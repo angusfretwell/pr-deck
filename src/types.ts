@@ -33,9 +33,6 @@ export interface PullRequest {
   isDraft: boolean;
   branch: string;
   updatedAt: string;
-  additions: number;
-  deletions: number;
-  changedFiles: number;
   ci: CiState;
   mergeability: Mergeability;
   review: ReviewState;
@@ -63,6 +60,9 @@ export interface FileChange {
 
 export interface PullRequestDetail {
   bodyHtml: string;
+  additions: number;
+  deletions: number;
+  changedFiles: number;
   checks: Check[];
   files: FileChange[];
 }

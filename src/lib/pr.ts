@@ -1,0 +1,76 @@
+import type { CheckState, CiState, PullRequest, ReviewState } from "../types";
+
+export type Tone = "ok" | "bad" | "warn" | "mute";
+export type BadgeIconName = "check" | "x" | "dot" | "ring" | "chat";
+
+export interface Badge {
+  tone: Tone;
+  icon: BadgeIconName;
+  label: string;
+}
+
+const PASS: Badge = { tone: "ok", icon: "check", label: "Passing" };
+const FAIL: Badge = { tone: "bad", icon: "x", label: "Failing" };
+const PENDING: Badge = { tone: "warn", icon: "dot", label: "Running" };
+
+export const CI_BADGE: Record<CiState, Badge> = {
+  pass: PASS,
+  fail: FAIL,
+  pending: PENDING,
+  none: { tone: "mute", icon: "ring", label: "No checks" },
+};
+
+export const CHECK_BADGE: Record<CheckState, Badge> = {
+  pass: PASS,
+  fail: FAIL,
+  pending: PENDING,
+  skipped: { tone: "mute", icon: "ring", label: "Skipped" },
+};
+
+export const REVIEW_BADGE: Record<ReviewState, Badge> = {
+  none: { tone: "mute", icon: "ring", label: "No reviews" },
+  comment: { tone: "mute", icon: "chat", label: "Commented" },
+  changes: { tone: "bad", icon: "x", label: "Changes requested" },
+  approved: { tone: "ok", icon: "check", label: "Approved" },
+};
+
+export const CONFLICT_BADGE: Badge = { tone: "bad", icon: "x", label: "Conflicts" };
+
+export type ViewerReviewState = ReviewState | "requested";
+
+export function viewerReview(pr: PullRequest, viewer: string): ViewerReviewState {
+  if (pr.reviewRequestedFromViewer) return "requested";
+  return pr.reviewers.find((reviewer) => reviewer.login === viewer)?.verdict ?? "none";
+}
+
+export function issueBadges(pr: PullRequest): Badge[] {
+  const badges: Badge[] = [];
+  if (pr.ci === "fail" || pr.ci === "pending") badges.push({ ...CI_BADGE[pr.ci], label: "Checks" });
+  if (pr.mergeability === "conflict") badges.push(CONFLICT_BADGE);
+  if (pr.review === "changes") badges.push(REVIEW_BADGE.changes);
+  if (
+    !badges.length &&
+    pr.review === "approved" &&
+    pr.ci === "pass" &&
+    pr.mergeability === "clean"
+  ) {
+    badges.push({ ...REVIEW_BADGE.approved, label: "Ready" });
+  }
+  return badges;
+}
+
+const HOUR_MS = 3_600_000;
+const STALE_AFTER_HOURS = 120;
+
+const hoursSince = (updatedAt: string, now: number) =>
+  Math.max(0, (now - Date.parse(updatedAt)) / HOUR_MS);
+
+export function age(updatedAt: string, now = Date.now()) {
+  const hours = Math.floor(hoursSince(updatedAt, now));
+  if (hours < 1) return "now";
+  if (hours < 24) return `${hours}h`;
+  return `${Math.round(hours / 24)}d`;
+}
+
+export const isStale = (updatedAt: string, now = Date.now()) =>
+  hoursSince(updatedAt, now) > STALE_AFTER_HOURS;
