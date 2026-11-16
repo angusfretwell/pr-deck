@@ -1,20 +1,18 @@
-import type { View } from "../types";
+import type { Filter, View } from "../types";
+import { sameFilters } from "./filters";
 
 export const ALL_OPEN_NAME = "All open";
 
-export const seedViews = (): View[] => [
+const DEFAULT_VIEWS: { name: string; filters: Filter[] }[] = [
   {
-    id: crypto.randomUUID(),
     name: "Mine",
     filters: [{ key: "author", values: ["@me"], negated: false }],
   },
   {
-    id: crypto.randomUUID(),
     name: "Needs my review",
     filters: [{ key: "myReview", values: ["requested"], negated: false }],
   },
   {
-    id: crypto.randomUUID(),
     name: "Ready to merge",
     filters: [
       { key: "ci", values: ["pass"], negated: false },
@@ -23,6 +21,18 @@ export const seedViews = (): View[] => [
     ],
   },
 ];
+
+export const seedViews = (): View[] =>
+  DEFAULT_VIEWS.map((view) => ({ ...view, id: crypto.randomUUID(), isDefault: true }));
+
+const matchesDefault = (view: View) =>
+  DEFAULT_VIEWS.some((seed) => seed.name === view.name && sameFilters(seed.filters, view.filters));
+
+export const needsDefaultMarks = (views: View[]) =>
+  views.some((view) => !view.isDefault && matchesDefault(view));
+
+export const markDefaultViews = (views: View[]): View[] =>
+  views.map((view) => (matchesDefault(view) ? { ...view, isDefault: true } : view));
 
 export const slugify = (name: string) =>
   name

@@ -1,5 +1,15 @@
 import { XIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogPopup,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTab } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -51,33 +61,59 @@ export function ViewTabs({
               </TabPill>
             );
           }
+          const deletable = active && !view.isDefault;
           return (
             <TabPill key={view.id} active={active}>
               <ViewTab
                 value={view.id}
                 name={view.name}
                 count={count}
-                className={cn(active && "pe-1.5")}
+                className={cn(deletable && "pe-1.5")}
                 onDoubleClick={() => onRenamingViewChange(view.id)}
               />
-              {active && (
-                <Hint label="Delete view">
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    className="me-1 size-5 text-muted-foreground sm:size-5"
-                    aria-label="Delete view"
-                    onClick={() => onDeleteView(view.id)}
-                  >
-                    <XIcon className="size-3 sm:size-3" />
-                  </Button>
-                </Hint>
+              {deletable && (
+                <DeleteViewButton name={view.name} onConfirm={() => onDeleteView(view.id)} />
               )}
             </TabPill>
           );
         })}
       </TabsList>
     </Tabs>
+  );
+}
+
+function DeleteViewButton({ name, onConfirm }: { name: string; onConfirm: () => void }) {
+  return (
+    <AlertDialog>
+      <Hint label="Delete view">
+        <AlertDialogTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              className="me-1 size-5 text-muted-foreground sm:size-5"
+              aria-label="Delete view"
+            />
+          }
+        >
+          <XIcon className="size-3 sm:size-3" />
+        </AlertDialogTrigger>
+      </Hint>
+      <AlertDialogPopup>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete “{name}”?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This view and its filters will be removed.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogClose render={<Button variant="ghost" />}>Cancel</AlertDialogClose>
+          <AlertDialogClose render={<Button variant="destructive" />} onClick={onConfirm}>
+            Delete
+          </AlertDialogClose>
+        </AlertDialogFooter>
+      </AlertDialogPopup>
+    </AlertDialog>
   );
 }
 

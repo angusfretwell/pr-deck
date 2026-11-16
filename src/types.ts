@@ -80,4 +80,5 @@ export interface View {
   id: string;
   name: string;
   filters: Filter[];
+  isDefault?: boolean;
 }

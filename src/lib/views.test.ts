@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vite-plus/test";
 import type { PullRequest } from "../types";
 import { passes } from "./filters";
-import { findViewBySlug, seedViews, slugify, uniqueName } from "./views";
+import {
+  findViewBySlug,
+  markDefaultViews,
+  needsDefaultMarks,
+  seedViews,
+  slugify,
+  uniqueName,
+} from "./views";
 
 const pr = (overrides: Partial<PullRequest> = {}): PullRequest => ({
   id: "1",
@@ -79,6 +86,10 @@ describe("seedViews", () => {
     expect(new Set(ids).size).toBe(3);
   });
 
+  it("marks every view as default", () => {
+    expect(seedViews().every((v) => v.isDefault)).toBe(true);
+  });
+
   it("Mine selects the viewer's PRs", () => {
     expect(select("Mine", pr({ id: "a", author: "me" }), pr({ id: "b", author: "bob" }))).toEqual([
       "a",
@@ -101,5 +112,28 @@ describe("seedViews", () => {
         pr({ id: "d", review: "comment" }),
       ),
     ).toEqual(["a"]);
+  });
+});
+
+describe("markDefaultViews", () => {
+  const legacy = () => seedViews().map((v) => ({ ...v, isDefault: undefined }));
+
+  it("marks unmarked views matching a default", () => {
+    const views = [...legacy(), view("x", "Custom")];
+    expect(needsDefaultMarks(views)).toBe(true);
+    expect(markDefaultViews(views).map((v) => !!v.isDefault)).toEqual([true, true, true, false]);
+  });
+
+  it("leaves renamed or refiltered defaults unmarked", () => {
+    const [mine, review] = legacy();
+    const views = [
+      { ...mine, name: "Mine!" },
+      { ...review, filters: [] },
+    ];
+    expect(needsDefaultMarks(views)).toBe(false);
+  });
+
+  it("needs nothing once marked", () => {
+    expect(needsDefaultMarks(seedViews())).toBe(false);
   });
 });

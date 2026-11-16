@@ -18,7 +18,14 @@ import { errorMessage } from "@/github/api";
 import { usePullRequests } from "@/github/hooks";
 import { groupPullRequests, matchesText, passes, sameFilters } from "@/lib/filters";
 import { useGroup, useLastPath, useStoredViews } from "@/lib/storage";
-import { findViewBySlug, seedViews, slugify, uniqueName } from "@/lib/views";
+import {
+  findViewBySlug,
+  markDefaultViews,
+  needsDefaultMarks,
+  seedViews,
+  slugify,
+  uniqueName,
+} from "@/lib/views";
 import { cn } from "@/lib/utils";
 import type { Filter, PullRequestList, View } from "@/types";
 
@@ -44,6 +51,8 @@ export function OrgRoute({ owner, viewSlug, ...searchProps }: OrgRouteProps) {
 
   useEffect(() => {
     if (!views) setStoredViews((prev) => (prev[owner] ? prev : { ...prev, [owner]: seedViews() }));
+    else if (needsDefaultMarks(views))
+      setStoredViews((prev) => ({ ...prev, [owner]: markDefaultViews(prev[owner] ?? []) }));
   }, [views, owner, setStoredViews]);
 
   if (!views) return null;
