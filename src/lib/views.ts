@@ -1,7 +1,7 @@
 import type { Filter, View } from "../types";
 import { sameFilters } from "./filters";
 
-export const ALL_OPEN_NAME = "All open";
+export const ALL_OPEN_NAME = "Open";
 
 const DEFAULT_VIEWS: { name: string; filters: Filter[] }[] = [
   {

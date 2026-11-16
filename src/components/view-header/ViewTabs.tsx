@@ -12,7 +12,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTab } from "@/components/ui/tabs";
+import { toggleVariants } from "@/components/ui/toggle";
 import { cn } from "@/lib/utils";
+import { ALL_OPEN_NAME } from "@/lib/views";
 import type { View } from "@/types";
 import { Hint } from "./Hint";
 
@@ -48,7 +50,7 @@ export function ViewTabs({
     >
       <TabsList className="flex-wrap justify-start gap-1.5 bg-transparent p-0 *:data-[slot=tab-indicator]:hidden">
         <TabPill active={activeViewId === null}>
-          <ViewTab value={ALL_OPEN_TAB} name="All open" count={allOpenCount} />
+          <ViewTab value={ALL_OPEN_TAB} name={ALL_OPEN_NAME} count={allOpenCount} />
         </TabPill>
         {views.map((view) => {
           const active = view.id === activeViewId;
@@ -56,8 +58,10 @@ export function ViewTabs({
           if (view.id === renamingViewId) {
             return (
               <TabPill key={view.id} active={active}>
-                <RenameInput name={view.name} onCommit={(name) => onRenameView(view.id, name)} />
-                <Count className="pe-3">{count}</Count>
+                <span className="px-3 leading-4">
+                  <RenameInput name={view.name} onCommit={(name) => onRenameView(view.id, name)} />
+                  <Count>{count}</Count>
+                </span>
               </TabPill>
             );
           }
@@ -91,7 +95,7 @@ function DeleteViewButton({ name, onConfirm }: { name: string; onConfirm: () => 
             <Button
               variant="ghost"
               size="icon-xs"
-              className="me-1 size-5 text-muted-foreground sm:size-5"
+              className="me-1 size-5 rounded-full text-muted-foreground before:rounded-full sm:size-5"
               aria-label="Delete view"
             />
           }
@@ -120,9 +124,10 @@ function DeleteViewButton({ name, onConfirm }: { name: string; onConfirm: () => 
 function TabPill({ active, children }: { active: boolean; children: ReactNode }) {
   return (
     <div
+      data-pressed={active ? "" : undefined}
       className={cn(
-        "flex h-7 items-center rounded-full border bg-background text-muted-foreground",
-        active && "border-transparent bg-muted text-foreground",
+        toggleVariants({ variant: "outline", size: "sm" }),
+        "cursor-default gap-0 rounded-full px-0 text-[13px] before:rounded-full sm:text-[13px]",
       )}
     >
       {children}
@@ -143,21 +148,22 @@ function ViewTab({ value, name, count, className, onDoubleClick }: ViewTabProps)
     <TabsTab
       value={value}
       className={cn(
-        "h-full rounded-full border-0 px-3 text-[13px] text-inherit hover:text-foreground sm:h-full sm:text-[13px]",
+        "h-full rounded-full border-0 px-3 text-[13px] text-inherit hover:text-inherit data-active:text-inherit sm:h-full sm:text-[13px]",
         className,
       )}
       onDoubleClick={onDoubleClick}
     >
-      {name}
-      <Count>{count}</Count>
+      <span className="leading-4">
+        {name} <Count>{count}</Count>
+      </span>
     </TabsTab>
   );
 }
 
-function Count({ className, children }: { className?: string; children: number | undefined }) {
+function Count({ children }: { children: number | undefined }) {
   if (children === undefined) return null;
   return (
-    <span className={cn("text-[11px] text-muted-foreground tabular-nums", className)}>
+    <span className="ms-0.5 text-[11px] leading-none text-muted-foreground tabular-nums">
       {children}
     </span>
   );
@@ -168,7 +174,7 @@ function RenameInput({ name, onCommit }: { name: string; onCommit: (name: string
   return (
     <input
       aria-label="View name"
-      className="me-1.5 ms-3 bg-transparent font-medium outline-none"
+      className="bg-transparent font-medium outline-none"
       style={{ width: `${Math.max(draft.length, 4) + 1}ch` }}
       value={draft}
       autoFocus
