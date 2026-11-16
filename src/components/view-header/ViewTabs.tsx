@@ -180,7 +180,7 @@ function TabPill({ active, children }: { active: boolean; children: ReactNode })
       data-pressed={active ? "" : undefined}
       className={cn(
         toggleVariants({ variant: "outline", size: "sm" }),
-        "shrink-0 cursor-default gap-0 rounded-full px-0 before:rounded-full",
+        "shrink-0 cursor-default gap-0 rounded-full px-0 before:rounded-full after:hidden",
       )}
     >
       {children}
