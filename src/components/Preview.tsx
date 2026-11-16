@@ -1,6 +1,6 @@
 import { GitPullRequestDraftIcon } from "@primer/octicons-react";
 import type { UseQueryResult } from "@tanstack/react-query";
-import { ChevronDownIcon, ChevronUpIcon, CircleAlertIcon, XIcon } from "lucide-react";
+import { ChevronDownIcon, CircleAlertIcon, XIcon } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useResizeObserver } from "usehooks-ts";
 import { BadgeIcon, BadgePill } from "@/components/status-badge";
@@ -165,15 +165,15 @@ function Description({ html }: { html: string }) {
           dangerouslySetInnerHTML={{ __html: html }}
         />
       </div>
-      {(collapsed || expanded) && (
+      {collapsed && (
         <Button
           variant="outline"
           size="sm"
           className="self-center"
-          onClick={() => setExpanded(!expanded)}
+          onClick={() => setExpanded(true)}
         >
-          {expanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
-          {expanded ? "Show less" : "Show more"}
+          <ChevronDownIcon />
+          Show more
         </Button>
       )}
     </div>
