@@ -47,7 +47,7 @@ export function FilterBar({
         <Group
           key={filter.key}
           aria-label={`${PROPERTY[filter.key].name} filter`}
-          className="*:rounded-full *:before:rounded-full"
+          className="max-w-full *:rounded-full *:before:rounded-full"
         >
           <GroupText
             className={cn(
@@ -69,9 +69,9 @@ export function FilterBar({
           <GroupSeparator />
           <PopoverTrigger
             {...filterTrigger(filter.key)}
-            render={<Button variant="outline" size="sm" />}
+            render={<Button variant="outline" size="sm" className="min-w-0 shrink" />}
           >
-            {summary(filter)}
+            <span className="truncate">{summary(filter)}</span>
           </PopoverTrigger>
           <GroupSeparator />
           <Button
