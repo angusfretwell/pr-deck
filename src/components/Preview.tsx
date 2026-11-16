@@ -3,17 +3,18 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import { ChevronDownIcon, ChevronUpIcon, CircleAlertIcon, XIcon } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useResizeObserver } from "usehooks-ts";
-import { BadgeIcon, BadgePill, pillClassName } from "@/components/status-badge";
+import { BadgeIcon, BadgePill } from "@/components/status-badge";
+import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Drawer, DrawerPanel, DrawerPopup, DrawerTitle } from "@/components/ui/drawer";
 import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+  Drawer,
+  DrawerHeader,
+  DrawerPanel,
+  DrawerPopup,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import { Frame, FrameHeader, FramePanel, FrameTitle } from "@/components/ui/frame";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { errorMessage } from "@/github/api";
@@ -47,7 +48,7 @@ function DiffBar({ file }: { file: FileChange }) {
       {Array.from({ length: DIFF_SQUARES }, (_, i) => (
         <i
           key={i}
-          className={`size-1.5 rounded-[1px] ${i < added ? "bg-success" : "bg-destructive"}`}
+          className={cn("size-1.5 rounded-xs", i < added ? "bg-success" : "bg-destructive")}
         />
       ))}
     </span>
@@ -70,33 +71,33 @@ function updated(updatedAt: string) {
 
 function Section({ title, children }: { title: ReactNode; children: ReactNode }) {
   return (
-    <section className="mt-5.5">
-      <h3 className="mb-2 font-semibold text-muted-foreground text-xs uppercase tracking-[0.05em]">
-        {title}
-      </h3>
+    <Frame>
+      <FrameHeader>
+        <FrameTitle role="heading" aria-level={3}>
+          {title}
+        </FrameTitle>
+      </FrameHeader>
       {children}
-    </section>
+    </Frame>
   );
 }
 
 function Lines({ children }: { children: ReactNode }) {
-  return <div className="divide-y rounded-lg border bg-card">{children}</div>;
+  return <FramePanel className="divide-y p-0">{children}</FramePanel>;
 }
 
 function Line({ children }: { children: ReactNode }) {
-  return <div className="flex items-center gap-2 px-3 py-1.75">{children}</div>;
+  return <div className="flex items-center gap-2 px-4 py-1.75">{children}</div>;
 }
 
 function ShowMore({ children, onClick }: { children: ReactNode; onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full cursor-pointer items-center gap-1.5 px-3 py-1.75 text-muted-foreground hover:text-foreground"
-    >
-      <ChevronDownIcon className="size-3.5" />
-      {children}
-    </button>
+    <div className="px-1.5 py-1">
+      <Button variant="ghost" size="sm" onClick={onClick}>
+        <ChevronDownIcon />
+        {children}
+      </Button>
+    </div>
   );
 }
 
@@ -106,7 +107,7 @@ function SkeletonLines() {
       {["w-1/2", "w-2/3", "w-2/5"].map((width) => (
         <Line key={width}>
           <span className="flex h-lh w-full items-center">
-            <Skeleton className={`h-4.5 ${width}`} />
+            <Skeleton className={cn("h-4.5", width)} />
           </span>
         </Line>
       ))}
@@ -116,23 +117,21 @@ function SkeletonLines() {
 
 function LoadError({ query }: { query: UseQueryResult<PullRequestDetail> }) {
   return (
-    <Empty className="rounded-lg border py-8 md:py-8">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <CircleAlertIcon />
-        </EmptyMedia>
-        <EmptyTitle className="text-base">Couldn't load details</EmptyTitle>
-        <EmptyDescription>{errorMessage(query.error)}</EmptyDescription>
-      </EmptyHeader>
-      <Button
-        size="sm"
-        variant="outline"
-        loading={query.isFetching}
-        onClick={() => query.refetch()}
-      >
-        Try again
-      </Button>
-    </Empty>
+    <Alert variant="error">
+      <CircleAlertIcon />
+      <AlertTitle>Couldn't load details</AlertTitle>
+      <AlertDescription>{errorMessage(query.error)}</AlertDescription>
+      <AlertAction>
+        <Button
+          size="xs"
+          variant="outline"
+          loading={query.isFetching}
+          onClick={() => query.refetch()}
+        >
+          Try again
+        </Button>
+      </AlertAction>
+    </Alert>
   );
 }
 
@@ -143,9 +142,7 @@ interface DetailProps {
 }
 
 function Detail({ query, skeleton, children }: DetailProps) {
-  if (query.data) return children(query.data);
-  if (query.isError) return <LoadError query={query} />;
-  return skeleton;
+  return query.data ? children(query.data) : skeleton;
 }
 
 function Description({ html }: { html: string }) {
@@ -169,7 +166,7 @@ function Description({ html }: { html: string }) {
   }, [html]);
 
   return (
-    <>
+    <div className="flex flex-col gap-2">
       <div className={cn(collapsed && "max-h-75 overflow-hidden mask-b-from-80%")}>
         <div
           ref={ref}
@@ -178,14 +175,17 @@ function Description({ html }: { html: string }) {
         />
       </div>
       {(collapsed || expanded) && (
-        <div className="mt-2 flex justify-center">
-          <Button variant="outline" size="sm" onClick={() => setExpanded(!expanded)}>
-            {expanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
-            {expanded ? "Show less" : "Show more"}
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="self-center"
+          onClick={() => setExpanded(!expanded)}
+        >
+          {expanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
+          {expanded ? "Show less" : "Show more"}
+        </Button>
       )}
-    </>
+    </div>
   );
 }
 
@@ -286,10 +286,10 @@ function FileList({ files, changedFiles }: { files: FileChange[]; changedFiles: 
 
 function PreviewHeading({ pr }: { pr: PullRequest }) {
   return (
-    <div className="flex min-w-0 gap-2 font-semibold">
+    <>
       <span className="truncate">{pr.repo}</span>
       <span className="font-medium text-muted-foreground/72">#{pr.number}</span>
-    </div>
+    </>
   );
 }
 
@@ -300,70 +300,76 @@ function PreviewBody({
 }: {
   pr: PullRequest;
   viewer: string;
-  className: string;
+  className?: string;
 }) {
   const query = usePullRequestDetail(pr.id);
   const you = (login: string) => (login === viewer ? " (you)" : "");
 
   return (
-    <div
-      className={cn("max-w-190 pb-[calc(--spacing(12)+env(safe-area-inset-bottom))]", className)}
-    >
-      <h2 className="mt-1.5 mb-2 wrap-break-word font-semibold text-2xl leading-[1.3] sm:text-xl tracking-[-0.01em]">
-        {pr.title}
-      </h2>
-      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-muted-foreground">
-        <span className="inline-flex items-center gap-1.25">
-          <UserAvatar login={pr.author} avatarUrl={pr.authorAvatarUrl} />
-          <span>
-            {pr.author}
-            {you(pr.author)} updated {updated(pr.updatedAt)}
+    <div className={cn("flex max-w-190 flex-col gap-5 pt-1.5", className)}>
+      <div className="flex flex-col gap-2">
+        <h2 className="wrap-break-word font-semibold text-2xl leading-[1.3] sm:text-xl tracking-[-0.01em]">
+          {pr.title}
+        </h2>
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-muted-foreground">
+          <span className="inline-flex items-center gap-1.25">
+            <UserAvatar login={pr.author} avatarUrl={pr.authorAvatarUrl} />
+            <span>
+              {pr.author}
+              {you(pr.author)} updated {updated(pr.updatedAt)}
+            </span>
           </span>
-        </span>
-        {query.data ? (
-          <span>
-            <span className="text-success-foreground">
-              +{query.data.additions.toLocaleString()}
-            </span>{" "}
-            <span className="text-destructive-foreground">
-              −{query.data.deletions.toLocaleString()}
-            </span>{" "}
-            · {query.data.changedFiles.toLocaleString()} files
-          </span>
-        ) : (
-          query.isPending && <Skeleton className="h-3.5 w-28" />
-        )}
-        {pr.mergeability === "conflict" && <BadgePill badge={CONFLICT_BADGE} />}
-        {pr.isDraft && (
-          <Badge variant="secondary" className={pillClassName}>
-            <GitPullRequestDraftIcon aria-hidden size={12} className="shrink-0" />
-            Draft
-          </Badge>
-        )}
+          {query.data ? (
+            <span>
+              <span className="text-success-foreground">
+                +{query.data.additions.toLocaleString()}
+              </span>{" "}
+              <span className="text-destructive-foreground">
+                −{query.data.deletions.toLocaleString()}
+              </span>{" "}
+              · {query.data.changedFiles.toLocaleString()} files
+            </span>
+          ) : (
+            query.isPending && <Skeleton className="h-3.5 w-28" />
+          )}
+          {pr.mergeability === "conflict" && <BadgePill badge={CONFLICT_BADGE} />}
+          {pr.isDraft && (
+            <Badge variant="secondary">
+              <GitPullRequestDraftIcon />
+              Draft
+            </Badge>
+          )}
+        </div>
       </div>
-      <div className="mt-4 mb-5">
-        <Button render={<a href={pr.url} target="_blank" rel="noopener" />}>Open in GitHub</Button>
-      </div>
-      <Section title="Description">
-        <Detail
-          query={query}
-          skeleton={
-            <div className="flex flex-col gap-2">
-              <Skeleton className="h-3.5 w-full" />
-              <Skeleton className="h-3.5 w-4/5" />
-              <Skeleton className="h-3.5 w-3/5" />
-            </div>
-          }
-        >
-          {(detail) =>
-            detail.bodyHtml ? (
-              <Description html={detail.bodyHtml} />
-            ) : (
-              <p className="text-muted-foreground">No description.</p>
-            )
-          }
-        </Detail>
-      </Section>
+      <Button className="self-start" render={<a href={pr.url} target="_blank" rel="noopener" />}>
+        Open in GitHub
+      </Button>
+      {query.isError ? (
+        <LoadError query={query} />
+      ) : (
+        <Section title="Description">
+          <FramePanel>
+            <Detail
+              query={query}
+              skeleton={
+                <div className="flex flex-col gap-2">
+                  <Skeleton className="h-3.5 w-full" />
+                  <Skeleton className="h-3.5 w-4/5" />
+                  <Skeleton className="h-3.5 w-3/5" />
+                </div>
+              }
+            >
+              {(detail) =>
+                detail.bodyHtml ? (
+                  <Description html={detail.bodyHtml} />
+                ) : (
+                  <p className="text-muted-foreground">No description.</p>
+                )
+              }
+            </Detail>
+          </FramePanel>
+        </Section>
+      )}
       <Section title="Reviewers">
         <Lines>
           {pr.reviewers.length === 0 && (
@@ -413,15 +419,22 @@ export function Preview({ pr, viewer, onClose }: PreviewProps) {
     <aside
       ref={ref}
       aria-label="Pull request preview"
-      className="min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain border-l bg-background transition-[opacity,translate] duration-200 ease-out starting:translate-x-4 starting:opacity-0 motion-reduce:transition-none"
+      className="min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain border-s bg-background transition-[opacity,translate] duration-200 ease-out starting:translate-x-4 starting:opacity-0 motion-reduce:transition-none"
     >
       <div className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-background py-2 ps-6 pe-2">
-        <PreviewHeading pr={pr} />
+        <div className="flex min-w-0 gap-2 font-semibold">
+          <PreviewHeading pr={pr} />
+        </div>
         <Button aria-label="Close" variant="ghost" size="icon" onClick={onClose}>
           <XIcon />
         </Button>
       </div>
-      <PreviewBody key={pr.id} pr={pr} viewer={viewer} className="px-6 pt-1" />
+      <PreviewBody
+        key={pr.id}
+        pr={pr}
+        viewer={viewer}
+        className="px-6 pb-[calc(--spacing(12)+env(safe-area-inset-bottom))]"
+      />
     </aside>
   );
 }
@@ -438,18 +451,20 @@ export function PreviewDrawer({ pr, open, viewer, onClose }: PreviewDrawerProps)
     <Drawer open={open && pr !== undefined} onOpenChange={(next) => !next && onClose()}>
       <DrawerPopup
         showBar
-        className="h-[calc(100dvh-max(--spacing(2),env(safe-area-inset-top))---spacing(8))] text-base sm:text-sm"
+        showCloseButton
+        className="h-[calc(100dvh-max(--spacing(2),env(safe-area-inset-top))---spacing(8))]"
       >
         {pr && (
-          <DrawerPanel className="p-0">
-            <DrawerTitle
-              render={<div />}
-              className="px-4 pt-3 font-normal text-base leading-normal sm:text-sm"
-            >
-              <PreviewHeading pr={pr} />
-            </DrawerTitle>
-            <PreviewBody key={pr.id} pr={pr} viewer={viewer} className="px-4 pt-1" />
-          </DrawerPanel>
+          <>
+            <DrawerHeader className="pe-12">
+              <DrawerTitle className="flex min-w-0 gap-2 text-base leading-normal">
+                <PreviewHeading pr={pr} />
+              </DrawerTitle>
+            </DrawerHeader>
+            <DrawerPanel>
+              <PreviewBody key={pr.id} pr={pr} viewer={viewer} />
+            </DrawerPanel>
+          </>
         )}
       </DrawerPopup>
     </Drawer>

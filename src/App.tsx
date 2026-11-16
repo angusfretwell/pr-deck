@@ -1,11 +1,19 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { CloudOffIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Redirect, Route, Switch, useLocation } from "wouter";
 import { AppShell } from "@/components/AppShell";
 import { OrgRoute } from "@/components/OrgPage";
 import { SetupScreen } from "@/components/SetupScreen";
 import { Button } from "@/components/ui/button";
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Spinner } from "@/components/ui/spinner";
 import { errorMessage, isAuthError } from "@/github/api";
 import { useSession } from "@/github/hooks";
@@ -49,7 +57,7 @@ export default function App() {
   );
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)] text-base text-foreground sm:text-sm md:h-dvh">
+    <div className="flex min-h-dvh flex-col pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)] md:h-dvh">
       {token ? (
         <Workspace onSignOut={() => signOut(null)} />
       ) : (
@@ -66,12 +74,22 @@ function Workspace({ onSignOut }: { onSignOut: () => void }) {
     return (
       <Empty>
         <EmptyHeader>
-          <EmptyTitle className="text-base">Couldn't reach GitHub</EmptyTitle>
+          <EmptyMedia variant="icon">
+            <CloudOffIcon />
+          </EmptyMedia>
+          <EmptyTitle>Couldn't reach GitHub</EmptyTitle>
           <EmptyDescription>{errorMessage(session.error)}</EmptyDescription>
         </EmptyHeader>
-        <Button size="sm" variant="outline" onClick={() => session.refetch()}>
-          Try again
-        </Button>
+        <EmptyContent>
+          <Button
+            size="sm"
+            variant="outline"
+            loading={session.isFetching}
+            onClick={() => session.refetch()}
+          >
+            Try again
+          </Button>
+        </EmptyContent>
       </Empty>
     );
   }
@@ -159,18 +177,22 @@ function OwnerNotFound({
   return (
     <Empty>
       <EmptyHeader>
-        <EmptyTitle className="text-base">
-          {hidden ? `${owner} is hidden` : `No access to ${owner}`}
-        </EmptyTitle>
+        <EmptyTitle>{hidden ? `${owner} is hidden` : `No access to ${owner}`}</EmptyTitle>
         <EmptyDescription>
           {hidden
             ? "You hid this account from the account menu. Show it again there to see its pull requests."
             : "It isn't one of your accounts or organisations, or your token can't see it."}
         </EmptyDescription>
       </EmptyHeader>
-      <Button size="sm" variant="outline" onClick={() => navigate(fallbackPath, { replace: true })}>
-        Back to {fallbackPath.split("/")[1]}
-      </Button>
+      <EmptyContent>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => navigate(fallbackPath, { replace: true })}
+        >
+          Back to {fallbackPath.split("/")[1]}
+        </Button>
+      </EmptyContent>
     </Empty>
   );
 }

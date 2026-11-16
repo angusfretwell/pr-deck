@@ -2,8 +2,9 @@ import { EyeIcon, KeyRoundIcon } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { SetupPreview } from "@/components/SetupPreview";
 import { Button } from "@/components/ui/button";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { errorMessage, fetchSession } from "@/github/api";
 import type { Session } from "@/types";
 
@@ -41,12 +42,12 @@ export function SetupScreen({ initialError, onSignIn }: SetupScreenProps) {
   return (
     <main className="grid flex-1 md:min-h-0 md:overflow-y-auto lg:grid-cols-[minmax(360px,420px)_1fr]">
       <section className="flex flex-col justify-center px-6 pt-12 pb-[calc(--spacing(12)+env(safe-area-inset-bottom))] sm:px-12 lg:px-10">
-        <div className="mx-auto w-full max-w-sm">
+        <div className="mx-auto flex w-full max-w-sm flex-col gap-8">
           <div className="flex items-center gap-2 font-semibold text-sm">
             <Logo />
             PR Deck
           </div>
-          <h1 className="my-8 text-balance font-semibold text-2xl tracking-tight">
+          <h1 className="text-balance font-semibold text-2xl tracking-tight">
             Every open pull request across your orgs, on one screen.
           </h1>
           <form className="flex flex-col gap-3" onSubmit={submit}>
@@ -66,36 +67,39 @@ export function SetupScreen({ initialError, onSignIn }: SetupScreenProps) {
                   setError(null);
                 }}
               />
+              <FieldDescription>
+                No token yet?{" "}
+                <a
+                  className="text-foreground underline underline-offset-4"
+                  href={NEW_TOKEN_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Create one with <code>repo</code> and <code>read:org</code>
+                </a>
+              </FieldDescription>
               <div className="min-h-4">{error && <FieldError match>{error}</FieldError>}</div>
             </Field>
             <Button type="submit" size="lg" loading={pending} disabled={!token.trim()}>
               Connect GitHub
             </Button>
-            <p className="text-muted-foreground text-xs">
-              No token yet?{" "}
-              <a
-                className="text-foreground underline underline-offset-4"
-                href={NEW_TOKEN_URL}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Create one with <code>repo</code> and <code>read:org</code>
-              </a>
-            </p>
           </form>
-          <ul className="mt-10 flex flex-col gap-3 border-t pt-6 text-muted-foreground text-xs">
-            {PROMISES.map(({ icon: Icon, text }) => (
-              <li key={text} className="flex gap-2">
-                <Icon className="mt-px size-3.5 shrink-0" />
-                {text}
-              </li>
-            ))}
-          </ul>
+          <div className="flex flex-col gap-6">
+            <Separator />
+            <ul className="flex flex-col gap-3 text-muted-foreground text-xs">
+              {PROMISES.map(({ icon: Icon, text }) => (
+                <li key={text} className="flex gap-2">
+                  <Icon className="mt-px size-3.5 shrink-0" />
+                  {text}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </section>
-      <section className="relative hidden overflow-hidden border-l bg-sidebar lg:block">
-        <div className="absolute top-[16%] -right-48 bottom-0 left-12 min-[1800px]:right-12 animate-rise overflow-hidden rounded-tl-xl border-t border-l shadow-lg/5 [mask-image:linear-gradient(to_bottom,black_45%,transparent_85%)] motion-reduce:animate-none">
-          <SetupPreview className="h-full min-w-[720px]" />
+      <section className="relative hidden overflow-hidden border-s bg-sidebar lg:block">
+        <div className="absolute top-[16%] -end-48 bottom-0 start-12 min-[1800px]:end-12 animate-rise overflow-hidden rounded-ss-xl border-t border-s shadow-lg/5 mask-b-from-45% mask-b-to-85% motion-reduce:animate-none">
+          <SetupPreview className="h-full min-w-180" />
         </div>
       </section>
     </main>

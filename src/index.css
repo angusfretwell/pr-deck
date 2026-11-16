@@ -251,7 +251,7 @@
     }
   }
   body {
-    @apply bg-background text-foreground;
+    @apply relative bg-background text-base text-foreground sm:text-sm;
   }
   code,
   kbd,
