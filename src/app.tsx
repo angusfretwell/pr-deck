@@ -18,13 +18,21 @@ import { Spinner } from "@/components/ui/spinner";
 import { errorMessage, isAuthError } from "@/github/api";
 import { useSession } from "@/github/hooks";
 import { clearQueryCache } from "@/lib/query-cache";
-import { useHiddenOwners, useLastPath, useToken } from "@/lib/storage";
+import { useColorMode, useHiddenOwners, useLastPath, useToken } from "@/lib/storage";
 import type { Session } from "@/types";
 
 export default function App() {
   const queryClient = useQueryClient();
   const [token, setToken, removeToken] = useToken();
   const [authError, setAuthError] = useState<string | null>(null);
+  const { isDarkMode } = useColorMode();
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDarkMode);
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", isDarkMode ? "#161616" : "#ffffff");
+  }, [isDarkMode]);
 
   const signOut = useCallback(
     (message: string | null) => {

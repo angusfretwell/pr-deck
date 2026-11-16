@@ -11,12 +11,15 @@ import {
   MenuGroupLabel,
   MenuItem,
   MenuPopup,
+  MenuRadioGroup,
+  MenuRadioItem,
   MenuSeparator,
   MenuTrigger,
 } from "@/components/ui/menu";
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
+import { useColorMode } from "@/lib/storage";
 import type { Account, Session } from "@/types";
 
 interface AppShellProps {
@@ -49,6 +52,7 @@ export function AppShell({
   const [, navigate] = useLocation();
   const [searchTapped, setSearchTapped] = useState(false);
   const fetching = useIsFetching() > 0;
+  const { ternaryDarkMode, setTernaryDarkMode } = useColorMode();
   const personal = session.owners.filter((owner) => owner.login === session.viewer.login);
   const organisations = session.owners.filter((owner) => owner.login !== session.viewer.login);
 
@@ -152,6 +156,15 @@ export function AppShell({
                       </MenuGroup>
                     ),
                 )}
+                <MenuSeparator />
+                <MenuGroup>
+                  <MenuGroupLabel>Theme</MenuGroupLabel>
+                  <MenuRadioGroup value={ternaryDarkMode} onValueChange={setTernaryDarkMode}>
+                    <MenuRadioItem value="system">System</MenuRadioItem>
+                    <MenuRadioItem value="light">Light</MenuRadioItem>
+                    <MenuRadioItem value="dark">Dark</MenuRadioItem>
+                  </MenuRadioGroup>
+                </MenuGroup>
                 <MenuSeparator />
                 <MenuItem onClick={onSignOut}>
                   <SignOutIcon />
