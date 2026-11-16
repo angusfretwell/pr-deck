@@ -4,14 +4,14 @@ import { useMediaQuery } from "usehooks-ts";
 import { Link } from "wouter";
 import { AccountAvatar } from "@/components/account-avatar";
 import {
-  ResponsiveMenu,
-  ResponsiveMenuGroup,
-  ResponsiveMenuGroupLabel,
-  ResponsiveMenuPopup,
-  ResponsiveMenuRadioGroup,
-  ResponsiveMenuRadioItem,
-  ResponsiveMenuTrigger,
-} from "@/components/responsive-menu";
+  Menu,
+  MenuGroup,
+  MenuGroupLabel,
+  MenuPopup,
+  MenuRadioGroup,
+  MenuRadioItem,
+  MenuTrigger,
+} from "@/components/ui/menu";
 import { Button } from "@/components/ui/button";
 import { SegmentedControl, SegmentedControlItem } from "@/components/ui/segmented-control";
 import type { Account } from "@/types";
@@ -161,30 +161,35 @@ function OwnerMenu({
     { label: "Organisations", accounts: owners.filter((owner) => owner.login !== viewerLogin) },
   ];
   return (
-    <ResponsiveMenu>
-      <ResponsiveMenuTrigger render={trigger}>{children}</ResponsiveMenuTrigger>
-      <ResponsiveMenuPopup align="start" className="w-72">
-        <ResponsiveMenuRadioGroup value={activeOwner} onValueChange={onSelect}>
+    <Menu>
+      <MenuTrigger render={trigger}>{children}</MenuTrigger>
+      <MenuPopup align="start" className="w-72">
+        <MenuRadioGroup value={activeOwner} onValueChange={onSelect}>
           {groups.map(
             ({ label, accounts }) =>
               accounts.length > 0 && (
-                <ResponsiveMenuGroup key={label}>
-                  <ResponsiveMenuGroupLabel>{label}</ResponsiveMenuGroupLabel>
+                <MenuGroup key={label}>
+                  <MenuGroupLabel>{label}</MenuGroupLabel>
                   {accounts.map((owner) => (
-                    <ResponsiveMenuRadioItem key={owner.login} value={owner.login}>
+                    <MenuRadioItem
+                      key={owner.login}
+                      value={owner.login}
+                      closeOnClick
+                      className="grid-cols-[.75rem_minmax(0,1fr)]"
+                    >
                       <span className="flex min-w-0 items-center gap-2">
                         <AccountAvatar account={owner} className="size-4 rounded-sm" />
                         <span className="truncate" title={owner.login}>
                           {owner.login}
                         </span>
                       </span>
-                    </ResponsiveMenuRadioItem>
+                    </MenuRadioItem>
                   ))}
-                </ResponsiveMenuGroup>
+                </MenuGroup>
               ),
           )}
-        </ResponsiveMenuRadioGroup>
-      </ResponsiveMenuPopup>
-    </ResponsiveMenu>
+        </MenuRadioGroup>
+      </MenuPopup>
+    </Menu>
   );
 }

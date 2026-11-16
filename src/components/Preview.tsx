@@ -14,7 +14,6 @@ import {
   DrawerPopup,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { Frame, FrameHeader, FramePanel, FrameTitle } from "@/components/ui/frame";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { errorMessage } from "@/github/api";
@@ -71,23 +70,21 @@ function updated(updatedAt: string) {
 
 function Section({ title, children }: { title: ReactNode; children: ReactNode }) {
   return (
-    <Frame>
-      <FrameHeader>
-        <FrameTitle role="heading" aria-level={3}>
-          {title}
-        </FrameTitle>
-      </FrameHeader>
+    <section className="flex flex-col gap-2">
+      <h3 className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+        {title}
+      </h3>
       {children}
-    </Frame>
+    </section>
   );
 }
 
 function Lines({ children }: { children: ReactNode }) {
-  return <FramePanel className="divide-y p-0">{children}</FramePanel>;
+  return <div className="divide-y rounded-lg border bg-card">{children}</div>;
 }
 
 function Line({ children }: { children: ReactNode }) {
-  return <div className="flex items-center gap-2 px-4 py-1.75">{children}</div>;
+  return <div className="flex items-center gap-2 px-3 py-1.75">{children}</div>;
 }
 
 function ShowMore({ children, onClick }: { children: ReactNode; onClick: () => void }) {
@@ -348,26 +345,24 @@ function PreviewBody({
         <LoadError query={query} />
       ) : (
         <Section title="Description">
-          <FramePanel>
-            <Detail
-              query={query}
-              skeleton={
-                <div className="flex flex-col gap-2">
-                  <Skeleton className="h-3.5 w-full" />
-                  <Skeleton className="h-3.5 w-4/5" />
-                  <Skeleton className="h-3.5 w-3/5" />
-                </div>
-              }
-            >
-              {(detail) =>
-                detail.bodyHtml ? (
-                  <Description html={detail.bodyHtml} />
-                ) : (
-                  <p className="text-muted-foreground">No description.</p>
-                )
-              }
-            </Detail>
-          </FramePanel>
+          <Detail
+            query={query}
+            skeleton={
+              <div className="flex flex-col gap-2">
+                <Skeleton className="h-3.5 w-full" />
+                <Skeleton className="h-3.5 w-4/5" />
+                <Skeleton className="h-3.5 w-3/5" />
+              </div>
+            }
+          >
+            {(detail) =>
+              detail.bodyHtml ? (
+                <Description html={detail.bodyHtml} />
+              ) : (
+                <p className="text-muted-foreground">No description.</p>
+              )
+            }
+          </Detail>
         </Section>
       )}
       <Section title="Reviewers">
@@ -451,13 +446,12 @@ export function PreviewDrawer({ pr, open, viewer, onClose }: PreviewDrawerProps)
     <Drawer open={open && pr !== undefined} onOpenChange={(next) => !next && onClose()}>
       <DrawerPopup
         showBar
-        showCloseButton
         finalFocus={(closeType) => closeType === "keyboard"}
         className="h-[calc(100dvh-max(--spacing(2),env(safe-area-inset-top))---spacing(8))]"
       >
         {pr && (
           <>
-            <DrawerHeader className="pe-12">
+            <DrawerHeader>
               <DrawerTitle className="flex min-w-0 gap-2 text-base leading-normal">
                 <PreviewHeading pr={pr} />
               </DrawerTitle>

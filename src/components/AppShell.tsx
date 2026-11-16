@@ -5,15 +5,15 @@ import { useLocation } from "wouter";
 import { AccountAvatar } from "@/components/account-avatar";
 import { OwnerSwitcher } from "@/components/OwnerSwitcher";
 import {
-  ResponsiveMenu,
-  ResponsiveMenuCheckboxItem,
-  ResponsiveMenuGroup,
-  ResponsiveMenuGroupLabel,
-  ResponsiveMenuItem,
-  ResponsiveMenuPopup,
-  ResponsiveMenuSeparator,
-  ResponsiveMenuTrigger,
-} from "@/components/responsive-menu";
+  Menu,
+  MenuCheckboxItem,
+  MenuGroup,
+  MenuGroupLabel,
+  MenuItem,
+  MenuPopup,
+  MenuSeparator,
+  MenuTrigger,
+} from "@/components/ui/menu";
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
@@ -95,13 +95,11 @@ export function AppShell({
             >
               <SearchIcon />
             </Button>
-            <ResponsiveMenu>
-              <ResponsiveMenuTrigger
-                render={<Button variant="ghost" size="icon-sm" aria-label="Account" />}
-              >
+            <Menu>
+              <MenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Account" />}>
                 <AccountAvatar account={session.viewer} className="size-5.5" />
-              </ResponsiveMenuTrigger>
-              <ResponsiveMenuPopup align="end" className="w-64">
+              </MenuTrigger>
+              <MenuPopup align="end" className="w-64">
                 <div className="flex items-center gap-2 px-2 py-1.5">
                   <AccountAvatar account={session.viewer} className="size-6" />
                   <div className="flex min-w-0 flex-col leading-tight">
@@ -115,19 +113,20 @@ export function AppShell({
                     )}
                   </div>
                 </div>
-                <ResponsiveMenuSeparator />
+                <MenuSeparator />
                 {[
                   { label: "Personal account", accounts: personal },
                   { label: "Organisations", accounts: organisations },
                 ].map(
                   ({ label, accounts }) =>
                     accounts.length > 0 && (
-                      <ResponsiveMenuGroup key={label}>
-                        <ResponsiveMenuGroupLabel>{label}</ResponsiveMenuGroupLabel>
+                      <MenuGroup key={label}>
+                        <MenuGroupLabel>{label}</MenuGroupLabel>
                         {accounts.map((owner) => {
                           const enabled = !hiddenOwners.includes(owner.login);
                           return (
-                            <ResponsiveMenuCheckboxItem
+                            <MenuCheckboxItem
+                              className="grid-cols-[.75rem_minmax(0,1fr)]"
                               key={owner.login}
                               checked={enabled}
                               disabled={enabled && enabledOwners.length === 1}
@@ -145,19 +144,19 @@ export function AppShell({
                                   {owner.login}
                                 </span>
                               </span>
-                            </ResponsiveMenuCheckboxItem>
+                            </MenuCheckboxItem>
                           );
                         })}
-                      </ResponsiveMenuGroup>
+                      </MenuGroup>
                     ),
                 )}
-                <ResponsiveMenuSeparator />
-                <ResponsiveMenuItem onClick={onSignOut}>
+                <MenuSeparator />
+                <MenuItem onClick={onSignOut}>
                   <LogOutIcon />
                   Remove token
-                </ResponsiveMenuItem>
-              </ResponsiveMenuPopup>
-            </ResponsiveMenu>
+                </MenuItem>
+              </MenuPopup>
+            </Menu>
           </>
         )}
       </header>
