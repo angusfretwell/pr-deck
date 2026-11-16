@@ -7,7 +7,7 @@ export default defineConfig({
     alias: { "@": new URL("./src", import.meta.url).pathname },
   },
   server: { port: 5183 },
-  fmt: {},
+  fmt: { ignorePatterns: [".claude/skills/**", "skills-lock.json"] },
   lint: {
     plugins: ["react", "typescript", "oxc"],
     rules: {
