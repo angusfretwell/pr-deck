@@ -10,6 +10,7 @@ import {
 import { toggleValue } from "@/lib/filters";
 import type { Filter, Group, PropertyKey, PullRequest, View } from "@/types";
 import { DisplayMenu } from "./view-header/display-menu";
+import { DraftsToggle } from "./view-header/drafts-toggle";
 import { FilterBar } from "./view-header/filter-bar";
 import { FilterMenu } from "./view-header/filter-menu";
 import { Hint } from "./view-header/hint";
@@ -53,6 +54,8 @@ export interface ViewHeaderProps {
   onDisplayMenuOpenChange: (open: boolean) => void;
   group: Group;
   onGroupChange: (group: Group) => void;
+  hideDrafts: boolean;
+  onHideDraftsChange: (hideDrafts: boolean) => void;
 
   orgPrs: PullRequest[];
   scopedPrs: PullRequest[];
@@ -72,6 +75,8 @@ export function ViewHeader({
   onDisplayMenuOpenChange,
   group,
   onGroupChange,
+  hideDrafts,
+  onHideDraftsChange,
   orgPrs,
   scopedPrs,
   viewer,
@@ -142,6 +147,7 @@ export function ViewHeader({
     <div className="border-b">
       <div className="flex items-center gap-1.5 px-2 py-2.5 md:px-4">
         <ViewTabs {...tabs} />
+        <DraftsToggle hideDrafts={hideDrafts} onHideDraftsChange={onHideDraftsChange} />
         <Hint label="Filter">
           <PopoverTrigger
             {...filterTrigger("header")}
@@ -149,7 +155,7 @@ export function ViewHeader({
               <Button
                 variant="outline"
                 size="icon-sm"
-                className="ms-auto rounded-full before:rounded-full"
+                className="rounded-full before:rounded-full max-md:ms-auto"
                 aria-label="Filter"
               />
             }

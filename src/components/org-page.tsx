@@ -27,7 +27,7 @@ import {
   toggleGroup,
   type SelectionAction,
 } from "@/lib/pr-list";
-import { useCollapsedGroups, useGroup, useLastPath } from "@/lib/storage";
+import { useCollapsedGroups, useGroup, useHideDrafts, useLastPath } from "@/lib/storage";
 import { useViews } from "@/lib/use-views";
 import { cn } from "@/lib/utils";
 import { countByView, type Views, type ViewsChange } from "@/lib/views";
@@ -80,6 +80,7 @@ function OrgPage({
   const [location] = useLocation();
   const [, setLastPath] = useLastPath();
   const [group, setGroup] = useGroup();
+  const [hideDraftsPreference, setHideDrafts] = useHideDrafts();
   const [collapsedGroups, setCollapsedGroups] = useCollapsedGroups(owner);
   const { filters, filtersChanged } = views;
   const [filterMenu, setFilterMenu] = useState<FilterMenuState | null>(null);
@@ -95,7 +96,9 @@ function OrgPage({
   });
   const pullRequests = usePullRequests(owner);
 
-  const orgPrs = pullRequests.data?.pullRequests ?? [];
+  const hideDrafts = desktop && hideDraftsPreference;
+  const allPrs = pullRequests.data?.pullRequests ?? [];
+  const orgPrs = hideDrafts ? allPrs.filter((pr) => !pr.isDraft) : allPrs;
   const list = derivePrList({
     pullRequests: orgPrs,
     query,
@@ -134,6 +137,11 @@ function OrgPage({
       },
       { hotkey: "/", callback: onOpenSearch, options: { enabled: idle } },
       { hotkey: "F", callback: () => changeFilterMenu("header"), options: { enabled: idle } },
+      {
+        hotkey: "D",
+        callback: () => setHideDrafts(!hideDrafts),
+        options: { enabled: idle && desktop },
+      },
       { hotkey: "J", callback: move(1), options: { enabled: idle && hasRows } },
       { hotkey: "ArrowDown", callback: move(1), options: { enabled: idle && hasRows } },
       { hotkey: "K", callback: move(-1), options: { enabled: idle && hasRows } },
@@ -162,7 +170,7 @@ function OrgPage({
           <ViewHeader
             views={views.list}
             viewCounts={pullRequests.data ? countByView(views.list, orgPrs, viewer) : {}}
-            allOpenCount={pullRequests.data?.pullRequests.length}
+            allOpenCount={pullRequests.data && orgPrs.length}
             activeViewId={views.active?.id ?? null}
             deletableViewId={views.deletableViewId}
             renamingViewId={views.session.renamingViewId}
@@ -182,6 +190,8 @@ function OrgPage({
             onDisplayMenuOpenChange={setDisplayMenuOpen}
             group={group}
             onGroupChange={setGroup}
+            hideDrafts={hideDrafts}
+            onHideDraftsChange={setHideDrafts}
             orgPrs={orgPrs}
             scopedPrs={list.scoped}
             viewer={viewer}
@@ -196,7 +206,7 @@ function OrgPage({
           )}
         >
           <div className="flex flex-1 flex-col pb-[calc(--spacing(4)+env(safe-area-inset-bottom))] md:min-h-0 md:overflow-y-auto md:overscroll-contain">
-            {orgPrs.length === 0 ? (
+            {allPrs.length === 0 ? (
               <NoPullRequests owner={owner} result={pullRequests} />
             ) : (
               <PrTable

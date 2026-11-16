@@ -182,6 +182,8 @@ export function SetupPreview({ className }: { className?: string }) {
         onDisplayMenuOpenChange={noop}
         group="repo"
         onGroupChange={noop}
+        hideDrafts={false}
+        onHideDraftsChange={noop}
         orgPrs={PULL_REQUESTS}
         scopedPrs={PULL_REQUESTS}
         viewer={VIEWER}
