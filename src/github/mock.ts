@@ -47,12 +47,19 @@ const titles = [
   "Remove the unused feature flag for search v1",
 ];
 
+const pollsUntilMergeable = new Map<string, number>();
+const settledMergeability = (index: number) => mergeStates[index % mergeStates.length]!;
+
 function pullRequests(owner: string): PullRequest[] {
   return Array.from({ length: 48 }, (_, index) => {
+    const id = `${owner}-${index}`;
     const author = authors[index % authors.length]!;
     const review = reviewStates[index % reviewStates.length]!;
+    if (index % 7 === 2 && !pollsUntilMergeable.has(id)) {
+      pollsUntilMergeable.set(id, index < 24 ? 1 : 2);
+    }
     return {
-      id: `${owner}-${index}`,
+      id,
       owner,
       repo: repos[(index * 7) % repos.length]!,
       number: 1200 - index * 3,
@@ -64,7 +71,7 @@ function pullRequests(owner: string): PullRequest[] {
       branch: `feature/change-${index}`,
       updatedAt: new Date(Date.now() - index * 47 * 60_000).toISOString(),
       ci: ciStates[index % ciStates.length]!,
-      mergeability: mergeStates[index % mergeStates.length]!,
+      mergeability: pollsUntilMergeable.get(id) ? "unknown" : settledMergeability(index),
       review,
       reviewers:
         review === "none"
@@ -107,6 +114,15 @@ const delay = <T>(value: T) => new Promise<T>((resolve) => setTimeout(() => reso
 export const fetchSession = (_token: string) => delay(session());
 export const fetchPullRequests = (_token: string, owner: string, _viewer: string) =>
   delay<PullRequestList>({ pullRequests: pullRequests(owner), totalCount: 48 });
-export const fetchMergeability = (_token: string, _ids: string[]) =>
-  delay<Record<string, Mergeability>>({});
+export const fetchMergeability = (_token: string, ids: string[]) =>
+  delay<Record<string, Mergeability>>(
+    Object.fromEntries(
+      ids.map((id) => {
+        const remaining = Math.max(0, (pollsUntilMergeable.get(id) ?? 0) - 1);
+        pollsUntilMergeable.set(id, remaining);
+        const index = Number(id.split("-").at(-1));
+        return [id, remaining > 0 ? "unknown" : settledMergeability(index)];
+      }),
+    ),
+  );
 export const fetchPullRequestDetail = (_token: string, _id: string) => delay(detail());
