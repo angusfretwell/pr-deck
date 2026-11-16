@@ -1,13 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import type { Filter, PullRequest } from "../types";
-import {
-  groupPullRequests,
-  matchesText,
-  passes,
-  PROPERTY,
-  sameFilters,
-  toggleValue,
-} from "./filters";
+import { matchesText, passes, PROPERTY, sameFilters, toggleValue } from "./filters";
 
 const pr = (overrides: Partial<PullRequest> = {}): PullRequest => ({
   id: "1",
@@ -162,31 +155,5 @@ describe("matchesText", () => {
 
   it("rejects non-matches", () => {
     expect(matchesText(target, "nope")).toBe(false);
-  });
-});
-
-describe("groupPullRequests", () => {
-  const prs = [
-    pr({ id: "1", repo: "web", author: "bob" }),
-    pr({ id: "2", repo: "api", author: "alice" }),
-    pr({ id: "3", repo: "web", author: "alice" }),
-  ];
-
-  it("groups by repo with sorted keys and input order", () => {
-    const groups = groupPullRequests(prs, "repo");
-    expect(groups.map((g) => g.key)).toEqual(["api", "web"]);
-    expect(groups[1]?.rows.map((row) => row.id)).toEqual(["1", "3"]);
-  });
-
-  it("groups by author", () => {
-    const groups = groupPullRequests(prs, "author");
-    expect(groups.map((g) => [g.key, g.rows.map((row) => row.id)])).toEqual([
-      ["alice", ["2", "3"]],
-      ["bob", ["1"]],
-    ]);
-  });
-
-  it("returns one group for none", () => {
-    expect(groupPullRequests(prs, "none")).toEqual([{ key: "", rows: prs }]);
   });
 });

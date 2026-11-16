@@ -19,7 +19,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ViewHeader, type FilterMenuState } from "@/components/view-header";
 import { errorMessage } from "@/github/api";
 import { usePullRequests } from "@/github/hooks";
-import { groupPullRequests, matchesText, passes, sameFilters } from "@/lib/filters";
+import { passes, sameFilters } from "@/lib/filters";
+import {
+  applySelectionAction,
+  derivePrList,
+  keyCommand,
+  NO_SELECTION,
+  toggleGroup,
+  type SelectionAction,
+} from "@/lib/pr-list";
 import { useCollapsedGroups, useGroup, useLastPath, useStoredViews } from "@/lib/storage";
 import {
   findViewBySlug,
@@ -106,8 +114,7 @@ function OrgPage({
   const filtersChanged = !sameFilters(filters, savedFilters);
   const [filterMenu, setFilterMenu] = useState<FilterMenuState | null>(null);
   const [displayMenuOpen, setDisplayMenuOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selection, setSelection] = useState(NO_SELECTION);
   const desktop = useMediaQuery("(min-width: 768px)");
   const pageRef = useRef<HTMLDivElement>(null!);
   const viewHeaderRef = useRef<HTMLDivElement>(null!);
@@ -123,24 +130,17 @@ function OrgPage({
   const pullRequests = usePullRequests(owner);
 
   const orgPrs = pullRequests.data?.pullRequests ?? [];
-  const scopedPrs = orgPrs.filter((pr) => matchesText(pr, query));
-  const visible = scopedPrs.filter((pr) => passes(pr, filters, viewer));
-  const groups = groupPullRequests(visible, group);
-  const isCollapsed = (key: string) => collapsedGroups.includes(`${group}:${key}`);
-  const toggleGroup = (key: string, all: boolean) => {
-    const id = `${group}:${key}`;
-    const ids = all ? groups.map((entry) => `${group}:${entry.key}`) : [id];
-    setCollapsedGroups((prev) =>
-      prev.includes(id)
-        ? prev.filter((x) => !ids.includes(x))
-        : [...prev, ...ids.filter((x) => !prev.includes(x))],
-    );
-  };
-  const order = groups.flatMap(({ key, rows }) =>
-    isCollapsed(key) ? [] : rows.map((pr) => pr.id),
-  );
-  const selected = visible.find((pr) => pr.id === selectedId);
-  const previewed = desktop && drawerOpen ? selected : undefined;
+  const list = derivePrList({
+    pullRequests: orgPrs,
+    query,
+    filters,
+    viewer,
+    group,
+    collapsed: collapsedGroups,
+    selection,
+    desktop,
+  });
+  const act = (action: SelectionAction) => setSelection(applySelectionAction(list, action));
 
   useEffect(() => setLastPath(location), [location, setLastPath]);
 
@@ -176,50 +176,24 @@ function OrgPage({
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return;
-      if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "f") {
-        event.preventDefault();
-        onOpenSearch();
-        return;
-      }
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
       const target = event.target as HTMLElement;
-      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
-
-      if (event.key === "Escape") {
-        if (typing) target.blur();
-        else if (drawerOpen) setDrawerOpen(false);
-        else setSelectedId(null);
-        return;
-      }
-      if (typing || filterMenu || displayMenuOpen) return;
-
-      const index = selectedId ? order.indexOf(selectedId) : -1;
-      const move = (delta: number) => {
-        if (!order.length) return;
-        event.preventDefault();
-        setSelectedId(
-          order[Math.max(0, Math.min(order.length - 1, index < 0 ? 0 : index + delta))],
-        );
-      };
-
-      if (event.key === "j" || event.key === "ArrowDown") move(1);
-      else if (event.key === "k" || event.key === "ArrowUp") move(-1);
-      else if (event.key === "/") {
-        event.preventDefault();
-        onOpenSearch();
-      } else if (event.key === "f" || event.key === "F") {
-        event.preventDefault();
+      const command = keyCommand(list, {
+        key: event.key,
+        mod: event.metaKey || event.ctrlKey,
+        alt: event.altKey,
+        typing: /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName),
+        menuOpen: !!filterMenu || displayMenuOpen,
+        onControl:
+          target instanceof Element && !!target.closest("button, a, [role=button], [role=tab]"),
+      });
+      if (!command) return;
+      if (command.preventDefault) event.preventDefault();
+      if (command.type === "selection") setSelection(command.selection);
+      else if (command.type === "openSearch") onOpenSearch();
+      else if (command.type === "openFilters")
         setFilterMenu({ anchor: "header", deferBar: !filtersChanged });
-      } else if (event.key === "o" || event.key === "O") {
-        if (selected) window.open(selected.url, "_blank", "noopener");
-      } else if (
-        (event.key === " " || event.key === "Enter") &&
-        index >= 0 &&
-        !target.closest("button, a, [role=button], [role=tab]")
-      ) {
-        event.preventDefault();
-        setDrawerOpen(!drawerOpen);
-      }
+      else if (command.type === "openUrl") window.open(command.url, "_blank", "noopener");
+      else target.blur();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -267,7 +241,7 @@ function OrgPage({
             group={group}
             onGroupChange={setGroup}
             orgPrs={orgPrs}
-            scopedPrs={scopedPrs}
+            scopedPrs={list.scoped}
             viewer={viewer}
           />
         </div>
@@ -276,7 +250,7 @@ function OrgPage({
         <div
           className={cn(
             "flex flex-1 flex-col md:grid md:min-h-0 md:grid-cols-[minmax(0,1fr)] md:overflow-hidden",
-            previewed && "md:grid-cols-[minmax(0,1fr)_minmax(380px,min(46%,800px))]",
+            list.previewed && "md:grid-cols-[minmax(0,1fr)_minmax(380px,min(46%,800px))]",
           )}
         >
           <div className="flex flex-1 flex-col pb-[calc(--spacing(4)+env(safe-area-inset-bottom))] md:min-h-0 md:overflow-y-auto md:overscroll-contain">
@@ -284,33 +258,33 @@ function OrgPage({
               <NoPullRequests owner={owner} result={pullRequests} />
             ) : (
               <PrTable
-                groups={groups}
+                groups={list.groups}
                 group={group}
-                compact={!!previewed}
-                selectedId={desktop || drawerOpen ? selectedId : null}
-                onSelect={(id) => {
-                  setSelectedId(id);
-                  setDrawerOpen(true);
-                }}
+                compact={!!list.previewed}
+                selectedId={list.highlightedId}
+                onSelect={(id) => act({ type: "select", id })}
                 query={query}
                 onShowAll={showAll}
                 onClearSearch={() => onQueryChange("")}
-                isCollapsed={isCollapsed}
-                onToggleGroup={toggleGroup}
+                onToggleGroup={(key, all) => setCollapsedGroups(toggleGroup(list, key, all))}
               />
             )}
             <TruncationNote list={pullRequests.data} />
           </div>
           {desktop ? (
-            previewed && (
-              <Preview pr={previewed} viewer={viewer} onClose={() => setDrawerOpen(false)} />
+            list.previewed && (
+              <Preview
+                pr={list.previewed}
+                viewer={viewer}
+                onClose={() => act({ type: "closePreview" })}
+              />
             )
           ) : (
             <PreviewDrawer
-              pr={selected}
-              open={drawerOpen}
+              pr={list.selected}
+              open={selection.previewOpen}
               viewer={viewer}
-              onClose={() => setDrawerOpen(false)}
+              onClose={() => act({ type: "closePreview" })}
             />
           )}
         </div>

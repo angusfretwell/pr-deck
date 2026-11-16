@@ -1,4 +1,4 @@
-import type { Filter, Group, PropertyKey, PullRequest } from "../types";
+import type { Filter, PropertyKey, PullRequest } from "../types";
 import { CI_BADGE, REVIEW_BADGE, viewerReview } from "./pr";
 
 export interface Option {
@@ -108,14 +108,3 @@ const signature = (filters: Filter[]) =>
   );
 
 export const sameFilters = (a: Filter[], b: Filter[]) => signature(a) === signature(b);
-
-export interface PullRequestGroup {
-  key: string;
-  rows: PullRequest[];
-}
-
-export function groupPullRequests(prs: PullRequest[], group: Group): PullRequestGroup[] {
-  if (group === "none") return [{ key: "", rows: prs }];
-  const keys = [...new Set(prs.map((pr) => pr[group]))].sort();
-  return keys.map((key) => ({ key, rows: prs.filter((pr) => pr[group] === key) }));
-}

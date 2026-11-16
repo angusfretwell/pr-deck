@@ -2,7 +2,8 @@ import { useRef } from "react";
 import { AppShell } from "@/components/app-shell";
 import { PrTable } from "@/components/pr-table";
 import { ViewHeader } from "@/components/view-header";
-import { groupPullRequests, passes } from "@/lib/filters";
+import { passes } from "@/lib/filters";
+import { derivePrList, NO_SELECTION } from "@/lib/pr-list";
 import { cn } from "@/lib/utils";
 import type { Account, PullRequest, Session, View } from "@/types";
 
@@ -149,7 +150,16 @@ const VIEW_COUNTS = Object.fromEntries(
   ]),
 );
 
-const GROUPS = groupPullRequests(PULL_REQUESTS, "repo");
+const { groups: GROUPS } = derivePrList({
+  pullRequests: PULL_REQUESTS,
+  query: "",
+  filters: [],
+  viewer: VIEWER,
+  group: "repo",
+  collapsed: [],
+  selection: NO_SELECTION,
+  desktop: true,
+});
 
 const noop = () => {};
 
@@ -213,7 +223,6 @@ export function SetupPreview({ className }: { className?: string }) {
           selectedId={null}
           onSelect={noop}
           onShowAll={noop}
-          isCollapsed={() => false}
           onToggleGroup={noop}
         />
       </div>
