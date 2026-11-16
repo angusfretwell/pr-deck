@@ -44,23 +44,6 @@ export type SelectionAction =
   | { type: "closePreview" }
   | { type: "escape" };
 
-export interface KeyPress {
-  key: string;
-  mod: boolean;
-  alt: boolean;
-  typing: boolean;
-  menuOpen: boolean;
-  onControl: boolean;
-}
-
-export type KeyCommand = (
-  | { type: "selection"; selection: Selection }
-  | { type: "openSearch" }
-  | { type: "openFilters" }
-  | { type: "openUrl"; url: string }
-  | { type: "blur" }
-) & { preventDefault: boolean };
-
 const collapsedId = (group: Group, key: string) => `${group}:${key}`;
 
 function groupRows(prs: PullRequest[], group: Group) {
@@ -131,47 +114,4 @@ export function toggleGroup(list: PrList, key: string, all: boolean): string[] {
   return collapsed.includes(id)
     ? collapsed.filter((existing) => !ids.includes(existing))
     : [...collapsed, ...ids.filter((added) => !collapsed.includes(added))];
-}
-
-export function keyCommand(list: PrList, press: KeyPress): KeyCommand | null {
-  const { key, mod, alt, typing, menuOpen, onControl } = press;
-  if (mod && !alt && key.toLowerCase() === "f") return { type: "openSearch", preventDefault: true };
-  if (mod || alt) return null;
-
-  const select = (action: SelectionAction, preventDefault: boolean): KeyCommand => ({
-    type: "selection",
-    selection: applySelectionAction(list, action),
-    preventDefault,
-  });
-
-  if (key === "Escape") {
-    return typing ? { type: "blur", preventDefault: false } : select({ type: "escape" }, false);
-  }
-  if (typing || menuOpen) return null;
-
-  switch (key) {
-    case "j":
-    case "ArrowDown":
-      return list.order.length ? select({ type: "move", delta: 1 }, true) : null;
-    case "k":
-    case "ArrowUp":
-      return list.order.length ? select({ type: "move", delta: -1 }, true) : null;
-    case "/":
-      return { type: "openSearch", preventDefault: true };
-    case "f":
-    case "F":
-      return { type: "openFilters", preventDefault: true };
-    case "o":
-    case "O":
-      return list.selected
-        ? { type: "openUrl", url: list.selected.url, preventDefault: false }
-        : null;
-    case " ":
-    case "Enter":
-      return navigableIndex(list) >= 0 && !onControl
-        ? select({ type: "togglePreview" }, true)
-        : null;
-    default:
-      return null;
-  }
 }

@@ -3,10 +3,8 @@ import type { PullRequest } from "../types";
 import {
   applySelectionAction,
   derivePrList,
-  keyCommand,
   NO_SELECTION,
   toggleGroup,
-  type KeyPress,
   type PrListInput,
   type Selection,
   type SelectionAction,
@@ -54,16 +52,6 @@ const list = (overrides: Partial<PrListInput> = {}) =>
 const selecting = (selectedId: string | null, previewOpen = false): Selection => ({
   selectedId,
   previewOpen,
-});
-
-const press = (key: string, overrides: Partial<KeyPress> = {}): KeyPress => ({
-  key,
-  mod: false,
-  alt: false,
-  typing: false,
-  menuOpen: false,
-  onControl: false,
-  ...overrides,
 });
 
 const rowIds = (groups: { key: string; rows: PullRequest[] }[]) =>
@@ -277,104 +265,5 @@ describe("a selection that leaves the visible set", () => {
     expect(applySelectionAction(collapsed, { type: "move", delta: 1 })).toEqual(
       selecting("2", true),
     );
-  });
-});
-
-describe("keyboard", () => {
-  const selection = (next: Selection, preventDefault: boolean) => ({
-    type: "selection",
-    selection: next,
-    preventDefault,
-  });
-
-  it("moves with j, k and the arrow keys", () => {
-    const at = list({ selection: selecting("4") });
-    expect(keyCommand(at, press("j"))).toEqual(selection(selecting("1"), true));
-    expect(keyCommand(at, press("ArrowDown"))).toEqual(selection(selecting("1"), true));
-    expect(keyCommand(at, press("k"))).toEqual(selection(selecting("2"), true));
-    expect(keyCommand(at, press("ArrowUp"))).toEqual(selection(selecting("2"), true));
-  });
-
-  it("leaves movement keys alone when there are no rows", () => {
-    expect(keyCommand(list({ query: "nope" }), press("j"))).toBeNull();
-  });
-
-  it("toggles the preview with space and enter", () => {
-    const at = list({ selection: selecting("4") });
-    expect(keyCommand(at, press(" "))).toEqual(selection(selecting("4", true), true));
-    expect(keyCommand(at, press("Enter"))).toEqual(selection(selecting("4", true), true));
-  });
-
-  it("leaves space and enter to a focused control", () => {
-    const at = list({ selection: selecting("4") });
-    expect(keyCommand(at, press(" ", { onControl: true }))).toBeNull();
-    expect(keyCommand(at, press("Enter", { onControl: true }))).toBeNull();
-  });
-
-  it("leaves space and enter alone with nothing navigable selected", () => {
-    expect(keyCommand(list(), press("Enter"))).toBeNull();
-    expect(keyCommand(list({ query: "docs", selection: selecting("3") }), press(" "))).toBeNull();
-  });
-
-  it("escapes without claiming the event", () => {
-    expect(keyCommand(list({ selection: selecting("4", true) }), press("Escape"))).toEqual(
-      selection(selecting("4"), false),
-    );
-    expect(keyCommand(list({ selection: selecting("4") }), press("Escape"))).toEqual(
-      selection(NO_SELECTION, false),
-    );
-  });
-
-  it("blurs the field on escape while typing, keeping the selection", () => {
-    expect(
-      keyCommand(list({ selection: selecting("4", true) }), press("Escape", { typing: true })),
-    ).toEqual({ type: "blur", preventDefault: false });
-  });
-
-  it("ignores every other key while typing", () => {
-    const at = list({ selection: selecting("4") });
-    for (const key of ["j", "k", "ArrowDown", "/", "f", "o", " ", "Enter"])
-      expect(keyCommand(at, press(key, { typing: true }))).toBeNull();
-  });
-
-  it("ignores list keys while a filter or display menu is open, except escape", () => {
-    const at = list({ selection: selecting("4", true) });
-    for (const key of ["j", "k", "ArrowUp", "/", "f", "o", " ", "Enter"])
-      expect(keyCommand(at, press(key, { menuOpen: true }))).toBeNull();
-    expect(keyCommand(at, press("Escape", { menuOpen: true }))).toEqual(
-      selection(selecting("4"), false),
-    );
-  });
-
-  it("opens search with slash and with mod+F, even while typing", () => {
-    const search = { type: "openSearch", preventDefault: true };
-    expect(keyCommand(list(), press("/"))).toEqual(search);
-    expect(keyCommand(list(), press("f", { mod: true }))).toEqual(search);
-    expect(keyCommand(list(), press("F", { mod: true, typing: true, menuOpen: true }))).toEqual(
-      search,
-    );
-  });
-
-  it("opens the filter menu with f", () => {
-    expect(keyCommand(list(), press("f"))).toEqual({ type: "openFilters", preventDefault: true });
-    expect(keyCommand(list(), press("F"))).toEqual({ type: "openFilters", preventDefault: true });
-  });
-
-  it("opens the selected pull request with o, leaving the event alone", () => {
-    expect(keyCommand(list({ selection: selecting("4") }), press("o"))).toEqual({
-      type: "openUrl",
-      url: "https://github.com/acme/docs/pull/4",
-      preventDefault: false,
-    });
-    expect(keyCommand(list(), press("o"))).toBeNull();
-    expect(keyCommand(list({ query: "web", selection: selecting("4") }), press("O"))).toBeNull();
-  });
-
-  it("ignores other modified keys", () => {
-    const at = list({ selection: selecting("4") });
-    expect(keyCommand(at, press("j", { mod: true }))).toBeNull();
-    expect(keyCommand(at, press("j", { alt: true }))).toBeNull();
-    expect(keyCommand(at, press("f", { mod: true, alt: true }))).toBeNull();
-    expect(keyCommand(at, press("Escape", { alt: true }))).toBeNull();
   });
 });

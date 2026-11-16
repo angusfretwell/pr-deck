@@ -1,5 +1,6 @@
 import { AlertIcon, GitPullRequestIcon, InfoIcon } from "@primer/octicons-react";
 import type { UseQueryResult } from "@tanstack/react-query";
+import { useHotkeys } from "@tanstack/react-hotkeys";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useMediaQuery, useResizeObserver } from "usehooks-ts";
 import { Redirect, useLocation } from "wouter";
@@ -22,7 +23,6 @@ import { usePullRequests } from "@/github/hooks";
 import {
   applySelectionAction,
   derivePrList,
-  keyCommand,
   NO_SELECTION,
   toggleGroup,
   type SelectionAction,
@@ -115,30 +115,39 @@ function OrgPage({
     onQueryChange("");
   };
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented) return;
-      const target = event.target as HTMLElement;
-      const command = keyCommand(list, {
-        key: event.key,
-        mod: event.metaKey || event.ctrlKey,
-        alt: event.altKey,
-        typing: /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName),
-        menuOpen: !!filterMenu || displayMenuOpen,
-        onControl:
-          target instanceof Element && !!target.closest("button, a, [role=button], [role=tab]"),
-      });
-      if (!command) return;
-      if (command.preventDefault) event.preventDefault();
-      if (command.type === "selection") setSelection(command.selection);
-      else if (command.type === "openSearch") onOpenSearch();
-      else if (command.type === "openFilters") changeFilterMenu("header");
-      else if (command.type === "openUrl") window.open(command.url, "_blank", "noopener");
-      else target.blur();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  });
+  const idle = !filterMenu && !displayMenuOpen;
+  const hasRows = list.order.length > 0;
+  const navigable = list.order.includes(selection.selectedId ?? "");
+  const move = (delta: 1 | -1) => () => act({ type: "move", delta });
+  const togglePreview = () => act({ type: "togglePreview" });
+  useHotkeys(
+    [
+      { hotkey: "Mod+F", callback: onOpenSearch },
+      {
+        hotkey: "Escape",
+        callback: ({ target }) => {
+          if (target instanceof HTMLElement && target.matches("input, textarea, select"))
+            target.blur();
+          else act({ type: "escape" });
+        },
+        options: { preventDefault: false },
+      },
+      { hotkey: "/", callback: onOpenSearch, options: { enabled: idle } },
+      { hotkey: "F", callback: () => changeFilterMenu("header"), options: { enabled: idle } },
+      { hotkey: "J", callback: move(1), options: { enabled: idle && hasRows } },
+      { hotkey: "ArrowDown", callback: move(1), options: { enabled: idle && hasRows } },
+      { hotkey: "K", callback: move(-1), options: { enabled: idle && hasRows } },
+      { hotkey: "ArrowUp", callback: move(-1), options: { enabled: idle && hasRows } },
+      { hotkey: "Enter", callback: togglePreview, options: { enabled: idle && navigable } },
+      { hotkey: "Space", callback: togglePreview, options: { enabled: idle && navigable } },
+      {
+        hotkey: "O",
+        callback: () => list.selected && window.open(list.selected.url, "_blank", "noopener"),
+        options: { enabled: idle && !!list.selected, preventDefault: false },
+      },
+    ],
+    { ignoreDefaultPrevented: true },
+  );
 
   return (
     <div
