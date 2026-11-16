@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { errorMessage, fetchSession } from "@/github/api";
+import { errorMessage } from "@/github/api";
+import { fetchSession } from "@/github/hooks";
 import { cn } from "@/lib/utils";
 import type { Session } from "@/types";
 
