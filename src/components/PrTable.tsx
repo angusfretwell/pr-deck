@@ -151,7 +151,7 @@ export function PrTable({
             className={cn(collapsed && "pb-1")}
           >
             {group !== "none" && (
-              <div className="sticky top-[calc(var(--pinned-height,0px)+--spacing(1))] z-10 mt-1 bg-background shadow-[0_-4px_0_var(--background)]">
+              <div className="sticky top-[calc(var(--pinned-height,0px)+--spacing(2))] z-10 mt-1 bg-background shadow-[0_-8px_0_var(--background)]">
                 <button
                   type="button"
                   aria-expanded={!collapsed}
