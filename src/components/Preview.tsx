@@ -1,10 +1,17 @@
 import type { UseQueryResult } from "@tanstack/react-query";
-import { ChevronDownIcon, XIcon } from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { ChevronDownIcon, ChevronUpIcon, CircleAlertIcon, XIcon } from "lucide-react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useResizeObserver } from "usehooks-ts";
 import { BadgeIcon, BadgePill, pillClassName } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { errorMessage } from "@/github/api";
@@ -22,6 +29,12 @@ export interface PreviewProps {
 const DIFF_SQUARES = 5;
 const DESCRIPTION_MAX_HEIGHT = 300;
 const PREVIEWED_FILES = 5;
+const CHECK_STATE_ORDER: Record<Check["state"], number> = {
+  fail: 0,
+  pending: 1,
+  pass: 2,
+  skipped: 3,
+};
 
 function DiffBar({ file }: { file: FileChange }) {
   const added = Math.round(
@@ -97,6 +110,28 @@ function SkeletonLines() {
   );
 }
 
+function LoadError({ query }: { query: UseQueryResult<PullRequestDetail> }) {
+  return (
+    <Empty className="rounded-lg border py-8 md:py-8">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <CircleAlertIcon />
+        </EmptyMedia>
+        <EmptyTitle className="text-base">Couldn't load details</EmptyTitle>
+        <EmptyDescription>{errorMessage(query.error)}</EmptyDescription>
+      </EmptyHeader>
+      <Button
+        size="sm"
+        variant="outline"
+        loading={query.isFetching}
+        onClick={() => query.refetch()}
+      >
+        Try again
+      </Button>
+    </Empty>
+  );
+}
+
 interface DetailProps {
   query: UseQueryResult<PullRequestDetail>;
   skeleton: ReactNode;
@@ -105,8 +140,7 @@ interface DetailProps {
 
 function Detail({ query, skeleton, children }: DetailProps) {
   if (query.data) return children(query.data);
-  if (query.isError)
-    return <p className="text-destructive-foreground">{errorMessage(query.error)}</p>;
+  if (query.isError) return <LoadError query={query} />;
   return skeleton;
 }
 
@@ -117,6 +151,13 @@ function Description({ html }: { html: string }) {
   const collapsed = !expanded && height > DESCRIPTION_MAX_HEIGHT * 1.2;
 
   useEffect(() => {
+    ref.current.querySelectorAll("table").forEach((table) => {
+      if (table.parentElement?.classList.contains("typeset-scroll")) return;
+      const wrapper = document.createElement("div");
+      wrapper.className = "typeset-scroll";
+      table.replaceWith(wrapper);
+      wrapper.append(table);
+    });
     ref.current.querySelectorAll("a[href]").forEach((link) => {
       link.setAttribute("target", "_blank");
       link.setAttribute("rel", "noopener noreferrer");
@@ -125,18 +166,18 @@ function Description({ html }: { html: string }) {
 
   return (
     <>
-      <div className={cn(collapsed && "max-h-75 overflow-hidden mask-b-from-50%")}>
+      <div className={cn(collapsed && "max-h-75 overflow-hidden mask-b-from-80%")}>
         <div
           ref={ref}
           className="typeset [--typeset-flow:1em] [--typeset-leading:1.6] [--typeset-size:13px]"
           dangerouslySetInnerHTML={{ __html: html }}
         />
       </div>
-      {collapsed && (
+      {(collapsed || expanded) && (
         <div className="mt-2 flex justify-center">
-          <Button variant="outline" size="sm" onClick={() => setExpanded(true)}>
-            <ChevronDownIcon />
-            Show more
+          <Button variant="outline" size="sm" onClick={() => setExpanded(!expanded)}>
+            {expanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
+            {expanded ? "Show less" : "Show more"}
           </Button>
         </div>
       )}
@@ -146,8 +187,9 @@ function Description({ html }: { html: string }) {
 
 function CheckList({ checks }: { checks: Check[] }) {
   const [expanded, setExpanded] = useState(false);
-  const required = checks.filter((check) => check.required);
-  const shown = expanded || required.length === 0 ? checks : required;
+  const sorted = checks.toSorted((a, b) => CHECK_STATE_ORDER[a.state] - CHECK_STATE_ORDER[b.state]);
+  const required = sorted.filter((check) => check.required);
+  const shown = expanded || required.length === 0 ? sorted : required;
 
   return (
     <Lines>
@@ -159,13 +201,26 @@ function CheckList({ checks }: { checks: Check[] }) {
       {shown.map((check) => (
         <Line key={check.name}>
           <BadgeIcon badge={CHECK_BADGE[check.state]} />
-          <span className="min-w-0 flex-1 truncate">{check.name}</span>
+          <span className="min-w-0 flex-1 truncate">
+            {check.url ? (
+              <a
+                href={check.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline"
+              >
+                {check.name}
+              </a>
+            ) : (
+              check.name
+            )}
+          </span>
           <span className="text-muted-foreground/72 tabular-nums">{duration(check)}</span>
         </Line>
       ))}
       {shown.length < checks.length && (
         <ShowMore onClick={() => setExpanded(true)}>
-          Show {checks.length - shown.length} optional
+          Show {checks.length - shown.length} more
         </ShowMore>
       )}
     </Lines>
@@ -174,6 +229,16 @@ function CheckList({ checks }: { checks: Check[] }) {
 
 const linesChanged = (file: FileChange) => file.additions + file.deletions;
 
+function FilePath({ path }: { path: string }) {
+  const split = path.lastIndexOf("/") + 1;
+  return (
+    <span title={path} className="flex min-w-0 flex-1 font-mono text-xs">
+      <span className="truncate">{path.slice(0, split)}</span>
+      <span className="shrink-0">{path.slice(split)}</span>
+    </span>
+  );
+}
+
 function FileList({ files, changedFiles }: { files: FileChange[]; changedFiles: number }) {
   const [expanded, setExpanded] = useState(false);
   const sorted = files.toSorted((a, b) => linesChanged(b) - linesChanged(a));
@@ -181,22 +246,33 @@ function FileList({ files, changedFiles }: { files: FileChange[]; changedFiles: 
 
   return (
     <Lines>
+      {files.length === 0 && (
+        <Line>
+          <span className="text-muted-foreground">No files changed.</span>
+        </Line>
+      )}
       {shown.map((file) => (
         <Line key={file.path}>
-          <span className="min-w-0 flex-1 truncate font-mono text-xs">{file.path}</span>
-          <span className="text-success-foreground tabular-nums">+{file.additions}</span>
-          <span className="text-destructive-foreground tabular-nums">−{file.deletions}</span>
+          <FilePath path={file.path} />
+          <span className="text-success-foreground tabular-nums">
+            +{file.additions.toLocaleString()}
+          </span>
+          <span className="text-destructive-foreground tabular-nums">
+            −{file.deletions.toLocaleString()}
+          </span>
           <DiffBar file={file} />
         </Line>
       ))}
       {shown.length < files.length ? (
         <ShowMore onClick={() => setExpanded(true)}>
-          Show {files.length - shown.length} more
+          Show {(files.length - shown.length).toLocaleString()} more
         </ShowMore>
       ) : (
         changedFiles > files.length && (
           <Line>
-            <span className="text-muted-foreground">and {changedFiles - files.length} more</span>
+            <span className="text-muted-foreground">
+              and {(changedFiles - files.length).toLocaleString()} more
+            </span>
           </Line>
         )
       )}
@@ -217,22 +293,18 @@ export function Preview({ pr, viewer, onClose }: PreviewProps) {
     <aside
       ref={ref}
       aria-label="Pull request preview"
-      className="min-h-0 overflow-y-auto border-l bg-background text-[13px] transition-[opacity,translate] duration-200 ease-out starting:translate-x-4 starting:opacity-0 motion-reduce:transition-none"
+      className="min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain border-l bg-background text-[13px] transition-[opacity,translate] duration-200 ease-out starting:translate-x-4 starting:opacity-0 motion-reduce:transition-none"
     >
-      <Button
-        aria-label="Close"
-        variant="ghost"
-        size="icon"
-        className="sticky top-2 z-10 float-right me-2 mt-2 bg-background"
-        onClick={onClose}
-      >
-        <XIcon />
-      </Button>
-      <div key={pr.id} className="max-w-190 px-6 pt-5 pb-12">
-        <div className="flex gap-2 font-semibold">
-          {pr.repo}
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-background py-2 ps-6 pe-2">
+        <div className="flex min-w-0 gap-2 font-semibold">
+          <span className="truncate">{pr.repo}</span>
           <span className="font-medium text-muted-foreground/72">#{pr.number}</span>
         </div>
+        <Button aria-label="Close" variant="ghost" size="icon" onClick={onClose}>
+          <XIcon />
+        </Button>
+      </div>
+      <div key={pr.id} className="max-w-190 px-6 pt-1 pb-12">
         <h2 className="mt-1.5 mb-2 font-semibold text-[19px] leading-[1.3] tracking-[-0.01em]">
           {pr.title}
         </h2>
@@ -245,9 +317,13 @@ export function Preview({ pr, viewer, onClose }: PreviewProps) {
           <span>updated {updated(pr.updatedAt)}</span>
           {query.data ? (
             <span>
-              <span className="text-success-foreground">+{query.data.additions}</span>{" "}
-              <span className="text-destructive-foreground">−{query.data.deletions}</span> ·{" "}
-              {query.data.changedFiles} files
+              <span className="text-success-foreground">
+                +{query.data.additions.toLocaleString()}
+              </span>{" "}
+              <span className="text-destructive-foreground">
+                −{query.data.deletions.toLocaleString()}
+              </span>{" "}
+              · {query.data.changedFiles.toLocaleString()} files
             </span>
           ) : (
             query.isPending && <Skeleton className="h-3.5 w-28" />
@@ -303,16 +379,24 @@ export function Preview({ pr, viewer, onClose }: PreviewProps) {
             ))}
           </Lines>
         </Section>
-        <Section title="Checks">
-          <Detail query={query} skeleton={<SkeletonLines />}>
-            {({ checks }) => <CheckList checks={checks} />}
-          </Detail>
-        </Section>
-        <Section title={`Files changed${query.data ? ` · ${query.data.changedFiles}` : ""}`}>
-          <Detail query={query} skeleton={<SkeletonLines />}>
-            {({ files, changedFiles }) => <FileList files={files} changedFiles={changedFiles} />}
-          </Detail>
-        </Section>
+        {!query.isError && (
+          <>
+            <Section title="Checks">
+              <Detail query={query} skeleton={<SkeletonLines />}>
+                {({ checks }) => <CheckList checks={checks} />}
+              </Detail>
+            </Section>
+            <Section
+              title={`Files changed${query.data ? ` · ${query.data.changedFiles.toLocaleString()}` : ""}`}
+            >
+              <Detail query={query} skeleton={<SkeletonLines />}>
+                {({ files, changedFiles }) => (
+                  <FileList files={files} changedFiles={changedFiles} />
+                )}
+              </Detail>
+            </Section>
+          </>
+        )}
       </div>
     </aside>
   );
