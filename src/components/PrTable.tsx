@@ -138,7 +138,7 @@ export function PrTable({
       ref={ref}
       role="listbox"
       aria-label="Pull requests"
-      className={cn("cursor-default px-2", group !== "none" && "pt-1")}
+      className={cn("@container cursor-default px-2", group !== "none" && "pt-1")}
       style={{ "--columns": columns } as CSSProperties}
     >
       {groups.map(({ key, rows }) => {
@@ -151,27 +151,29 @@ export function PrTable({
             className={cn(collapsed && "pb-1")}
           >
             {group !== "none" && (
-              <div className="sticky top-[calc(var(--pinned-height,0px)+--spacing(2))] z-10 mt-1 bg-background shadow-[0_-8px_0_var(--background)]">
-                <button
-                  type="button"
-                  aria-expanded={!collapsed}
-                  onClick={(event) => onToggleGroup(key, event.altKey)}
-                  className="flex h-9 w-full items-center gap-2 rounded-md bg-muted px-2 text-left font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-8"
-                >
-                  <ChevronRightIcon
-                    className={cn(
-                      "size-4 shrink-0 text-muted-foreground transition-transform sm:size-3.5 duration-150 motion-reduce:transition-none",
-                      !collapsed && "rotate-90",
+              <div className="sticky top-[calc(var(--pinned-height,0px)+--spacing(2))] z-10 mt-1 w-0">
+                <div className="w-[100cqw] bg-background shadow-[0_-8px_0_var(--background)]">
+                  <button
+                    type="button"
+                    aria-expanded={!collapsed}
+                    onClick={(event) => onToggleGroup(key, event.altKey)}
+                    className="flex h-9 w-full items-center gap-2 rounded-md bg-muted px-2 text-left font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-8"
+                  >
+                    <ChevronRightIcon
+                      className={cn(
+                        "size-4 shrink-0 text-muted-foreground transition-transform sm:size-3.5 duration-150 motion-reduce:transition-none",
+                        !collapsed && "rotate-90",
+                      )}
+                    />
+                    {group === "author" && rows[0] && (
+                      <UserAvatar login={key} avatarUrl={rows[0].authorAvatarUrl} />
                     )}
-                  />
-                  {group === "author" && rows[0] && (
-                    <UserAvatar login={key} avatarUrl={rows[0].authorAvatarUrl} />
-                  )}
-                  <span className="truncate">{key}</span>
-                  <span className="font-medium text-muted-foreground/72 tabular-nums">
-                    {rows.length}
-                  </span>
-                </button>
+                    <span className="truncate">{key}</span>
+                    <span className="font-medium text-muted-foreground/72 tabular-nums">
+                      {rows.length}
+                    </span>
+                  </button>
+                </div>
               </div>
             )}
             {!collapsed && <div className="flex flex-col gap-0.5 pt-1">{rows.map(row)}</div>}
