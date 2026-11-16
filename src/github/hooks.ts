@@ -11,6 +11,8 @@ const { fetchMergeability, fetchPullRequestDetail, fetchPullRequests, fetchSessi
   ? mockApi
   : realApi;
 
+export { fetchSession };
+
 const retry = (failureCount: number, error: Error) => isRetryable(error) && failureCount < 1;
 const RETRY_DELAY_MS = 1000;
 
