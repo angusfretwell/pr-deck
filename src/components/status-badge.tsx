@@ -52,7 +52,7 @@ export function BadgePill({ badge }: { badge: Badge }) {
 }
 
 export function BadgeIcon({ badge, className }: { badge: Badge; className?: string }) {
-  const Glyph = badge.icon === "pending" ? PulseDot : ICON[badge.icon];
+  const Glyph = badge.icon === "pending" ? PingDot : ICON[badge.icon];
   return (
     <span
       role="img"
@@ -64,6 +64,10 @@ export function BadgeIcon({ badge, className }: { badge: Badge; className?: stri
   );
 }
 
-function PulseDot({ className, ...props }: ComponentProps<"span">) {
-  return <span className={cn("animate-pulse rounded-full bg-current", className)} {...props} />;
+function PingDot({ className, ...props }: ComponentProps<"span">) {
+  return (
+    <span className={cn("relative rounded-full bg-current", className)} {...props}>
+      <span className="absolute inset-0 animate-ping rounded-full bg-current opacity-72" />
+    </span>
+  );
 }
