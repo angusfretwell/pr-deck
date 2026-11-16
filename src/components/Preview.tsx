@@ -228,6 +228,15 @@ function CheckList({ checks }: { checks: Check[] }) {
   );
 }
 
+function LineCounts({ additions, deletions }: { additions: number; deletions: number }) {
+  return (
+    <>
+      <span className="text-success-foreground">+{additions.toLocaleString()}</span>{" "}
+      <span className="text-destructive-foreground">−{deletions.toLocaleString()}</span>
+    </>
+  );
+}
+
 const linesChanged = (file: FileChange) => file.additions + file.deletions;
 
 function FilePath({ path }: { path: string }) {
@@ -255,11 +264,8 @@ function FileList({ files, changedFiles }: { files: FileChange[]; changedFiles: 
       {shown.map((file) => (
         <Line key={file.path}>
           <FilePath path={file.path} />
-          <span className="shrink-0 text-success-foreground tabular-nums">
-            +{file.additions.toLocaleString()}
-          </span>
-          <span className="shrink-0 text-destructive-foreground tabular-nums">
-            −{file.deletions.toLocaleString()}
+          <span className="shrink-0">
+            <LineCounts additions={file.additions} deletions={file.deletions} />
           </span>
           <DiffBar file={file} />
         </Line>
@@ -318,13 +324,8 @@ function PreviewBody({
           </span>
           {query.data ? (
             <span>
-              <span className="text-success-foreground">
-                +{query.data.additions.toLocaleString()}
-              </span>{" "}
-              <span className="text-destructive-foreground">
-                −{query.data.deletions.toLocaleString()}
-              </span>{" "}
-              · {query.data.changedFiles.toLocaleString()} files
+              <LineCounts additions={query.data.additions} deletions={query.data.deletions} /> ·{" "}
+              {query.data.changedFiles.toLocaleString()} files
             </span>
           ) : (
             query.isPending && <Skeleton className="h-3.5 w-28" />
