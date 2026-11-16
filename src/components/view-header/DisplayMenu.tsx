@@ -1,14 +1,14 @@
 import { SlidersHorizontalIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
-  Menu,
-  MenuGroup,
-  MenuGroupLabel,
-  MenuPopup,
-  MenuRadioGroup,
-  MenuRadioItem,
-  MenuTrigger,
-} from "@/components/ui/menu";
+  ResponsiveMenu,
+  ResponsiveMenuGroup,
+  ResponsiveMenuGroupLabel,
+  ResponsiveMenuPopup,
+  ResponsiveMenuRadioGroup,
+  ResponsiveMenuRadioItem,
+  ResponsiveMenuTrigger,
+} from "@/components/responsive-menu";
+import { Button } from "@/components/ui/button";
 import type { Group } from "@/types";
 import { Hint } from "./Hint";
 
@@ -27,9 +27,9 @@ interface DisplayMenuProps {
 
 export function DisplayMenu({ open, onOpenChange, group, onGroupChange }: DisplayMenuProps) {
   return (
-    <Menu open={open} onOpenChange={onOpenChange}>
+    <ResponsiveMenu open={open} onOpenChange={onOpenChange}>
       <Hint label="Display">
-        <MenuTrigger
+        <ResponsiveMenuTrigger
           render={
             <Button
               variant="outline"
@@ -39,21 +39,21 @@ export function DisplayMenu({ open, onOpenChange, group, onGroupChange }: Displa
             />
           }
         >
-          <SlidersHorizontalIcon className="size-3.5 sm:size-3.5" />
-        </MenuTrigger>
+          <SlidersHorizontalIcon className="size-3.5" />
+        </ResponsiveMenuTrigger>
       </Hint>
-      <MenuPopup align="end" className="min-w-40">
-        <MenuGroup>
-          <MenuGroupLabel>Group by</MenuGroupLabel>
-          <MenuRadioGroup value={group} onValueChange={(value: Group) => onGroupChange(value)}>
+      <ResponsiveMenuPopup align="end" className="min-w-40">
+        <ResponsiveMenuGroup>
+          <ResponsiveMenuGroupLabel>Group by</ResponsiveMenuGroupLabel>
+          <ResponsiveMenuRadioGroup value={group} onValueChange={onGroupChange}>
             {GROUPS.map(({ value, label }) => (
-              <MenuRadioItem key={value} value={value} closeOnClick>
+              <ResponsiveMenuRadioItem key={value} value={value}>
                 {label}
-              </MenuRadioItem>
+              </ResponsiveMenuRadioItem>
             ))}
-          </MenuRadioGroup>
-        </MenuGroup>
-      </MenuPopup>
-    </Menu>
+          </ResponsiveMenuRadioGroup>
+        </ResponsiveMenuGroup>
+      </ResponsiveMenuPopup>
+    </ResponsiveMenu>
   );
 }

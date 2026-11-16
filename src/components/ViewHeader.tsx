@@ -1,20 +1,30 @@
 import { ListFilterIcon } from "lucide-react";
-import { type RefCallback, useRef } from "react";
+import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  PopoverCreateHandle,
+  type PopoverPrimitive,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { toggleValue } from "@/lib/filters";
 import type { Filter, Group, PropertyKey, PullRequest, View } from "@/types";
 import { DisplayMenu } from "./view-header/DisplayMenu";
 import { FilterBar } from "./view-header/FilterBar";
-import { FILTER_TRIGGER, FilterMenu } from "./view-header/FilterMenu";
+import { FilterMenu } from "./view-header/FilterMenu";
 import { Hint } from "./view-header/Hint";
 import { ViewTabs } from "./view-header/ViewTabs";
 
-export type MenuAnchor = "header" | "add" | number;
+export type MenuAnchor = "header" | "add" | PropertyKey;
 
 export interface FilterMenuState {
   anchor: MenuAnchor;
-  propertyKey: PropertyKey | null;
   deferBar?: boolean;
+}
+
+export interface FilterTriggerProps {
+  handle: PopoverPrimitive.Handle<MenuAnchor>;
+  payload: MenuAnchor;
+  id: string;
 }
 
 export interface ViewHeaderProps {
@@ -23,7 +33,7 @@ export interface ViewHeaderProps {
   allOpenCount: number | undefined;
   activeViewId: string | null;
   renamingViewId: string | null;
-  onSelectView: (id: string | null) => void;
+  viewHref: (id: string | null) => string;
   onRenamingViewChange: (id: string | null) => void;
   onRenameView: (id: string, name: string) => void;
   onDeleteView: (id: string) => void;
@@ -65,21 +75,19 @@ export function ViewHeader({
   viewer,
   ...tabs
 }: ViewHeaderProps) {
-  const anchors = useRef(new Map<MenuAnchor, HTMLElement>());
-  const anchorRef =
-    (anchor: MenuAnchor): RefCallback<HTMLElement> =>
-    (element) => {
-      if (element) anchors.current.set(anchor, element);
-      return () => {
-        anchors.current.delete(anchor);
-      };
-    };
+  const [filterMenuHandle] = useState(() => PopoverCreateHandle<MenuAnchor>());
+  const triggerIdPrefix = useId();
+  const filterTrigger = (anchor: MenuAnchor): FilterTriggerProps => ({
+    handle: filterMenuHandle,
+    payload: anchor,
+    id: `${triggerIdPrefix}${anchor}`,
+  });
 
-  const toggleFilterMenu = (anchor: MenuAnchor) => {
-    if (filterMenu?.anchor === anchor) return onFilterMenuChange(null);
-    if (anchor === "header")
-      return onFilterMenuChange({ anchor, propertyKey: null, deferBar: !filtersChanged });
-    onFilterMenuChange({ anchor, propertyKey: anchor === "add" ? null : filters[anchor].key });
+  const changeFilterMenu = (open: boolean, trigger: Element | undefined) => {
+    if (!open) return onFilterMenuChange(null);
+    const anchors: MenuAnchor[] = ["header", "add", ...filters.map((filter) => filter.key)];
+    const anchor = anchors.find((candidate) => filterTrigger(candidate).id === trigger?.id);
+    if (anchor) onFilterMenuChange({ anchor, deferBar: anchor === "header" && !filtersChanged });
   };
 
   const barVisible = filtersChanged
@@ -89,7 +97,7 @@ export function ViewHeader({
   const toggleFilterValue = (key: PropertyKey, value: string) => {
     const next = toggleValue(filters, key, value);
     onFiltersChange(next);
-    if (next.length < filters.length && typeof filterMenu?.anchor === "number")
+    if (filterMenu?.anchor === key && !next.some((filter) => filter.key === key))
       onFilterMenuChange(null);
   };
 
@@ -133,18 +141,19 @@ export function ViewHeader({
       <div className="flex items-center gap-1.5 px-2 py-2.5 md:px-4">
         <ViewTabs {...tabs} />
         <Hint label="Filter">
-          <Button
-            variant="outline"
-            size="icon-sm"
-            className="ms-auto shrink-0 rounded-full before:rounded-full data-pressed:bg-accent"
-            aria-label="Filter"
-            ref={anchorRef("header")}
-            data-pressed={filterMenu?.anchor === "header" ? "" : undefined}
-            {...{ [FILTER_TRIGGER]: "" }}
-            onClick={() => toggleFilterMenu("header")}
+          <PopoverTrigger
+            {...filterTrigger("header")}
+            render={
+              <Button
+                variant="outline"
+                size="icon-sm"
+                className="ms-auto rounded-full before:rounded-full"
+                aria-label="Filter"
+              />
+            }
           >
-            <ListFilterIcon className="size-3.5 sm:size-3.5" />
-          </Button>
+            <ListFilterIcon />
+          </PopoverTrigger>
         </Hint>
         <DisplayMenu
           open={displayMenuOpen}
@@ -159,16 +168,15 @@ export function ViewHeader({
           orgPrs={orgPrs}
           viewer={viewer}
           actions={actions}
-          anchorRef={anchorRef}
-          onToggleMenu={toggleFilterMenu}
+          filterTrigger={filterTrigger}
           onNegate={negateFilter}
           onRemove={removeFilter}
         />
       )}
       <FilterMenu
-        menu={filterMenu}
-        anchorOf={(anchor) => anchors.current.get(anchor) ?? null}
-        onClose={() => onFilterMenuChange(null)}
+        handle={filterMenuHandle}
+        triggerId={filterMenu && filterTrigger(filterMenu.anchor).id}
+        onOpenChange={changeFilterMenu}
         orgPrs={orgPrs}
         scopedPrs={scopedPrs}
         filters={filters}

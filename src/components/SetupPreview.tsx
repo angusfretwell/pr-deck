@@ -160,7 +160,7 @@ export function SetupPreview({ className }: { className?: string }) {
       inert
       aria-hidden
       className={cn(
-        "pointer-events-none isolate flex select-none flex-col bg-background text-foreground",
+        "pointer-events-none isolate flex select-none flex-col bg-background",
         className,
       )}
     >
@@ -183,7 +183,7 @@ export function SetupPreview({ className }: { className?: string }) {
         allOpenCount={PULL_REQUESTS.length}
         activeViewId={null}
         renamingViewId={null}
-        onSelectView={noop}
+        viewHref={() => "#"}
         onRenamingViewChange={noop}
         onRenameView={noop}
         onDeleteView={noop}

@@ -1,18 +1,19 @@
 import { ChevronDownIcon, ChevronsUpDownIcon } from "lucide-react";
 import { useLayoutEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
 import { useMediaQuery } from "usehooks-ts";
+import { Link } from "wouter";
 import { AccountAvatar } from "@/components/account-avatar";
-import { Button } from "@/components/ui/button";
 import {
-  Menu,
-  MenuGroup,
-  MenuGroupLabel,
-  MenuPopup,
-  MenuRadioGroup,
-  MenuRadioItem,
-  MenuTrigger,
-} from "@/components/ui/menu";
-import { Tabs, TabsList, TabsTab } from "@/components/ui/tabs";
+  ResponsiveMenu,
+  ResponsiveMenuGroup,
+  ResponsiveMenuGroupLabel,
+  ResponsiveMenuPopup,
+  ResponsiveMenuRadioGroup,
+  ResponsiveMenuRadioItem,
+  ResponsiveMenuTrigger,
+} from "@/components/responsive-menu";
+import { Button } from "@/components/ui/button";
+import { SegmentedControl, SegmentedControlItem } from "@/components/ui/segmented-control";
 import type { Account } from "@/types";
 
 const OVERFLOW_TRIGGER_WIDTH = 64;
@@ -26,7 +27,7 @@ interface OwnerSwitcherProps {
 
 export function OwnerSwitcher(props: OwnerSwitcherProps) {
   const desktop = useMediaQuery("(min-width: 768px)");
-  return desktop ? <OwnerTabs {...props} /> : <OwnerDropdown {...props} />;
+  return desktop ? <OwnerLinks {...props} /> : <OwnerDropdown {...props} />;
 }
 
 function OwnerDropdown(props: OwnerSwitcherProps) {
@@ -34,38 +35,37 @@ function OwnerDropdown(props: OwnerSwitcherProps) {
   return (
     <OwnerMenu
       {...props}
-      trigger={
-        <Button
-          variant="ghost"
-          size="sm"
-          className="me-auto shrink-0 justify-start gap-2 px-2 font-semibold"
-        />
-      }
+      trigger={<Button variant="ghost" size="sm" className="me-auto font-semibold" />}
     >
-      {active && <AccountAvatar account={active} className="size-5 shrink-0 rounded-sm" />}
+      {active && <AccountAvatar account={active} className="size-5 rounded-sm" />}
       <span className="max-w-32 truncate" title={props.activeOwner}>
         {props.activeOwner}
       </span>
-      <ChevronsUpDownIcon className="text-muted-foreground" />
+      <ChevronsUpDownIcon />
     </OwnerMenu>
   );
 }
 
-function OwnerTabs(props: OwnerSwitcherProps) {
-  const { owners, activeOwner, onSelect } = props;
+function OwnerLinks(props: OwnerSwitcherProps) {
+  const { owners, activeOwner } = props;
   const container = useRef<HTMLDivElement>(null);
   const measurer = useRef<HTMLDivElement>(null);
   const [visibleLogins, setVisibleLogins] = useState(() => owners.map((owner) => owner.login));
 
   useLayoutEffect(() => {
     const available = container.current;
-    const list = measurer.current;
+    const list = measurer.current?.firstElementChild;
     if (!available || !list) return;
     const update = () => {
-      const widths = [...list.querySelectorAll<HTMLElement>('[data-slot="tabs-tab"]')].map(
-        (tab) => tab.getBoundingClientRect().width,
-      );
-      setVisibleLogins(fitOwners(owners, widths, activeOwner, available.clientWidth));
+      const style = getComputedStyle(list);
+      const items = list.querySelectorAll('[data-slot="segmented-control-item"]');
+      const layout = {
+        widths: [...items].map((item) => item.getBoundingClientRect().width),
+        gap: Number.parseFloat(style.columnGap) || 0,
+        padding:
+          Number.parseFloat(style.paddingInlineStart) + Number.parseFloat(style.paddingInlineEnd),
+      };
+      setVisibleLogins(fitOwners(owners, layout, activeOwner, available.clientWidth));
     };
     update();
     const observer = new ResizeObserver(update);
@@ -79,27 +79,15 @@ function OwnerTabs(props: OwnerSwitcherProps) {
 
   return (
     <div ref={container} className="relative flex min-w-0 flex-1 items-center gap-1">
-      <div ref={measurer} aria-hidden inert className="invisible absolute top-0 left-0 w-max">
-        <Tabs value={activeOwner}>
-          <OwnerTabList owners={owners} />
-        </Tabs>
+      <div ref={measurer} aria-hidden inert className="invisible absolute top-0 start-0 w-max">
+        <OwnerNav owners={owners} activeOwner={activeOwner} />
       </div>
-      {visible.length > 0 && (
-        <Tabs className="min-w-0" value={activeOwner} onValueChange={onSelect}>
-          <OwnerTabList owners={visible} />
-        </Tabs>
-      )}
+      {visible.length > 0 && <OwnerNav owners={visible} activeOwner={activeOwner} />}
       {overflow.length > 0 && (
         <OwnerMenu
           {...props}
           owners={overflow}
-          trigger={
-            <Button
-              variant="ghost"
-              size="sm"
-              className="shrink-0 gap-1 px-2 text-muted-foreground"
-            />
-          }
+          trigger={<Button variant="ghost" size="sm" className="text-muted-foreground" />}
         >
           +{overflow.length}
           <ChevronDownIcon />
@@ -109,36 +97,54 @@ function OwnerTabs(props: OwnerSwitcherProps) {
   );
 }
 
-function fitOwners(owners: Account[], widths: number[], activeOwner: string, available: number) {
-  const listPadding = 4;
-  const tabGap = 2;
-  const total = widths.reduce((sum, width) => sum + width + tabGap, listPadding);
+interface NavLayout {
+  widths: number[];
+  gap: number;
+  padding: number;
+}
+
+function fitOwners(
+  owners: Account[],
+  { widths, gap, padding }: NavLayout,
+  activeOwner: string,
+  available: number,
+) {
+  const total = widths.reduce((sum, width) => sum + width + gap, padding - gap);
   if (total <= available) return owners.map((owner) => owner.login);
 
   const activeIndex = owners.findIndex((owner) => owner.login === activeOwner);
   const fitted = new Set(activeIndex === -1 ? [] : [activeIndex]);
-  let used = listPadding + OVERFLOW_TRIGGER_WIDTH + (widths[activeIndex] ?? 0);
+  let used = padding + OVERFLOW_TRIGGER_WIDTH + (widths[activeIndex] ?? 0);
   for (const [index, width] of widths.entries()) {
     if (index === activeIndex) continue;
-    if (used + width + tabGap > available) break;
-    used += width + tabGap;
+    if (used + width + gap > available) break;
+    used += width + gap;
     fitted.add(index);
   }
   return owners.filter((_, index) => fitted.has(index)).map((owner) => owner.login);
 }
 
-function OwnerTabList({ owners }: { owners: Account[] }) {
+function OwnerNav({ owners, activeOwner }: { owners: Account[]; activeOwner: string }) {
   return (
-    <TabsList className="max-w-full">
+    <SegmentedControl aria-label="Accounts" render={<nav />} className="min-w-0">
       {owners.map((owner) => (
-        <TabsTab key={owner.login} value={owner.login} className="min-w-0 shrink overflow-hidden">
-          <AccountAvatar account={owner} className="size-4.5 shrink-0 rounded-sm" />
+        <SegmentedControlItem
+          key={owner.login}
+          className="min-w-0 shrink"
+          render={
+            <Link
+              href={`/${owner.login}`}
+              aria-current={owner.login === activeOwner ? "page" : undefined}
+            />
+          }
+        >
+          <AccountAvatar account={owner} className="size-4.5 rounded-sm" />
           <span className="max-w-45 min-w-0 truncate" title={owner.login}>
             {owner.login}
           </span>
-        </TabsTab>
+        </SegmentedControlItem>
       ))}
-    </TabsList>
+    </SegmentedControl>
   );
 }
 
@@ -155,37 +161,30 @@ function OwnerMenu({
     { label: "Organisations", accounts: owners.filter((owner) => owner.login !== viewerLogin) },
   ];
   return (
-    <Menu>
-      <MenuTrigger render={trigger}>{children}</MenuTrigger>
-      <MenuPopup align="start" className="w-72">
-        <MenuRadioGroup value={activeOwner} onValueChange={(owner: string) => onSelect(owner)}>
-          <div className="max-h-[60vh] overflow-y-auto overscroll-contain">
-            {groups.map(
-              ({ label, accounts }) =>
-                accounts.length > 0 && (
-                  <MenuGroup key={label}>
-                    <MenuGroupLabel>{label}</MenuGroupLabel>
-                    {accounts.map((owner) => (
-                      <MenuRadioItem
-                        key={owner.login}
-                        value={owner.login}
-                        closeOnClick
-                        className="grid-cols-[.75rem_minmax(0,1fr)]"
-                      >
-                        <span className="flex min-w-0 items-center gap-2">
-                          <AccountAvatar account={owner} className="size-4 shrink-0 rounded-sm" />
-                          <span className="truncate" title={owner.login}>
-                            {owner.login}
-                          </span>
+    <ResponsiveMenu>
+      <ResponsiveMenuTrigger render={trigger}>{children}</ResponsiveMenuTrigger>
+      <ResponsiveMenuPopup align="start" className="w-72">
+        <ResponsiveMenuRadioGroup value={activeOwner} onValueChange={onSelect}>
+          {groups.map(
+            ({ label, accounts }) =>
+              accounts.length > 0 && (
+                <ResponsiveMenuGroup key={label}>
+                  <ResponsiveMenuGroupLabel>{label}</ResponsiveMenuGroupLabel>
+                  {accounts.map((owner) => (
+                    <ResponsiveMenuRadioItem key={owner.login} value={owner.login}>
+                      <span className="flex min-w-0 items-center gap-2">
+                        <AccountAvatar account={owner} className="size-4 rounded-sm" />
+                        <span className="truncate" title={owner.login}>
+                          {owner.login}
                         </span>
-                      </MenuRadioItem>
-                    ))}
-                  </MenuGroup>
-                ),
-            )}
-          </div>
-        </MenuRadioGroup>
-      </MenuPopup>
-    </Menu>
+                      </span>
+                    </ResponsiveMenuRadioItem>
+                  ))}
+                </ResponsiveMenuGroup>
+              ),
+          )}
+        </ResponsiveMenuRadioGroup>
+      </ResponsiveMenuPopup>
+    </ResponsiveMenu>
   );
 }

@@ -1,20 +1,19 @@
 import { PlusIcon, XIcon } from "lucide-react";
-import type { ReactNode, RefCallback } from "react";
-import { Button } from "@/components/ui/button";
+import type { ReactNode } from "react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Group, GroupSeparator, GroupText } from "@/components/ui/group";
+import { PopoverTrigger } from "@/components/ui/popover";
 import { PROPERTY } from "@/lib/filters";
+import { cn } from "@/lib/utils";
 import type { Filter, PullRequest } from "@/types";
-import type { MenuAnchor } from "../ViewHeader";
-import { FILTER_TRIGGER } from "./FilterMenu";
-
-const SEGMENT = "inline-flex items-center px-2 transition-colors hover:bg-accent";
+import type { FilterTriggerProps, MenuAnchor } from "../ViewHeader";
 
 interface FilterBarProps {
   filters: Filter[];
   orgPrs: PullRequest[];
   viewer: string;
   actions: ReactNode;
-  anchorRef: (anchor: MenuAnchor) => RefCallback<HTMLElement>;
-  onToggleMenu: (anchor: MenuAnchor) => void;
+  filterTrigger: (anchor: MenuAnchor) => FilterTriggerProps;
   onNegate: (index: number) => void;
   onRemove: (index: number) => void;
 }
@@ -29,13 +28,10 @@ export function FilterBar({
   orgPrs,
   viewer,
   actions,
-  anchorRef,
-  onToggleMenu,
+  filterTrigger,
   onNegate,
   onRemove,
 }: FilterBarProps) {
-  const trigger = { [FILTER_TRIGGER]: "" };
-
   const summary = (filter: Filter) => {
     const property = PROPERTY[filter.key];
     const options = property.options(orgPrs, viewer);
@@ -46,52 +42,62 @@ export function FilterBar({
   };
 
   return (
-    <div className="mx-2 mb-2.5 flex md:mx-4 flex-wrap items-center gap-1.5 rounded-[10px] bg-muted px-2 py-1.5">
+    <div className="mx-2 mb-2.5 flex flex-wrap items-center gap-1.5 rounded-lg bg-muted px-2 py-1.5 md:mx-4">
       {filters.map((filter, index) => (
-        <span
+        <Group
           key={filter.key}
-          ref={anchorRef(index)}
-          className="inline-flex h-8 items-stretch sm:h-7 divide-x overflow-hidden whitespace-nowrap rounded-md border bg-background"
+          aria-label={`${PROPERTY[filter.key].name} filter`}
+          className="*:rounded-full *:before:rounded-full"
         >
-          <span className="inline-flex items-center px-2 text-muted-foreground">
+          <GroupText
+            className={cn(
+              buttonVariants({ size: "sm", variant: "outline" }),
+              "pointer-events-none text-muted-foreground",
+            )}
+          >
             {PROPERTY[filter.key].name}
-          </span>
-          <button
-            type="button"
-            className={`${SEGMENT} text-muted-foreground`}
+          </GroupText>
+          <GroupSeparator />
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-muted-foreground"
             onClick={() => onNegate(index)}
           >
             {operator(filter)}
-          </button>
-          <button
-            type="button"
-            className={`${SEGMENT} font-medium text-foreground`}
-            {...trigger}
-            onClick={() => onToggleMenu(index)}
+          </Button>
+          <GroupSeparator />
+          <PopoverTrigger
+            {...filterTrigger(filter.key)}
+            render={<Button variant="outline" size="sm" />}
           >
             {summary(filter)}
-          </button>
-          <button
-            type="button"
-            className={`${SEGMENT} text-muted-foreground`}
+          </PopoverTrigger>
+          <GroupSeparator />
+          <Button
+            variant="outline"
+            size="icon-sm"
+            className="text-muted-foreground"
             aria-label="Remove filter"
             onClick={() => onRemove(index)}
           >
-            <XIcon className="size-3.5 sm:size-3" />
-          </button>
-        </span>
+            <XIcon />
+          </Button>
+        </Group>
       ))}
-      <Button
-        ref={anchorRef("add")}
-        variant="ghost"
-        size="icon-sm"
-        className="text-muted-foreground"
-        aria-label="Add filter"
-        {...trigger}
-        onClick={() => onToggleMenu("add")}
+      <PopoverTrigger
+        {...filterTrigger("add")}
+        render={
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="text-muted-foreground"
+            aria-label="Add filter"
+          />
+        }
       >
         <PlusIcon />
-      </Button>
+      </PopoverTrigger>
       <span className="ms-auto flex items-center gap-1.5">{actions}</span>
     </div>
   );

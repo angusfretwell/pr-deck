@@ -8,13 +8,11 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Popover, PopoverPopup } from "@/components/ui/popover";
+import { Popover, PopoverPopup, type PopoverPrimitive } from "@/components/ui/popover";
 import { UserAvatar } from "@/components/user-avatar";
 import { type Option, passes, PROPERTIES, PROPERTY, type Property } from "@/lib/filters";
 import type { Filter, PropertyKey, PullRequest } from "@/types";
-import type { FilterMenuState, MenuAnchor } from "../ViewHeader";
-
-export const FILTER_TRIGGER = "data-filter-trigger";
+import type { MenuAnchor } from "../ViewHeader";
 
 type Item =
   | { kind: "property"; property: Property }
@@ -31,9 +29,9 @@ const itemKey = (item: Item) =>
   item.kind === "value" ? `${item.property.key}:${item.option.value}` : item.property.key;
 
 interface FilterMenuProps {
-  menu: FilterMenuState | null;
-  anchorOf: (anchor: MenuAnchor) => Element | null;
-  onClose: () => void;
+  handle: PopoverPrimitive.Handle<MenuAnchor>;
+  triggerId: string | null;
+  onOpenChange: (open: boolean, trigger: Element | undefined) => void;
   orgPrs: PullRequest[];
   scopedPrs: PullRequest[];
   filters: Filter[];
@@ -41,32 +39,31 @@ interface FilterMenuProps {
   onToggle: (key: PropertyKey, value: string) => void;
 }
 
-function fromTrigger(event: Event) {
-  const target = event instanceof FocusEvent ? event.relatedTarget : event.target;
-  return target instanceof Element && target.closest(`[${FILTER_TRIGGER}]`) !== null;
-}
-
-export function FilterMenu({ menu, anchorOf, onClose, ...list }: FilterMenuProps) {
+export function FilterMenu({ handle, triggerId, onOpenChange, ...list }: FilterMenuProps) {
   return (
     <Popover
-      open={menu !== null}
-      onOpenChange={(open, { event }) => !open && !fromTrigger(event) && onClose()}
+      handle={handle}
+      open={triggerId !== null}
+      triggerId={triggerId}
+      onOpenChange={(open, { trigger }) => onOpenChange(open, trigger)}
     >
-      {menu && (
-        <PopoverPopup
-          key={menu.anchor}
-          anchor={() => anchorOf(menu.anchor)}
-          align={menu.anchor === "header" ? "end" : "start"}
-          portalProps={{ className: "*:transition-none" }}
-          className="w-72 sm:w-62.5 *:data-[slot=popover-viewport]:p-0"
-        >
-          <FilterMenuList
-            initialKey={menu.propertyKey}
-            canGoBack={typeof menu.anchor !== "number"}
-            {...list}
-          />
-        </PopoverPopup>
-      )}
+      {({ payload: anchor }) => {
+        if (anchor === undefined) return null;
+        const chipKey = anchor === "header" || anchor === "add" ? null : anchor;
+        return (
+          <PopoverPopup
+            align={anchor === "header" ? "end" : "start"}
+            className="w-72 sm:w-62.5 *:data-[slot=popover-viewport]:py-0 *:data-[slot=popover-viewport]:[--viewport-inline-padding:0]"
+          >
+            <FilterMenuList
+              key={anchor}
+              initialKey={chipKey}
+              canGoBack={chipKey === null}
+              {...list}
+            />
+          </PopoverPopup>
+        );
+      }}
     </Popover>
   );
 }
@@ -160,13 +157,13 @@ function FilterMenuList({
           }}
         />
         <CommandEmpty>No matches</CommandEmpty>
-        <div className="grid min-h-0 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)] **:data-[slot=scroll-area-viewport]:mask-none">
-          <CommandList className="not-empty:p-1">
+        <div className="grid min-h-0 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)]">
+          <CommandList>
             {(item: Item) => (
               <CommandItem
                 key={itemKey(item)}
                 value={item}
-                className="gap-2 py-1"
+                className="gap-2"
                 onClick={() => pick(item)}
               >
                 {item.kind === "value" ? (

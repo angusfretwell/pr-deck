@@ -1,13 +1,15 @@
 import type { UseQueryResult } from "@tanstack/react-query";
-import { CircleAlertIcon, GitPullRequestIcon } from "lucide-react";
+import { CircleAlertIcon, GitPullRequestIcon, InfoIcon } from "lucide-react";
 import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { Redirect, useLocation } from "wouter";
 import { Preview, PreviewDrawer } from "@/components/Preview";
 import { PrTable } from "@/components/PrTable";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
@@ -183,9 +185,7 @@ function OrgPage({
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
 
       if (event.key === "Escape") {
-        if (filterMenu) setFilterMenu(null);
-        else if (displayMenuOpen) setDisplayMenuOpen(false);
-        else if (typing) target.blur();
+        if (typing) target.blur();
         else if (drawerOpen) setDrawerOpen(false);
         else setSelectedId(null);
         return;
@@ -208,7 +208,7 @@ function OrgPage({
         onOpenSearch();
       } else if (event.key === "f" || event.key === "F") {
         event.preventDefault();
-        setFilterMenu({ anchor: "header", propertyKey: null, deferBar: !filtersChanged });
+        setFilterMenu({ anchor: "header", deferBar: !filtersChanged });
       } else if (event.key === "o" || event.key === "O") {
         if (selected) window.open(selected.url, "_blank", "noopener");
       } else if (
@@ -226,13 +226,13 @@ function OrgPage({
 
   return (
     <div
-      className="flex min-h-0 flex-1 flex-col [--pinned-height:0px] max-md:[--pinned-height:calc(50px+var(--view-header-height))]"
+      className="flex min-h-0 flex-1 flex-col [--pinned-height:0px] max-md:[--pinned-height:calc(--spacing(12.5)+var(--view-header-height))]"
       style={{ "--view-header-height": `${viewHeaderHeight}px` } as CSSProperties}
     >
       <div className="max-md:h-(--view-header-height)">
         <div
           ref={viewHeaderRef}
-          className="bg-background max-md:fixed max-md:inset-x-0 max-md:top-[50px] max-md:z-20"
+          className="bg-background max-md:fixed max-md:inset-x-0 max-md:top-12.5 max-md:z-20"
         >
           <ViewHeader
             views={views}
@@ -249,9 +249,7 @@ function OrgPage({
             allOpenCount={pullRequests.data?.pullRequests.length}
             activeViewId={activeView?.id ?? null}
             renamingViewId={renamingViewId}
-            onSelectView={(id) =>
-              navigate(viewPath(owner, views.find((view) => view.id === id)?.name))
-            }
+            viewHref={(id) => viewPath(owner, views.find((view) => view.id === id)?.name)}
             onRenamingViewChange={onRenamingViewChange}
             onRenameView={renameView}
             onDeleteView={deleteView}
@@ -327,10 +325,15 @@ function OrgPage({
 function TruncationNote({ list }: { list: PullRequestList }) {
   if (list.totalCount <= list.pullRequests.length) return null;
   return (
-    <p className="px-4 pt-3 text-muted-foreground text-xs">
-      Showing the {list.pullRequests.length} most recently updated of {list.totalCount} open pull
-      requests.
-    </p>
+    <div className="px-2 pt-3 md:px-4">
+      <Alert variant="info">
+        <InfoIcon />
+        <AlertDescription>
+          Showing the {list.pullRequests.length} most recently updated of {list.totalCount} open
+          pull requests.
+        </AlertDescription>
+      </Alert>
+    </div>
   );
 }
 
@@ -347,17 +350,19 @@ function NoPullRequests({
         <EmptyMedia variant="icon">
           <GitPullRequestIcon />
         </EmptyMedia>
-        <EmptyTitle className="text-base">No open pull requests</EmptyTitle>
+        <EmptyTitle>No open pull requests</EmptyTitle>
         <EmptyDescription>{owner} is all clear.</EmptyDescription>
       </EmptyHeader>
-      <Button
-        size="sm"
-        variant="outline"
-        loading={result.isFetching}
-        onClick={() => result.refetch()}
-      >
-        Refresh
-      </Button>
+      <EmptyContent>
+        <Button
+          size="sm"
+          variant="outline"
+          loading={result.isFetching}
+          onClick={() => result.refetch()}
+        >
+          Refresh
+        </Button>
+      </EmptyContent>
     </Empty>
   );
 }
@@ -369,17 +374,19 @@ function LoadError({ result }: { result: UseQueryResult<PullRequestList> }) {
         <EmptyMedia variant="icon">
           <CircleAlertIcon />
         </EmptyMedia>
-        <EmptyTitle className="text-base">Couldn't load pull requests</EmptyTitle>
+        <EmptyTitle>Couldn't load pull requests</EmptyTitle>
         <EmptyDescription>{errorMessage(result.error)}</EmptyDescription>
       </EmptyHeader>
-      <Button
-        size="sm"
-        variant="outline"
-        loading={result.isFetching}
-        onClick={() => result.refetch()}
-      >
-        Try again
-      </Button>
+      <EmptyContent>
+        <Button
+          size="sm"
+          variant="outline"
+          loading={result.isFetching}
+          onClick={() => result.refetch()}
+        >
+          Try again
+        </Button>
+      </EmptyContent>
     </Empty>
   );
 }
