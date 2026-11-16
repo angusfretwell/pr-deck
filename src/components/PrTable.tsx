@@ -2,8 +2,7 @@ import { GitPullRequestDraftIcon } from "@primer/octicons-react";
 import { ChevronRightIcon, FunnelXIcon, SearchXIcon } from "lucide-react";
 import { useEffect, useRef, type CSSProperties } from "react";
 import { useMediaQuery } from "usehooks-ts";
-import { BadgeIcon, BadgePill, pillClassName } from "@/components/status-badge";
-import { Badge } from "@/components/ui/badge";
+import { BadgeIcon, BadgePill } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { UserAvatar } from "@/components/user-avatar";
@@ -91,35 +90,25 @@ export function PrTable({
           selected ? "bg-info/8 dark:bg-info/16" : "hover:bg-accent",
         )}
       >
-        {summary ? (
-          <>
-            <span className="flex min-w-0 items-center gap-1.5 font-medium">
-              {pr.isDraft && (
-                <GitPullRequestDraftIcon
-                  aria-label="Draft"
-                  size={14}
-                  className="shrink-0 text-muted-foreground"
-                />
-              )}
-              <bdi className="truncate">{pr.title}</bdi>
+        <span className="flex min-w-0 items-center gap-1.5 font-medium">
+          {pr.isDraft && (
+            <GitPullRequestDraftIcon
+              aria-label="Draft"
+              size={14}
+              className="shrink-0 text-muted-foreground"
+            />
+          )}
+          <bdi className="truncate">{pr.title}</bdi>
+          {!summary && !showRepo && (
+            <span className="ms-0.5 shrink-0 font-normal text-muted-foreground/72">
+              {group === "repo" ? "" : `${pr.repo} `}#{pr.number}
             </span>
-            <BadgeIcon badge={statusBadge(pr)} size={14} />
-          </>
+          )}
+        </span>
+        {summary ? (
+          <BadgeIcon badge={statusBadge(pr)} size={14} />
         ) : (
           <>
-            <span className="truncate font-medium">
-              {pr.isDraft && (
-                <Badge variant="secondary" className={cn(pillClassName, "me-1.5")}>
-                  Draft
-                </Badge>
-              )}
-              <bdi>{pr.title}</bdi>
-              {!showRepo && (
-                <span className="ms-2 font-normal text-muted-foreground/72">
-                  {group === "repo" ? "" : `${pr.repo} `}#{pr.number}
-                </span>
-              )}
-            </span>
             <span className="flex min-w-0 items-center justify-end gap-1 overflow-hidden">
               {issueBadges(pr).map((badge) => (
                 <BadgePill key={badge.label} badge={badge} />
