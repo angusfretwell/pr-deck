@@ -65,11 +65,12 @@ export function ViewTabs({
     };
   }, []);
 
+  const countsKey = [allOpenCount, ...views.map((view) => viewCounts[view.id])].join();
   useEffect(() => {
     scroller.current
       ?.querySelector("[data-pressed]")
       ?.scrollIntoView({ inline: "center", block: "nearest" });
-  }, [activeViewId, views.length]);
+  }, [activeViewId, views.length, countsKey]);
 
   const left = overflow.start ? "transparent, #000 24px" : "#000, #000";
   const right = overflow.end ? "#000 calc(100% - 24px), transparent" : "#000, #000";
