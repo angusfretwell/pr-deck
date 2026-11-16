@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Redirect, Route, Switch } from "wouter";
+import { Redirect, Route, Switch, useLocation } from "wouter";
 import { AppShell } from "@/components/AppShell";
 import { OrgRoute } from "@/components/OrgPage";
 import { SetupScreen } from "@/components/SetupScreen";
@@ -96,22 +96,22 @@ function Dashboard({ session, onSignOut }: { session: Session; onSignOut: () => 
   return (
     <Switch>
       <Route path="/:org/:viewSlug?">
-        {({ org, viewSlug }) =>
-          owners.includes(org) ? (
-            <>
-              <AppShell
-                session={session}
-                enabledOwners={enabledOwners}
-                hiddenOwners={hiddenOwners}
-                onHiddenOwnersChange={setHiddenOwners}
-                activeOwner={org}
-                query={query}
-                onQueryChange={setQuery}
-                searchRef={searchRef}
-                searchVisible={searchOpen || query !== ""}
-                onSearchBlur={() => setSearchOpen(false)}
-                onSignOut={onSignOut}
-              />
+        {({ org, viewSlug }) => (
+          <>
+            <AppShell
+              session={session}
+              enabledOwners={enabledOwners}
+              hiddenOwners={hiddenOwners}
+              onHiddenOwnersChange={setHiddenOwners}
+              activeOwner={org}
+              query={query}
+              onQueryChange={setQuery}
+              searchRef={searchRef}
+              searchVisible={searchOpen || query !== ""}
+              onSearchBlur={() => setSearchOpen(false)}
+              onSignOut={onSignOut}
+            />
+            {owners.includes(org) ? (
               <OrgRoute
                 key={org}
                 owner={org}
@@ -121,11 +121,11 @@ function Dashboard({ session, onSignOut }: { session: Session; onSignOut: () => 
                 onQueryChange={setQuery}
                 onOpenSearch={openSearch}
               />
-            </>
-          ) : (
-            <Redirect to="/" replace />
-          )
-        }
+            ) : (
+              <OwnerNotFound owner={org} hidden={hiddenOwners.includes(org)} owners={owners} />
+            )}
+          </>
+        )}
       </Route>
       <Route>
         <RootRedirect owners={owners} />
@@ -134,9 +134,42 @@ function Dashboard({ session, onSignOut }: { session: Session; onSignOut: () => 
   );
 }
 
-function RootRedirect({ owners }: { owners: string[] }) {
+function useFallbackPath(owners: string[]) {
   const [lastPath] = useLastPath();
   const lastOwner = lastPath?.split("/")[1];
-  const to = lastPath && lastOwner && owners.includes(lastOwner) ? lastPath : `/${owners[0]}`;
-  return <Redirect to={to} replace />;
+  return lastPath && lastOwner && owners.includes(lastOwner) ? lastPath : `/${owners[0]}`;
+}
+
+function RootRedirect({ owners }: { owners: string[] }) {
+  return <Redirect to={useFallbackPath(owners)} replace />;
+}
+
+function OwnerNotFound({
+  owner,
+  hidden,
+  owners,
+}: {
+  owner: string;
+  hidden: boolean;
+  owners: string[];
+}) {
+  const [, navigate] = useLocation();
+  const fallbackPath = useFallbackPath(owners);
+  return (
+    <Empty>
+      <EmptyHeader>
+        <EmptyTitle className="text-base">
+          {hidden ? `${owner} is hidden` : `No access to ${owner}`}
+        </EmptyTitle>
+        <EmptyDescription>
+          {hidden
+            ? "You hid this account from the account menu. Show it again there to see its pull requests."
+            : "It isn't one of your accounts or organisations, or your token can't see it."}
+        </EmptyDescription>
+      </EmptyHeader>
+      <Button size="sm" variant="outline" onClick={() => navigate(fallbackPath, { replace: true })}>
+        Back to {fallbackPath.split("/")[1]}
+      </Button>
+    </Empty>
+  );
 }

@@ -10,7 +10,8 @@ import {
 } from "./api";
 import { withMergeability } from "./mapping";
 
-const retry = (failureCount: number, error: Error) => isRetryable(error) && failureCount < 3;
+const retry = (failureCount: number, error: Error) => isRetryable(error) && failureCount < 1;
+const RETRY_DELAY_MS = 1000;
 
 const MERGEABILITY_POLL_MS = 10_000;
 const MERGEABILITY_POLL_ATTEMPTS = 4;
@@ -21,6 +22,7 @@ const live = {
   refetchInterval: 15 * 60_000,
   refetchOnWindowFocus: true,
   retry,
+  retryDelay: RETRY_DELAY_MS,
 };
 
 export function useSession(): UseQueryResult<Session> {
@@ -31,6 +33,7 @@ export function useSession(): UseQueryResult<Session> {
     staleTime: Infinity,
     gcTime: Infinity,
     retry,
+    retryDelay: RETRY_DELAY_MS,
   });
 }
 
@@ -71,6 +74,7 @@ function usePendingMergeability(owner: string, list: PullRequestList | undefined
         ? MERGEABILITY_POLL_MS * 2 ** state.dataUpdateCount
         : false,
     retry,
+    retryDelay: RETRY_DELAY_MS,
   });
 }
 

@@ -39,8 +39,8 @@ export function SetupScreen({ initialError, onSignIn }: SetupScreenProps) {
   };
 
   return (
-    <main className="grid flex-1 overflow-y-auto lg:grid-cols-[minmax(400px,5fr)_7fr] lg:overflow-hidden">
-      <section className="flex flex-col justify-center px-6 py-12 sm:px-12">
+    <main className="grid min-h-0 flex-1 overflow-y-auto lg:grid-cols-[minmax(360px,420px)_1fr]">
+      <section className="flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-10">
         <div className="mx-auto w-full max-w-sm">
           <div className="flex items-center gap-2 font-semibold text-sm">
             <Logo />
@@ -66,7 +66,7 @@ export function SetupScreen({ initialError, onSignIn }: SetupScreenProps) {
                   setError(null);
                 }}
               />
-              {error && <FieldError match>{error}</FieldError>}
+              <div className="min-h-4">{error && <FieldError match>{error}</FieldError>}</div>
             </Field>
             <Button type="submit" size="lg" loading={pending} disabled={!token.trim()}>
               Connect GitHub
@@ -94,7 +94,7 @@ export function SetupScreen({ initialError, onSignIn }: SetupScreenProps) {
         </div>
       </section>
       <section className="relative hidden overflow-hidden border-l bg-sidebar lg:block">
-        <div className="absolute top-[16%] -right-48 bottom-0 left-12 animate-rise overflow-hidden rounded-tl-xl border-t border-l shadow-lg/5 [mask-image:linear-gradient(to_bottom,black_45%,transparent_85%)] motion-reduce:animate-none">
+        <div className="absolute top-[16%] -right-48 bottom-0 left-12 min-[1800px]:right-12 animate-rise overflow-hidden rounded-tl-xl border-t border-l shadow-lg/5 [mask-image:linear-gradient(to_bottom,black_45%,transparent_85%)] motion-reduce:animate-none">
           <SetupPreview className="h-full min-w-[720px]" />
         </div>
       </section>

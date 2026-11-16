@@ -50,6 +50,8 @@ export function AppShell({
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   const fetching = useIsFetching() > 0;
+  const personal = session.owners.filter((owner) => owner.login === session.viewer.login);
+  const organisations = session.owners.filter((owner) => owner.login !== session.viewer.login);
 
   return (
     <header className="flex h-[50px] shrink-0 items-center gap-3 border-b px-4">
@@ -102,36 +104,62 @@ export function AppShell({
             <MenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Account" />}>
               <AccountAvatar account={session.viewer} className="size-5.5" />
             </MenuTrigger>
-            <MenuPopup align="end">
-              <MenuGroup>
-                <MenuGroupLabel>{session.viewer.login}</MenuGroupLabel>
-              </MenuGroup>
+            <MenuPopup align="end" className="w-64">
+              <div className="flex items-center gap-2 px-2 py-1.5">
+                <AccountAvatar account={session.viewer} className="size-6" />
+                <div className="flex min-w-0 flex-col leading-tight">
+                  <span className="truncate font-medium">
+                    {session.viewer.name || session.viewer.login}
+                  </span>
+                  {session.viewer.name && (
+                    <span className="truncate text-muted-foreground text-xs">
+                      {session.viewer.login}
+                    </span>
+                  )}
+                </div>
+              </div>
               <MenuSeparator />
-              <MenuGroup>
-                <MenuGroupLabel>Organisations</MenuGroupLabel>
-                {session.owners.map((owner) => {
-                  const enabled = !hiddenOwners.includes(owner.login);
-                  return (
-                    <MenuCheckboxItem
-                      key={owner.login}
-                      checked={enabled}
-                      disabled={enabled && enabledOwners.length === 1}
-                      onCheckedChange={(checked) =>
-                        onHiddenOwnersChange(
-                          checked
-                            ? hiddenOwners.filter((login) => login !== owner.login)
-                            : [...hiddenOwners, owner.login],
-                        )
-                      }
-                    >
-                      <span className="flex items-center gap-2">
-                        <AccountAvatar account={owner} className="size-4 rounded-sm" />
-                        {owner.login}
-                      </span>
-                    </MenuCheckboxItem>
-                  );
-                })}
-              </MenuGroup>
+              <div className="max-h-[60vh] overflow-y-auto overscroll-contain">
+                {[
+                  { label: "Personal account", accounts: personal },
+                  { label: "Organisations", accounts: organisations },
+                ].map(
+                  ({ label, accounts }) =>
+                    accounts.length > 0 && (
+                      <MenuGroup key={label}>
+                        <MenuGroupLabel>{label}</MenuGroupLabel>
+                        {accounts.map((owner) => {
+                          const enabled = !hiddenOwners.includes(owner.login);
+                          return (
+                            <MenuCheckboxItem
+                              key={owner.login}
+                              checked={enabled}
+                              className="grid-cols-[.75rem_minmax(0,1fr)]"
+                              disabled={enabled && enabledOwners.length === 1}
+                              onCheckedChange={(checked) =>
+                                onHiddenOwnersChange(
+                                  checked
+                                    ? hiddenOwners.filter((login) => login !== owner.login)
+                                    : [...hiddenOwners, owner.login],
+                                )
+                              }
+                            >
+                              <span className="flex min-w-0 items-center gap-2">
+                                <AccountAvatar
+                                  account={owner}
+                                  className="size-4 shrink-0 rounded-sm"
+                                />
+                                <span className="truncate" title={owner.login}>
+                                  {owner.login}
+                                </span>
+                              </span>
+                            </MenuCheckboxItem>
+                          );
+                        })}
+                      </MenuGroup>
+                    ),
+                )}
+              </div>
               <MenuSeparator />
               <MenuItem onClick={onSignOut}>
                 <LogOutIcon />
