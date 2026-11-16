@@ -1,7 +1,7 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 import { CircleAlertIcon, GitPullRequestIcon } from "lucide-react";
-import { type CSSProperties, useEffect, useRef, useState } from "react";
-import { useMediaQuery, useResizeObserver } from "usehooks-ts";
+import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useMediaQuery } from "usehooks-ts";
 import { Redirect, useLocation } from "wouter";
 import { Preview, PreviewDrawer } from "@/components/Preview";
 import { PrTable } from "@/components/PrTable";
@@ -108,7 +108,15 @@ function OrgPage({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const desktop = useMediaQuery("(min-width: 768px)");
   const viewHeaderRef = useRef<HTMLDivElement>(null!);
-  const { height: viewHeaderHeight = 0 } = useResizeObserver({ ref: viewHeaderRef });
+  const [viewHeaderHeight, setViewHeaderHeight] = useState(0);
+  useLayoutEffect(() => {
+    const element = viewHeaderRef.current;
+    const measure = () => setViewHeaderHeight(element.offsetHeight);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
   const pullRequests = usePullRequests(owner);
 
   const orgPrs = pullRequests.data?.pullRequests ?? [];
@@ -221,47 +229,49 @@ function OrgPage({
       className="flex min-h-0 flex-1 flex-col [--pinned-height:0px] max-md:[--pinned-height:calc(50px+var(--view-header-height))]"
       style={{ "--view-header-height": `${viewHeaderHeight}px` } as CSSProperties}
     >
-      <div
-        ref={viewHeaderRef}
-        className="bg-background max-md:sticky max-md:top-[50px] max-md:z-20"
-      >
-        <ViewHeader
-          views={views}
-          viewCounts={
-            pullRequests.data
-              ? Object.fromEntries(
-                  views.map((view) => [
-                    view.id,
-                    orgPrs.filter((pr) => passes(pr, view.filters, viewer)).length,
-                  ]),
-                )
-              : {}
-          }
-          allOpenCount={pullRequests.data?.pullRequests.length}
-          activeViewId={activeView?.id ?? null}
-          renamingViewId={renamingViewId}
-          onSelectView={(id) =>
-            navigate(viewPath(owner, views.find((view) => view.id === id)?.name))
-          }
-          onRenamingViewChange={onRenamingViewChange}
-          onRenameView={renameView}
-          onDeleteView={deleteView}
-          filters={filters}
-          filtersChanged={filtersChanged}
-          onFiltersChange={setFilters}
-          onResetFilters={() => setFilters(savedFilters)}
-          onSaveView={() => activeView && replaceView({ ...activeView, filters })}
-          onSaveAsNewView={saveAsNewView}
-          filterMenu={filterMenu}
-          onFilterMenuChange={setFilterMenu}
-          displayMenuOpen={displayMenuOpen}
-          onDisplayMenuOpenChange={setDisplayMenuOpen}
-          group={group}
-          onGroupChange={setGroup}
-          orgPrs={orgPrs}
-          scopedPrs={scopedPrs}
-          viewer={viewer}
-        />
+      <div className="max-md:h-(--view-header-height)">
+        <div
+          ref={viewHeaderRef}
+          className="bg-background max-md:fixed max-md:inset-x-0 max-md:top-[50px] max-md:z-20"
+        >
+          <ViewHeader
+            views={views}
+            viewCounts={
+              pullRequests.data
+                ? Object.fromEntries(
+                    views.map((view) => [
+                      view.id,
+                      orgPrs.filter((pr) => passes(pr, view.filters, viewer)).length,
+                    ]),
+                  )
+                : {}
+            }
+            allOpenCount={pullRequests.data?.pullRequests.length}
+            activeViewId={activeView?.id ?? null}
+            renamingViewId={renamingViewId}
+            onSelectView={(id) =>
+              navigate(viewPath(owner, views.find((view) => view.id === id)?.name))
+            }
+            onRenamingViewChange={onRenamingViewChange}
+            onRenameView={renameView}
+            onDeleteView={deleteView}
+            filters={filters}
+            filtersChanged={filtersChanged}
+            onFiltersChange={setFilters}
+            onResetFilters={() => setFilters(savedFilters)}
+            onSaveView={() => activeView && replaceView({ ...activeView, filters })}
+            onSaveAsNewView={saveAsNewView}
+            filterMenu={filterMenu}
+            onFilterMenuChange={setFilterMenu}
+            displayMenuOpen={displayMenuOpen}
+            onDisplayMenuOpenChange={setDisplayMenuOpen}
+            group={group}
+            onGroupChange={setGroup}
+            orgPrs={orgPrs}
+            scopedPrs={scopedPrs}
+            viewer={viewer}
+          />
+        </div>
       </div>
       {pullRequests.data ? (
         <div
