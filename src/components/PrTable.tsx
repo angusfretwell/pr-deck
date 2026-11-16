@@ -85,7 +85,7 @@ export function PrTable({
             : onSelect(pr.id)
         }
         className={cn(
-          "grid h-10 grid-cols-(--columns) items-center gap-x-2.5 rounded-md px-2 sm:h-9",
+          "grid h-10 touch-manipulation grid-cols-(--columns) items-center gap-x-2.5 rounded-md px-2 sm:h-9",
           group === "none"
             ? "scroll-mt-(--pinned-height)"
             : "scroll-mt-[calc(var(--pinned-height,0px)+--spacing(12))] sm:scroll-mt-[calc(var(--pinned-height,0px)+--spacing(11))]",
