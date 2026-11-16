@@ -142,9 +142,14 @@ export function PrTable({
       {groups.map(({ key, rows }) => {
         const collapsed = isCollapsed(key);
         return (
-          <div key={key} role="group" aria-label={group === "none" ? undefined : key}>
+          <div
+            key={key}
+            role="group"
+            aria-label={group === "none" ? undefined : key}
+            className={cn(collapsed && "pb-1")}
+          >
             {group !== "none" && (
-              <div className="sticky top-1 z-10 mt-1 bg-background pb-1 shadow-[0_-4px_0_var(--background)]">
+              <div className="sticky top-1 z-10 mt-1 bg-background shadow-[0_-4px_0_var(--background)]">
                 <button
                   type="button"
                   aria-expanded={!collapsed}
@@ -167,7 +172,7 @@ export function PrTable({
                 </button>
               </div>
             )}
-            {!collapsed && <div className="flex flex-col gap-0.5">{rows.map(row)}</div>}
+            {!collapsed && <div className="flex flex-col gap-0.5 pt-1">{rows.map(row)}</div>}
           </div>
         );
       })}
