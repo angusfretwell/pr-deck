@@ -89,7 +89,7 @@ export function PrTable({
           group === "none"
             ? "scroll-mt-(--pinned-height)"
             : "scroll-mt-[calc(var(--pinned-height,0px)+--spacing(12))] sm:scroll-mt-[calc(var(--pinned-height,0px)+--spacing(11))]",
-          selected ? "bg-info/8 dark:bg-info/16" : "hover:bg-accent",
+          selected ? "bg-info/8 dark:bg-info/16" : "hover:bg-accent active:bg-accent",
         )}
       >
         <span className="flex min-w-0 items-center gap-1.5 font-medium">
