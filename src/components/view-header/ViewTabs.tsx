@@ -84,7 +84,7 @@ export function ViewTabs({
     >
       <div
         ref={scroller}
-        className="-my-1 overflow-x-auto py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="-my-1 overflow-x-auto overflow-y-hidden py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         style={{ maskImage, WebkitMaskImage: maskImage }}
       >
         <TabsList className="justify-start gap-1.5 bg-transparent p-0 *:data-[slot=tab-indicator]:hidden">
