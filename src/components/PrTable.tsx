@@ -16,9 +16,11 @@ export interface PrTableProps {
   compact: boolean;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  query: string;
   onShowAll: () => void;
+  onClearSearch: () => void;
   isCollapsed: (key: string) => boolean;
-  onToggleGroup: (key: string) => void;
+  onToggleGroup: (key: string, all: boolean) => void;
 }
 
 export function PrTable({
@@ -27,7 +29,9 @@ export function PrTable({
   compact,
   selectedId,
   onSelect,
+  query,
   onShowAll,
+  onClearSearch,
   isCollapsed,
   onToggleGroup,
 }: PrTableProps) {
@@ -39,10 +43,12 @@ export function PrTable({
   if (groups.every(({ rows }) => rows.length === 0)) {
     return (
       <Empty>
-        <EmptyDescription>No pull requests match this view.</EmptyDescription>
+        <EmptyDescription>
+          {query ? `No pull requests match "${query}".` : "No pull requests match this view."}
+        </EmptyDescription>
         <EmptyContent>
-          <Button variant="outline" onClick={onShowAll}>
-            Show all open
+          <Button variant="outline" onClick={query ? onClearSearch : onShowAll}>
+            {query ? "Clear search" : "Show all open"}
           </Button>
         </EmptyContent>
       </Empty>
@@ -75,7 +81,7 @@ export function PrTable({
         }
         className={cn(
           "grid h-9 grid-cols-(--columns) items-center gap-x-2.5 rounded-md px-2",
-          group !== "none" && "scroll-mt-9",
+          group !== "none" && "scroll-mt-11",
           selected ? "bg-info/8 dark:bg-info/16" : "hover:bg-accent",
         )}
       >
@@ -85,7 +91,7 @@ export function PrTable({
               Draft
             </Badge>
           )}
-          {pr.title}
+          <bdi>{pr.title}</bdi>
           {!showRepo && (
             <span className="ms-2 font-normal text-muted-foreground/72">
               {group === "repo" ? "" : `${pr.repo} `}#{pr.number}
@@ -98,8 +104,12 @@ export function PrTable({
           ))}
         </span>
         {showRepo && (
-          <span className="truncate text-muted-foreground">
-            {pr.repo} <span className="text-muted-foreground/72">#{pr.number}</span>
+          <span
+            title={`${pr.repo} #${pr.number}`}
+            className="flex min-w-0 gap-1 text-muted-foreground"
+          >
+            <span className="truncate">{pr.repo}</span>
+            <span className="shrink-0 text-muted-foreground/72">#{pr.number}</span>
           </span>
         )}
         {showAuthor && (
@@ -126,7 +136,7 @@ export function PrTable({
       ref={ref}
       role="listbox"
       aria-label="Pull requests"
-      className="cursor-default px-2 text-[13px]"
+      className={cn("cursor-default px-2 text-[13px]", group !== "none" && "pt-1")}
       style={{ "--columns": columns } as CSSProperties}
     >
       {groups.map(({ key, rows }) => {
@@ -134,11 +144,11 @@ export function PrTable({
         return (
           <div key={key} role="group" aria-label={group === "none" ? undefined : key}>
             {group !== "none" && (
-              <div className="sticky top-0 z-10 my-1 rounded-md bg-background">
+              <div className="sticky top-1 z-10 mt-1 bg-background pb-1 shadow-[0_-4px_0_var(--background)]">
                 <button
                   type="button"
                   aria-expanded={!collapsed}
-                  onClick={() => onToggleGroup(key)}
+                  onClick={(event) => onToggleGroup(key, event.altKey)}
                   className="flex h-8 w-full items-center gap-2 rounded-md bg-muted px-2 text-left font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <ChevronRightIcon

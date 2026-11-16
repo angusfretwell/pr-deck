@@ -112,10 +112,13 @@ function OrgPage({
   const visible = scopedPrs.filter((pr) => passes(pr, filters, viewer));
   const groups = groupPullRequests(visible, group);
   const isCollapsed = (key: string) => collapsedGroups.includes(`${group}:${key}`);
-  const toggleGroup = (key: string) => {
+  const toggleGroup = (key: string, all: boolean) => {
     const id = `${group}:${key}`;
+    const ids = all ? groups.map((entry) => `${group}:${entry.key}`) : [id];
     setCollapsedGroups((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+      prev.includes(id)
+        ? prev.filter((x) => !ids.includes(x))
+        : [...prev, ...ids.filter((x) => !prev.includes(x))],
     );
   };
   const order = groups.flatMap(({ key, rows }) =>
@@ -250,10 +253,10 @@ function OrgPage({
         <div
           className={cn(
             "grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] overflow-hidden",
-            previewed && "grid-cols-[minmax(0,1fr)_minmax(380px,46%)]",
+            previewed && "grid-cols-[minmax(0,1fr)_minmax(380px,min(46%,800px))]",
           )}
         >
-          <div className="min-h-0 overflow-y-auto pb-4">
+          <div className="min-h-0 overflow-y-auto overscroll-contain pb-4">
             {orgPrs.length === 0 ? (
               <Empty>
                 <EmptyDescription>No open pull requests in {owner}.</EmptyDescription>
@@ -268,7 +271,9 @@ function OrgPage({
                   setSelectedId(id);
                   setDrawerOpen(true);
                 }}
+                query={query}
                 onShowAll={showAll}
+                onClearSearch={() => onQueryChange("")}
                 isCollapsed={isCollapsed}
                 onToggleGroup={toggleGroup}
               />

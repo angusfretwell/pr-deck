@@ -206,6 +206,8 @@ export function SetupPreview({ className }: { className?: string }) {
       <div className="pb-4">
         <PrTable
           groups={GROUPS}
+          query=""
+          onClearSearch={noop}
           group="repo"
           compact={false}
           selectedId={null}
