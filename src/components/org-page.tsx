@@ -1,7 +1,7 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 import { CircleAlertIcon, GitPullRequestIcon, InfoIcon } from "lucide-react";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useMediaQuery } from "usehooks-ts";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useMediaQuery, useResizeObserver } from "usehooks-ts";
 import { Redirect, useLocation } from "wouter";
 import { Preview, PreviewDrawer } from "@/components/preview";
 import { PrTable } from "@/components/pr-table";
@@ -88,17 +88,11 @@ function OrgPage({
   const [displayMenuOpen, setDisplayMenuOpen] = useState(false);
   const [selection, setSelection] = useState(NO_SELECTION);
   const desktop = useMediaQuery("(min-width: 768px)");
-  const pageRef = useRef<HTMLDivElement>(null!);
   const viewHeaderRef = useRef<HTMLDivElement>(null!);
-  useLayoutEffect(() => {
-    const element = viewHeaderRef.current;
-    const measure = () =>
-      pageRef.current.style.setProperty("--view-header-height", `${element.offsetHeight}px`);
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
+  const { height: viewHeaderHeight = 0 } = useResizeObserver({
+    ref: viewHeaderRef,
+    box: "border-box",
+  });
   const pullRequests = usePullRequests(owner);
 
   const orgPrs = pullRequests.data?.pullRequests ?? [];
@@ -148,8 +142,8 @@ function OrgPage({
 
   return (
     <div
-      ref={pageRef}
       className="flex min-h-0 flex-1 flex-col [--pinned-height:0px] max-md:[--pinned-height:calc(--spacing(12.5)+var(--view-header-height))]"
+      style={{ "--view-header-height": `${viewHeaderHeight}px` } as CSSProperties}
     >
       <div className="max-md:h-(--view-header-height)">
         <div
