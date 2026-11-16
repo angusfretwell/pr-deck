@@ -68,7 +68,11 @@ export function PrTable({
         key={pr.id}
         role="option"
         aria-selected={selected}
-        onClick={() => onSelect(pr.id)}
+        onClick={(event) =>
+          event.metaKey || event.ctrlKey
+            ? window.open(pr.url, "_blank", "noopener")
+            : onSelect(pr.id)
+        }
         className={cn(
           "grid h-9 grid-cols-(--columns) items-center gap-x-2.5 rounded-md px-2",
           group !== "none" && "scroll-mt-11",
