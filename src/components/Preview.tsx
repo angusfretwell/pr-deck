@@ -314,10 +314,11 @@ function PreviewBody({
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-muted-foreground">
         <span className="inline-flex items-center gap-1.25">
           <UserAvatar login={pr.author} avatarUrl={pr.authorAvatarUrl} />
-          {pr.author}
-          {you(pr.author)}
+          <span>
+            {pr.author}
+            {you(pr.author)} updated {updated(pr.updatedAt)}
+          </span>
         </span>
-        <span>updated {updated(pr.updatedAt)}</span>
         {query.data ? (
           <span>
             <span className="text-success-foreground">
