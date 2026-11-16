@@ -1,3 +1,4 @@
+import { GitPullRequestDraftIcon } from "@primer/octicons-react";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { ChevronDownIcon, ChevronUpIcon, CircleAlertIcon, XIcon } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
@@ -335,6 +336,7 @@ function PreviewBody({
         {pr.mergeability === "conflict" && <BadgePill badge={CONFLICT_BADGE} />}
         {pr.isDraft && (
           <Badge variant="secondary" className={pillClassName}>
+            <GitPullRequestDraftIcon aria-hidden size={12} className="shrink-0" />
             Draft
           </Badge>
         )}
