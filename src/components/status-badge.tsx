@@ -11,6 +11,7 @@ import {
   type Icon,
 } from "@primer/octicons-react";
 import { Badge as BadgeUi, type BadgeProps } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/spinner";
 import type { Badge, BadgeIconName, Tone } from "@/lib/pr";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +52,7 @@ export function BadgePill({ badge }: { badge: Badge }) {
 }
 
 export function BadgeIcon({ badge, className }: { badge: Badge; className?: string }) {
-  const Glyph = ICON[badge.icon];
+  const Glyph = badge.icon === "pending" ? Spinner : ICON[badge.icon];
   return (
     <span
       role="img"
