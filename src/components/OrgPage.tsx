@@ -17,7 +17,7 @@ import { ViewHeader, type FilterMenuState } from "@/components/ViewHeader";
 import { errorMessage } from "@/github/api";
 import { usePullRequests } from "@/github/hooks";
 import { groupPullRequests, matchesText, passes, sameFilters } from "@/lib/filters";
-import { useGroup, useLastPath, useStoredViews } from "@/lib/storage";
+import { useCollapsedGroups, useGroup, useLastPath, useStoredViews } from "@/lib/storage";
 import {
   findViewBySlug,
   markDefaultViews,
@@ -97,6 +97,7 @@ function OrgPage({
   const [location, navigate] = useLocation();
   const [, setLastPath] = useLastPath();
   const [group, setGroup] = useGroup();
+  const [collapsedGroups, setCollapsedGroups] = useCollapsedGroups();
   const savedFilters = activeView?.filters ?? [];
   const [filters, setFilters] = useState<Filter[]>(savedFilters);
   const [filterMenu, setFilterMenu] = useState<FilterMenuState | null>(null);
@@ -109,7 +110,16 @@ function OrgPage({
   const scopedPrs = orgPrs.filter((pr) => matchesText(pr, query));
   const visible = scopedPrs.filter((pr) => passes(pr, filters, viewer));
   const groups = groupPullRequests(visible, group);
-  const order = groups.flatMap(({ rows }) => rows.map((pr) => pr.id));
+  const isCollapsed = (key: string) => collapsedGroups.includes(`${group}:${key}`);
+  const toggleGroup = (key: string) => {
+    const id = `${group}:${key}`;
+    setCollapsedGroups((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  };
+  const order = groups.flatMap(({ key, rows }) =>
+    isCollapsed(key) ? [] : rows.map((pr) => pr.id),
+  );
   const selected = visible.find((pr) => pr.id === selectedId);
   const previewed = drawerOpen ? selected : undefined;
 
@@ -252,6 +262,8 @@ function OrgPage({
                   setDrawerOpen(true);
                 }}
                 onShowAll={showAll}
+                isCollapsed={isCollapsed}
+                onToggleGroup={toggleGroup}
               />
             )}
             <TruncationNote list={pullRequests.data} />
@@ -303,9 +315,9 @@ function LoadError({ result }: { result: UseQueryResult<PullRequestList> }) {
 
 function LoadingRows() {
   return (
-    <div className="min-h-0 flex-1 overflow-hidden" aria-busy="true">
+    <div className="min-h-0 flex-1 overflow-hidden px-2" aria-busy="true">
       {Array.from({ length: 12 }, (_, index) => (
-        <div key={index} className="flex h-9 items-center gap-3 border-b px-4">
+        <div key={index} className="flex h-9 items-center gap-3 px-2">
           <Skeleton className="size-4 rounded-full" />
           <Skeleton className="h-3 w-24" />
           <Skeleton

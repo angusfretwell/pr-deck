@@ -1,3 +1,4 @@
+import { ChevronRightIcon } from "lucide-react";
 import { useEffect, useRef, type CSSProperties } from "react";
 import { BadgePill } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
@@ -16,9 +17,20 @@ export interface PrTableProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onShowAll: () => void;
+  isCollapsed: (key: string) => boolean;
+  onToggleGroup: (key: string) => void;
 }
 
-export function PrTable({ groups, group, compact, selectedId, onSelect, onShowAll }: PrTableProps) {
+export function PrTable({
+  groups,
+  group,
+  compact,
+  selectedId,
+  onSelect,
+  onShowAll,
+  isCollapsed,
+  onToggleGroup,
+}: PrTableProps) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     ref.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: "nearest" });
@@ -58,9 +70,9 @@ export function PrTable({ groups, group, compact, selectedId, onSelect, onShowAl
         aria-selected={selected}
         onClick={() => onSelect(pr.id)}
         className={cn(
-          "grid h-9 grid-cols-(--columns) items-center gap-x-2.5 border-b px-4",
+          "grid h-9 grid-cols-(--columns) items-center gap-x-2.5 rounded-md px-2",
+          group !== "none" && "scroll-mt-11",
           selected ? "bg-info/8 dark:bg-info/16" : "hover:bg-accent",
-          selected && compact && "shadow-[inset_2px_0_0_var(--color-info)]",
         )}
       >
         <span className="truncate font-medium">
@@ -110,25 +122,41 @@ export function PrTable({ groups, group, compact, selectedId, onSelect, onShowAl
       ref={ref}
       role="listbox"
       aria-label="Pull requests"
-      className="cursor-default pb-12 text-[13px]"
+      className="cursor-default px-2 pb-12 text-[13px]"
       style={{ "--columns": columns } as CSSProperties}
     >
-      {groups.map(({ key, rows }) => (
-        <div key={key} role="group" aria-label={group === "none" ? undefined : key}>
-          {group !== "none" && (
-            <div className="flex items-center gap-2 px-4 pt-4 pb-1.5 font-semibold">
-              {group === "author" && rows[0] && (
-                <UserAvatar login={key} avatarUrl={rows[0].authorAvatarUrl} />
-              )}
-              {key}
-              <span className="font-medium text-muted-foreground/72 tabular-nums">
-                {rows.length}
-              </span>
-            </div>
-          )}
-          {rows.map(row)}
-        </div>
-      ))}
+      {groups.map(({ key, rows }) => {
+        const collapsed = isCollapsed(key);
+        return (
+          <div key={key} role="group" aria-label={group === "none" ? undefined : key}>
+            {group !== "none" && (
+              <div className="sticky top-0 z-10 bg-background py-1">
+                <button
+                  type="button"
+                  aria-expanded={!collapsed}
+                  onClick={() => onToggleGroup(key)}
+                  className="flex h-9 w-full items-center gap-2 rounded-md bg-muted px-2 text-left font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <ChevronRightIcon
+                    className={cn(
+                      "size-3.5 shrink-0 text-muted-foreground transition-transform duration-150 motion-reduce:transition-none",
+                      !collapsed && "rotate-90",
+                    )}
+                  />
+                  {group === "author" && rows[0] && (
+                    <UserAvatar login={key} avatarUrl={rows[0].authorAvatarUrl} />
+                  )}
+                  <span className="truncate">{key}</span>
+                  <span className="font-medium text-muted-foreground/72 tabular-nums">
+                    {rows.length}
+                  </span>
+                </button>
+              </div>
+            )}
+            {!collapsed && rows.map(row)}
+          </div>
+        );
+      })}
     </div>
   );
 }

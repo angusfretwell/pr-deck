@@ -8,3 +8,4 @@ export const useStoredViews = () => useLocalStorage<Record<string, View[]>>("pr-
 export const useGroup = () => useLocalStorage<Group>("pr-deck:group", "repo");
 export const useLastPath = () => useLocalStorage<string | null>("pr-deck:last-path", null);
 export const useHiddenOwners = () => useLocalStorage<string[]>("pr-deck:hidden-owners", []);
+export const useCollapsedGroups = () => useLocalStorage<string[]>("pr-deck:collapsed-groups", []);
