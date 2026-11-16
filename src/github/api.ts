@@ -9,7 +9,6 @@ import {
   type RawSession,
 } from "./mapping";
 import {
-  OPEN_COUNT_QUERY,
   PAGE_SIZE,
   PULL_REQUEST_DETAIL_QUERY,
   PULL_REQUESTS_QUERY,
@@ -30,10 +29,6 @@ interface PullRequestsResponse extends OwnerResponse {
     pageInfo: { hasNextPage: boolean; endCursor: string | null };
     nodes: (RawPullRequest | null)[];
   };
-}
-
-interface OpenCountResponse extends OwnerResponse {
-  search: { issueCount: number };
 }
 
 interface ViewerTeamsResponse {
@@ -108,15 +103,6 @@ export async function fetchPullRequests(
     pullRequests: nodes.map((node) => toPullRequest(node, { viewer, viewerTeams })),
     totalCount,
   };
-}
-
-export async function fetchOpenCount(token: string, owner: string): Promise<number> {
-  const response = await createClient(token)<OpenCountResponse>(OPEN_COUNT_QUERY, {
-    owner,
-    search: searchQuery(owner),
-  });
-  assertOwnerFound(response, owner);
-  return response.search.issueCount;
 }
 
 export async function fetchPullRequestDetail(

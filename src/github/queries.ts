@@ -98,17 +98,6 @@ export const PULL_REQUESTS_QUERY = `
   }
 `;
 
-export const OPEN_COUNT_QUERY = `
-  query OpenCount($owner: String!, $search: String!) {
-    repositoryOwner(login: $owner) {
-      login
-    }
-    search(query: $search, type: ISSUE, first: 0) {
-      issueCount
-    }
-  }
-`;
-
 export const VIEWER_TEAMS_QUERY = `
   query ViewerTeams($owner: String!, $viewer: String!) {
     repositoryOwner(login: $owner) {

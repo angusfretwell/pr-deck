@@ -1,13 +1,7 @@
 import { skipToken, useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { useToken } from "@/lib/storage";
 import type { PullRequestDetail, PullRequestList, Session } from "@/types";
-import {
-  fetchOpenCount,
-  fetchPullRequestDetail,
-  fetchPullRequests,
-  fetchSession,
-  isAuthError,
-} from "./api";
+import { fetchPullRequestDetail, fetchPullRequests, fetchSession, isAuthError } from "./api";
 
 const retry = (failureCount: number, error: Error) => !isAuthError(error) && failureCount < 3;
 
@@ -43,15 +37,6 @@ export function usePullRequests(owner: string): UseQueryResult<PullRequestList> 
       state.data?.pullRequests.some((pr) => pr.mergeability === "unknown")
         ? MERGEABILITY_PENDING_REFETCH_MS
         : live.refetchInterval,
-  });
-}
-
-export function useOpenCount(owner: string, enabled: boolean): UseQueryResult<number> {
-  const [token] = useToken();
-  return useQuery({
-    queryKey: ["open-count", owner],
-    queryFn: token && enabled ? () => fetchOpenCount(token, owner) : skipToken,
-    ...live,
   });
 }
 

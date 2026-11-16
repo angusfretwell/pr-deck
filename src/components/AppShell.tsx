@@ -1,5 +1,5 @@
 import { useIsFetching, useQueryClient } from "@tanstack/react-query";
-import { LogOutIcon, RefreshCwIcon, TriangleAlertIcon } from "lucide-react";
+import { LogOutIcon, RefreshCwIcon } from "lucide-react";
 import type { RefObject } from "react";
 import { useLocation } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,8 +16,6 @@ import {
 } from "@/components/ui/menu";
 import { Tabs, TabsList, TabsTab } from "@/components/ui/tabs";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "@/components/ui/tooltip";
-import { errorMessage } from "@/github/api";
-import { useOpenCount, usePullRequests } from "@/github/hooks";
 import { cn } from "@/lib/utils";
 import type { Account, Session } from "@/types";
 
@@ -54,11 +52,6 @@ export function AppShell({
             <TabsTab key={owner.login} value={owner.login}>
               <AccountAvatar account={owner} className="size-4.5 rounded-sm" />
               {owner.login}
-              {owner.login === activeOwner ? (
-                <LoadedCount owner={owner.login} />
-              ) : (
-                <OpenCount owner={owner.login} />
-              )}
             </TabsTab>
           ))}
         </TabsList>
@@ -115,29 +108,4 @@ function AccountAvatar({ account, className }: { account: Account; className: st
       <AvatarFallback>{account.login[0].toUpperCase()}</AvatarFallback>
     </Avatar>
   );
-}
-
-function LoadedCount({ owner }: { owner: string }) {
-  const { data, error } = usePullRequests(owner);
-  return <Count value={data?.totalCount} error={error} />;
-}
-
-function OpenCount({ owner }: { owner: string }) {
-  const { data, error } = useOpenCount(owner, true);
-  return <Count value={data} error={error} />;
-}
-
-function Count({ value, error }: { value: number | undefined; error: Error | null }) {
-  if (error && value === undefined) {
-    const message = errorMessage(error);
-    return (
-      <Tooltip>
-        <TooltipTrigger render={<span aria-label={message} />}>
-          <TriangleAlertIcon className="size-3.5 text-warning" />
-        </TooltipTrigger>
-        <TooltipPopup>{message}</TooltipPopup>
-      </Tooltip>
-    );
-  }
-  return <span className="text-muted-foreground text-xs tabular-nums">{value}</span>;
 }
