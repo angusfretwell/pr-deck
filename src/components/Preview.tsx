@@ -305,7 +305,7 @@ export function Preview({ pr, viewer, onClose }: PreviewProps) {
         </Button>
       </div>
       <div key={pr.id} className="max-w-190 px-6 pt-1 pb-12">
-        <h2 className="mt-1.5 mb-2 font-semibold text-[19px] leading-[1.3] tracking-[-0.01em]">
+        <h2 className="mt-1.5 mb-2 wrap-break-word font-semibold text-[19px] leading-[1.3] tracking-[-0.01em]">
           {pr.title}
         </h2>
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-muted-foreground">
