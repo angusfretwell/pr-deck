@@ -92,6 +92,7 @@ export interface RawCheckRun {
   startedAt: string | null;
   completedAt: string | null;
   detailsUrl: string | null;
+  isRequired: boolean;
 }
 
 export interface RawStatusContext {
@@ -99,6 +100,7 @@ export interface RawStatusContext {
   context: string;
   state: RawRollupState;
   targetUrl: string | null;
+  isRequired: boolean;
 }
 
 export interface RawPullRequestDetail {
@@ -275,6 +277,7 @@ export function toCheck(node: RawCheckRun | RawStatusContext): Check {
       state: CHECK_STATES[node.state],
       seconds: null,
       url: node.targetUrl,
+      required: node.isRequired,
     };
   }
   const conclusion = node.status === "COMPLETED" ? node.conclusion : null;
@@ -283,6 +286,7 @@ export function toCheck(node: RawCheckRun | RawStatusContext): Check {
     state: CHECK_STATES[conclusion ?? node.status],
     seconds: conclusion ? secondsBetween(node.startedAt, node.completedAt) : null,
     url: node.detailsUrl,
+    required: node.isRequired,
   };
 }
 

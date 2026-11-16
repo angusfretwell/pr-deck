@@ -50,6 +50,7 @@ export interface Check {
   state: CheckState;
   seconds: number | null;
   url: string | null;
+  required: boolean;
 }
 
 export interface FileChange {

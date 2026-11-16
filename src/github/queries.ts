@@ -145,11 +145,13 @@ export const PULL_REQUEST_DETAIL_QUERY = `
                       startedAt
                       completedAt
                       detailsUrl
+                      isRequired(pullRequestId: $id)
                     }
                     ... on StatusContext {
                       context
                       state
                       targetUrl
+                      isRequired(pullRequestId: $id)
                     }
                   }
                 }

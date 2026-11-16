@@ -244,6 +244,7 @@ describe("toCheck", () => {
       startedAt,
       completedAt,
       detailsUrl: "https://ci/build",
+      isRequired: true,
     });
 
   it.each([
@@ -275,6 +276,7 @@ describe("toCheck", () => {
       state: "pass",
       seconds: 90,
       url: "https://ci/build",
+      required: true,
     });
     expect(checkRun("IN_PROGRESS", null, "2026-11-01T00:00:00Z").seconds).toBeNull();
   });
@@ -293,12 +295,19 @@ describe("toCheck", () => {
     ["EXPECTED", "pending"],
   ] as const)("maps a status context %s to %s", (state, expected) => {
     expect(
-      toCheck({ __typename: "StatusContext", context: "vercel", state, targetUrl: null }),
+      toCheck({
+        __typename: "StatusContext",
+        context: "vercel",
+        state,
+        targetUrl: null,
+        isRequired: false,
+      }),
     ).toEqual({
       name: "vercel",
       state: expected,
       seconds: null,
       url: null,
+      required: false,
     });
   });
 });
@@ -325,12 +334,14 @@ describe("toPullRequestDetail", () => {
                       startedAt: "2026-11-01T00:00:00Z",
                       completedAt: "2026-11-01T00:00:05Z",
                       detailsUrl: "https://ci/test",
+                      isRequired: true,
                     },
                     {
                       __typename: "StatusContext",
                       context: "deploy",
                       state: "SUCCESS",
                       targetUrl: "https://deploy",
+                      isRequired: false,
                     },
                   ],
                 },
@@ -345,8 +356,14 @@ describe("toPullRequestDetail", () => {
       ...stats,
       bodyHtml: "<p>Hello</p>",
       checks: [
-        { name: "test", state: "fail", seconds: 5, url: "https://ci/test" },
-        { name: "deploy", state: "pass", seconds: null, url: "https://deploy" },
+        { name: "test", state: "fail", seconds: 5, url: "https://ci/test", required: true },
+        {
+          name: "deploy",
+          state: "pass",
+          seconds: null,
+          url: "https://deploy",
+          required: false,
+        },
       ],
       files: [{ path: "src/a.ts", additions: 4, deletions: 1 }],
     });

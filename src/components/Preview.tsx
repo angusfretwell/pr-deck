@@ -1,5 +1,7 @@
 import type { UseQueryResult } from "@tanstack/react-query";
-import { useEffect, useRef, type ReactNode } from "react";
+import { ChevronDownIcon, XIcon } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useResizeObserver } from "usehooks-ts";
 import { BadgeIcon, BadgePill } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,15 +20,8 @@ export interface PreviewProps {
 }
 
 const DIFF_SQUARES = 5;
-
-const PROSE = cn(
-  "prose prose-sm prose-neutral dark:prose-invert max-w-none text-[13px] leading-[1.55]",
-  "[&>:first-child]:mt-0 [&>:last-child]:mb-0",
-  "prose-headings:mt-4 prose-headings:mb-2 prose-headings:font-semibold prose-h1:text-base prose-h2:text-[15px] prose-h3:text-[13px]",
-  "prose-code:before:content-none prose-code:after:content-none",
-  "prose-pre:bg-muted prose-pre:text-foreground",
-  "prose-img:inline prose-img:h-auto prose-img:max-w-full [&_table]:block [&_table]:overflow-x-auto",
-);
+const DESCRIPTION_MAX_HEIGHT = 300;
+const PREVIEWED_FILES = 5;
 
 function DiffBar({ file }: { file: FileChange }) {
   const added = Math.round(
@@ -77,6 +72,19 @@ function Line({ children }: { children: ReactNode }) {
   return <div className="flex items-center gap-2 px-3 py-1.75">{children}</div>;
 }
 
+function ShowMore({ children, onClick }: { children: ReactNode; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full cursor-pointer items-center gap-1.5 px-3 py-1.75 text-muted-foreground hover:text-foreground"
+    >
+      <ChevronDownIcon className="size-3.5" />
+      {children}
+    </button>
+  );
+}
+
 function SkeletonLines() {
   return (
     <Lines>
@@ -102,11 +110,96 @@ function Detail({ query, skeleton, children }: DetailProps) {
   return skeleton;
 }
 
-function openLinksInNewTab(node: HTMLElement | null) {
-  node?.querySelectorAll("a[href]").forEach((link) => {
-    link.setAttribute("target", "_blank");
-    link.setAttribute("rel", "noopener noreferrer");
-  });
+function Description({ html }: { html: string }) {
+  const ref = useRef<HTMLDivElement>(null!);
+  const { height = 0 } = useResizeObserver({ ref });
+  const [expanded, setExpanded] = useState(false);
+  const collapsed = !expanded && height > DESCRIPTION_MAX_HEIGHT * 1.2;
+
+  useEffect(() => {
+    ref.current.querySelectorAll("a[href]").forEach((link) => {
+      link.setAttribute("target", "_blank");
+      link.setAttribute("rel", "noopener noreferrer");
+    });
+  }, [html]);
+
+  return (
+    <>
+      <div className={cn(collapsed && "max-h-75 overflow-hidden mask-b-from-50%")}>
+        <div
+          ref={ref}
+          className="typeset [--typeset-flow:1em] [--typeset-leading:1.6] [--typeset-size:13px]"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      </div>
+      {collapsed && (
+        <div className="-mx-3">
+          <ShowMore onClick={() => setExpanded(true)}>Show more</ShowMore>
+        </div>
+      )}
+    </>
+  );
+}
+
+function CheckList({ checks }: { checks: Check[] }) {
+  const [expanded, setExpanded] = useState(false);
+  const required = checks.filter((check) => check.required);
+  const shown = expanded || required.length === 0 ? checks : required;
+
+  return (
+    <Lines>
+      {checks.length === 0 && (
+        <Line>
+          <span className="text-muted-foreground">No checks.</span>
+        </Line>
+      )}
+      {shown.map((check) => (
+        <Line key={check.name}>
+          <BadgeIcon badge={CHECK_BADGE[check.state]} />
+          <span className="min-w-0 flex-1 truncate">{check.name}</span>
+          <span className="text-muted-foreground/72 tabular-nums">{duration(check)}</span>
+        </Line>
+      ))}
+      {shown.length < checks.length && (
+        <ShowMore onClick={() => setExpanded(true)}>
+          Show {checks.length - shown.length} optional
+        </ShowMore>
+      )}
+    </Lines>
+  );
+}
+
+const linesChanged = (file: FileChange) => file.additions + file.deletions;
+
+function FileList({ files, changedFiles }: { files: FileChange[]; changedFiles: number }) {
+  const [expanded, setExpanded] = useState(false);
+  const shown = expanded
+    ? files
+    : files.toSorted((a, b) => linesChanged(b) - linesChanged(a)).slice(0, PREVIEWED_FILES);
+
+  return (
+    <Lines>
+      {shown.map((file) => (
+        <Line key={file.path}>
+          <span className="min-w-0 flex-1 truncate font-mono text-xs">{file.path}</span>
+          <span className="text-success-foreground tabular-nums">+{file.additions}</span>
+          <span className="text-destructive-foreground tabular-nums">−{file.deletions}</span>
+          <DiffBar file={file} />
+        </Line>
+      ))}
+      {shown.length < files.length ? (
+        <ShowMore onClick={() => setExpanded(true)}>
+          Show {files.length - shown.length} more
+        </ShowMore>
+      ) : (
+        changedFiles > files.length && (
+          <Line>
+            <span className="text-muted-foreground">and {changedFiles - files.length} more</span>
+          </Line>
+        )
+      )}
+    </Lines>
+  );
 }
 
 export function Preview({ pr, viewer, onClose }: PreviewProps) {
@@ -125,14 +218,15 @@ export function Preview({ pr, viewer, onClose }: PreviewProps) {
       className="min-h-0 overflow-y-auto border-l bg-background text-[13px] transition-[opacity,translate] duration-200 ease-out starting:translate-x-4 starting:opacity-0 motion-reduce:transition-none"
     >
       <Button
+        aria-label="Close"
         variant="ghost"
-        size="sm"
-        className="sticky top-2.5 z-10 float-right me-3 mt-2.5 bg-background text-muted-foreground"
+        size="icon"
+        className="sticky top-2 z-10 float-right me-2 mt-2 bg-background"
         onClick={onClose}
       >
-        Close
+        <XIcon />
       </Button>
-      <div className="max-w-190 px-6 pt-5 pb-12">
+      <div key={pr.id} className="max-w-190 px-6 pt-5 pb-12">
         <div className="flex gap-2 font-semibold">
           {pr.repo}
           <span className="font-medium text-muted-foreground/72">#{pr.number}</span>
@@ -181,11 +275,7 @@ export function Preview({ pr, viewer, onClose }: PreviewProps) {
           >
             {(detail) =>
               detail.bodyHtml ? (
-                <div
-                  ref={openLinksInNewTab}
-                  className={PROSE}
-                  dangerouslySetInnerHTML={{ __html: detail.bodyHtml }}
-                />
+                <Description html={detail.bodyHtml} />
               ) : (
                 <p className="text-muted-foreground">No description.</p>
               )
@@ -213,47 +303,12 @@ export function Preview({ pr, viewer, onClose }: PreviewProps) {
         </Section>
         <Section title="Checks">
           <Detail query={query} skeleton={<SkeletonLines />}>
-            {({ checks }) => (
-              <Lines>
-                {checks.length === 0 && (
-                  <Line>
-                    <span className="text-muted-foreground">No checks.</span>
-                  </Line>
-                )}
-                {checks.map((check) => (
-                  <Line key={check.name}>
-                    <BadgeIcon badge={CHECK_BADGE[check.state]} />
-                    <span className="min-w-0 flex-1 truncate">{check.name}</span>
-                    <span className="text-muted-foreground/72 tabular-nums">{duration(check)}</span>
-                  </Line>
-                ))}
-              </Lines>
-            )}
+            {({ checks }) => <CheckList checks={checks} />}
           </Detail>
         </Section>
         <Section title={`Files changed${query.data ? ` · ${query.data.changedFiles}` : ""}`}>
           <Detail query={query} skeleton={<SkeletonLines />}>
-            {({ files, changedFiles }) => (
-              <Lines>
-                {files.map((file) => (
-                  <Line key={file.path}>
-                    <span className="min-w-0 flex-1 truncate font-mono text-xs">{file.path}</span>
-                    <span className="text-success-foreground tabular-nums">+{file.additions}</span>
-                    <span className="text-destructive-foreground tabular-nums">
-                      −{file.deletions}
-                    </span>
-                    <DiffBar file={file} />
-                  </Line>
-                ))}
-                {changedFiles > files.length && (
-                  <Line>
-                    <span className="text-muted-foreground">
-                      and {changedFiles - files.length} more
-                    </span>
-                  </Line>
-                )}
-              </Lines>
-            )}
+            {({ files, changedFiles }) => <FileList files={files} changedFiles={changedFiles} />}
           </Detail>
         </Section>
       </div>
