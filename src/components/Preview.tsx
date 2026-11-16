@@ -69,7 +69,7 @@ function updated(updatedAt: string) {
 function Section({ title, children }: { title: ReactNode; children: ReactNode }) {
   return (
     <section className="mt-5.5">
-      <h3 className="mb-2 font-semibold text-[11px] text-muted-foreground uppercase tracking-[0.05em]">
+      <h3 className="mb-2 font-semibold text-muted-foreground text-xs uppercase tracking-[0.05em]">
         {title}
       </h3>
       {children}
@@ -169,7 +169,7 @@ function Description({ html }: { html: string }) {
       <div className={cn(collapsed && "max-h-75 overflow-hidden mask-b-from-80%")}>
         <div
           ref={ref}
-          className="typeset [--typeset-flow:1em] [--typeset-leading:1.6] [--typeset-size:13px]"
+          className="typeset [--typeset-flow:1em] [--typeset-leading:1.6] [--typeset-size:var(--text-sm)]"
           dangerouslySetInnerHTML={{ __html: html }}
         />
       </div>
@@ -294,7 +294,7 @@ export function Preview({ pr, viewer, onClose }: PreviewProps) {
     <aside
       ref={ref}
       aria-label="Pull request preview"
-      className="bg-background text-[13px] max-md:overflow-x-clip md:min-h-0 md:overflow-x-hidden md:overflow-y-auto md:overscroll-contain md:border-l transition-[opacity,translate] duration-200 ease-out starting:translate-x-4 starting:opacity-0 motion-reduce:transition-none"
+      className="bg-background max-md:overflow-x-clip md:min-h-0 md:overflow-x-hidden md:overflow-y-auto md:overscroll-contain md:border-l transition-[opacity,translate] duration-200 ease-out starting:translate-x-4 starting:opacity-0 motion-reduce:transition-none"
     >
       <div className="sticky top-(--pinned-height) z-10 flex items-center justify-between gap-2 bg-background py-2 ps-6 pe-2">
         <div className="flex min-w-0 gap-2 font-semibold">
@@ -309,7 +309,7 @@ export function Preview({ pr, viewer, onClose }: PreviewProps) {
         key={pr.id}
         className="max-w-190 px-6 pt-1 pb-[calc(--spacing(12)+env(safe-area-inset-bottom))]"
       >
-        <h2 className="mt-1.5 mb-2 wrap-break-word font-semibold text-[19px] leading-[1.3] tracking-[-0.01em]">
+        <h2 className="mt-1.5 mb-2 wrap-break-word font-semibold text-2xl leading-[1.3] sm:text-xl tracking-[-0.01em]">
           {pr.title}
         </h2>
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-muted-foreground">

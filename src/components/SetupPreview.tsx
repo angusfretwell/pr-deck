@@ -160,7 +160,7 @@ export function SetupPreview({ className }: { className?: string }) {
       inert
       aria-hidden
       className={cn(
-        "pointer-events-none isolate flex select-none flex-col bg-background text-[13px] text-foreground",
+        "pointer-events-none isolate flex select-none flex-col bg-background text-foreground",
         className,
       )}
     >

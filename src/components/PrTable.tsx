@@ -80,10 +80,10 @@ export function PrTable({
             : onSelect(pr.id)
         }
         className={cn(
-          "grid h-9 grid-cols-(--columns) items-center gap-x-2.5 rounded-md px-2",
+          "grid h-10 grid-cols-(--columns) items-center gap-x-2.5 rounded-md px-2 sm:h-9",
           group === "none"
             ? "scroll-mt-(--pinned-height)"
-            : "scroll-mt-[calc(var(--pinned-height,0px)+--spacing(11))]",
+            : "scroll-mt-[calc(var(--pinned-height,0px)+--spacing(12))] sm:scroll-mt-[calc(var(--pinned-height,0px)+--spacing(11))]",
           selected ? "bg-info/8 dark:bg-info/16" : "hover:bg-accent",
         )}
       >
@@ -138,7 +138,7 @@ export function PrTable({
       ref={ref}
       role="listbox"
       aria-label="Pull requests"
-      className={cn("cursor-default px-2 text-[13px]", group !== "none" && "pt-1")}
+      className={cn("cursor-default px-2", group !== "none" && "pt-1")}
       style={{ "--columns": columns } as CSSProperties}
     >
       {groups.map(({ key, rows }) => {
@@ -156,11 +156,11 @@ export function PrTable({
                   type="button"
                   aria-expanded={!collapsed}
                   onClick={(event) => onToggleGroup(key, event.altKey)}
-                  className="flex h-8 w-full items-center gap-2 rounded-md bg-muted px-2 text-left font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex h-9 w-full items-center gap-2 rounded-md bg-muted px-2 text-left font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-8"
                 >
                   <ChevronRightIcon
                     className={cn(
-                      "size-3.5 shrink-0 text-muted-foreground transition-transform duration-150 motion-reduce:transition-none",
+                      "size-4 shrink-0 text-muted-foreground transition-transform sm:size-3.5 duration-150 motion-reduce:transition-none",
                       !collapsed && "rotate-90",
                     )}
                   />

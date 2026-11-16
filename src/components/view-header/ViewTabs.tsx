@@ -180,7 +180,7 @@ function TabPill({ active, children }: { active: boolean; children: ReactNode })
       data-pressed={active ? "" : undefined}
       className={cn(
         toggleVariants({ variant: "outline", size: "sm" }),
-        "shrink-0 cursor-default gap-0 rounded-full px-0 text-[13px] before:rounded-full sm:text-[13px]",
+        "shrink-0 cursor-default gap-0 rounded-full px-0 before:rounded-full",
       )}
     >
       {children}
@@ -201,7 +201,7 @@ function ViewTab({ value, name, count, className, onDoubleClick }: ViewTabProps)
     <TabsTab
       value={value}
       className={cn(
-        "h-full rounded-full border-0 px-3 text-[13px] text-inherit hover:text-inherit data-active:text-inherit sm:h-full sm:text-[13px]",
+        "h-full rounded-full border-0 px-3 text-inherit hover:text-inherit data-active:text-inherit sm:h-full",
         className,
       )}
       onDoubleClick={onDoubleClick}
@@ -219,7 +219,7 @@ function ViewTab({ value, name, count, className, onDoubleClick }: ViewTabProps)
 function Count({ children }: { children: number | undefined }) {
   if (children === undefined) return null;
   return (
-    <span className="ms-1.5 shrink-0 text-[11px] leading-none text-muted-foreground tabular-nums">
+    <span className="ms-1.5 shrink-0 text-sm leading-none text-muted-foreground tabular-nums sm:text-xs">
       {children}
     </span>
   );

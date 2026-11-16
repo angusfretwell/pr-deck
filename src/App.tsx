@@ -48,7 +48,7 @@ export default function App() {
   );
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)] text-[13px] text-foreground md:h-dvh">
+    <div className="flex min-h-dvh flex-col bg-background pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)] text-base text-foreground sm:text-sm md:h-dvh">
       {token ? (
         <Workspace onSignOut={() => signOut(null)} />
       ) : (

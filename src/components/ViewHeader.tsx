@@ -47,8 +47,6 @@ export interface ViewHeaderProps {
   viewer: string;
 }
 
-const BAR_BUTTON = "px-2.5 sm:h-6.5 sm:text-[13px]";
-
 export function ViewHeader({
   filters,
   filtersChanged,
@@ -109,29 +107,29 @@ export function ViewHeader({
     filtersChanged &&
     (tabs.activeViewId === null ? (
       <>
-        <Button variant="ghost" size="xs" className={BAR_BUTTON} onClick={onResetFilters}>
+        <Button variant="ghost" size="sm" onClick={onResetFilters}>
           Clear
         </Button>
-        <Button size="xs" className={BAR_BUTTON} onClick={onSaveAsNewView}>
+        <Button size="sm" onClick={onSaveAsNewView}>
           Save as view
         </Button>
       </>
     ) : (
       <>
-        <Button variant="ghost" size="xs" className={BAR_BUTTON} onClick={onResetFilters}>
+        <Button variant="ghost" size="sm" onClick={onResetFilters}>
           Reset
         </Button>
-        <Button variant="ghost" size="xs" className={BAR_BUTTON} onClick={onSaveAsNewView}>
+        <Button variant="ghost" size="sm" onClick={onSaveAsNewView}>
           Save as new view
         </Button>
-        <Button size="xs" className={BAR_BUTTON} onClick={onSaveView}>
+        <Button size="sm" onClick={onSaveView}>
           Save
         </Button>
       </>
     ));
 
   return (
-    <div className="border-b text-[13px]">
+    <div className="border-b">
       <div className="flex items-center gap-1.5 px-4 py-2.5">
         <ViewTabs {...tabs} />
         <Hint label="Filter">

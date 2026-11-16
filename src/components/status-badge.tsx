@@ -14,7 +14,7 @@ import type { Badge, BadgeIconName, Tone } from "@/lib/pr";
 import { cn } from "@/lib/utils";
 
 export const pillClassName =
-  "h-5 rounded-md bg-foreground/6 px-1.5 text-foreground/80 sm:h-5 sm:text-xs dark:bg-foreground/10";
+  "h-6 rounded-md bg-foreground/6 px-1.5 text-foreground/80 sm:h-5 dark:bg-foreground/10";
 
 const ICON_TONE: Record<Tone, string> = {
   ok: "text-success",

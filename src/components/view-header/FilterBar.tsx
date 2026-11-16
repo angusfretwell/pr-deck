@@ -46,12 +46,12 @@ export function FilterBar({
   };
 
   return (
-    <div className="mx-4 mb-2.5 flex flex-wrap items-center gap-1.5 rounded-[10px] bg-muted px-2 py-1.5 text-[13px]">
+    <div className="mx-4 mb-2.5 flex flex-wrap items-center gap-1.5 rounded-[10px] bg-muted px-2 py-1.5">
       {filters.map((filter, index) => (
         <span
           key={filter.key}
           ref={anchorRef(index)}
-          className="inline-flex h-6.5 items-stretch divide-x overflow-hidden whitespace-nowrap rounded-md border bg-background"
+          className="inline-flex h-8 items-stretch sm:h-7 divide-x overflow-hidden whitespace-nowrap rounded-md border bg-background"
         >
           <span className="inline-flex items-center px-2 text-muted-foreground">
             {PROPERTY[filter.key].name}
@@ -77,15 +77,15 @@ export function FilterBar({
             aria-label="Remove filter"
             onClick={() => onRemove(index)}
           >
-            <XIcon className="size-3" />
+            <XIcon className="size-3.5 sm:size-3" />
           </button>
         </span>
       ))}
       <Button
         ref={anchorRef("add")}
         variant="ghost"
-        size="icon-xs"
-        className="text-muted-foreground sm:size-6.5"
+        size="icon-sm"
+        className="text-muted-foreground"
         aria-label="Add filter"
         {...trigger}
         onClick={() => onToggleMenu("add")}
