@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Empty, EmptyContent, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { UserAvatar } from "@/components/user-avatar";
-import type { PullRequestGroup } from "@/lib/filters";
 import { age, isStale, issueBadges, statusBadge } from "@/lib/pr";
+import type { PrListGroup } from "@/lib/pr-list";
 import { cn } from "@/lib/utils";
 import type { Group, PullRequest } from "@/types";
 
 export interface PrTableProps {
-  groups: PullRequestGroup[];
+  groups: PrListGroup[];
   group: Group;
   compact: boolean;
   selectedId: string | null;
@@ -21,7 +21,6 @@ export interface PrTableProps {
   query: string;
   onShowAll: () => void;
   onClearSearch: () => void;
-  isCollapsed: (key: string) => boolean;
   onToggleGroup: (key: string, all: boolean) => void;
 }
 
@@ -34,7 +33,6 @@ export function PrTable({
   query,
   onShowAll,
   onClearSearch,
-  isCollapsed,
   onToggleGroup,
 }: PrTableProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -159,10 +157,10 @@ export function PrTable({
       className={cn("@container cursor-default px-2", group !== "none" && "pt-1")}
       style={{ "--columns": columns } as CSSProperties}
     >
-      {groups.map(({ key, rows }) => (
+      {groups.map(({ key, rows, collapsed }) => (
         <Collapsible
           key={key}
-          open={!isCollapsed(key)}
+          open={!collapsed}
           onOpenChange={(_, { event }) => onToggleGroup(key, "altKey" in event && event.altKey)}
           className="data-closed:pb-1"
         >
