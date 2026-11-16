@@ -103,7 +103,9 @@ function SkeletonLines() {
     <Lines>
       {["w-1/2", "w-2/3", "w-2/5"].map((width) => (
         <Line key={width}>
-          <Skeleton className={`h-4.5 ${width}`} />
+          <span className="flex h-lh w-full items-center">
+            <Skeleton className={`h-4.5 ${width}`} />
+          </span>
         </Line>
       ))}
     </Lines>
