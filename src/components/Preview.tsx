@@ -2,7 +2,7 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import { ChevronDownIcon, XIcon } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useResizeObserver } from "usehooks-ts";
-import { BadgeIcon, BadgePill } from "@/components/status-badge";
+import { BadgeIcon, BadgePill, pillClassName } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -252,7 +252,7 @@ export function Preview({ pr, viewer, onClose }: PreviewProps) {
           )}
           {pr.mergeability === "conflict" && <BadgePill badge={CONFLICT_BADGE} />}
           {pr.isDraft && (
-            <Badge variant="outline" className="text-muted-foreground">
+            <Badge variant="secondary" className={pillClassName}>
               Draft
             </Badge>
           )}

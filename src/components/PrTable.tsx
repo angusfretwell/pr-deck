@@ -1,6 +1,6 @@
 import { ChevronRightIcon } from "lucide-react";
 import { useEffect, useRef, type CSSProperties } from "react";
-import { BadgePill } from "@/components/status-badge";
+import { BadgePill, pillClassName } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription } from "@/components/ui/empty";
@@ -81,7 +81,7 @@ export function PrTable({
       >
         <span className="truncate font-medium">
           {pr.isDraft && (
-            <Badge variant="outline" className="me-1.5 bg-transparent text-muted-foreground">
+            <Badge variant="secondary" className={cn(pillClassName, "me-1.5")}>
               Draft
             </Badge>
           )}
