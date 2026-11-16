@@ -9,6 +9,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/u
 import { Spinner } from "@/components/ui/spinner";
 import { errorMessage, isAuthError } from "@/github/api";
 import { useSession } from "@/github/hooks";
+import { clearQueryCache } from "@/lib/query-cache";
 import { useHiddenOwners, useLastPath, useToken } from "@/lib/storage";
 import type { Session } from "@/types";
 
@@ -21,16 +22,16 @@ export default function App() {
     (message: string | null) => {
       setAuthError(message);
       removeToken();
-      queryClient.clear();
+      clearQueryCache();
     },
-    [queryClient, removeToken],
+    [removeToken],
   );
 
   const signIn = (newToken: string, session: Session) => {
-    queryClient.clear();
+    clearQueryCache();
+    setToken(newToken);
     queryClient.setQueryData(["session"], session);
     setAuthError(null);
-    setToken(newToken);
   };
 
   useEffect(
