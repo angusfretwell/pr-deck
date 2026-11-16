@@ -1,9 +1,9 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 import { CircleAlertIcon, GitPullRequestIcon } from "lucide-react";
-import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useResizeObserver } from "usehooks-ts";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
+import { useMediaQuery, useResizeObserver } from "usehooks-ts";
 import { Redirect, useLocation } from "wouter";
-import { Preview } from "@/components/Preview";
+import { Preview, PreviewDrawer } from "@/components/Preview";
 import { PrTable } from "@/components/PrTable";
 import { Button } from "@/components/ui/button";
 import {
@@ -105,12 +105,8 @@ function OrgPage({
   const [filterMenu, setFilterMenu] = useState<FilterMenuState | null>(null);
   const [displayMenuOpen, setDisplayMenuOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [drawerOpen, setDrawerOpenState] = useState(false);
-  const listScrollY = useRef(0);
-  const setDrawerOpen = (open: boolean) => {
-    if (open && !drawerOpen) listScrollY.current = window.scrollY;
-    setDrawerOpenState(open);
-  };
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const desktop = useMediaQuery("(min-width: 768px)");
   const viewHeaderRef = useRef<HTMLDivElement>(null!);
   const { height: viewHeaderHeight = 0 } = useResizeObserver({ ref: viewHeaderRef });
   const pullRequests = usePullRequests(owner);
@@ -133,12 +129,7 @@ function OrgPage({
     isCollapsed(key) ? [] : rows.map((pr) => pr.id),
   );
   const selected = visible.find((pr) => pr.id === selectedId);
-  const previewed = drawerOpen ? selected : undefined;
-  const previewOpen = previewed !== undefined;
-
-  useLayoutEffect(() => {
-    if (!previewOpen) window.scrollTo({ top: listScrollY.current });
-  }, [previewOpen]);
+  const previewed = desktop && drawerOpen ? selected : undefined;
 
   useEffect(() => setLastPath(location), [location, setLastPath]);
 
@@ -279,12 +270,7 @@ function OrgPage({
             previewed && "md:grid-cols-[minmax(0,1fr)_minmax(380px,min(46%,800px))]",
           )}
         >
-          <div
-            className={cn(
-              "flex flex-1 flex-col pb-[calc(--spacing(4)+env(safe-area-inset-bottom))] md:min-h-0 md:overflow-y-auto md:overscroll-contain",
-              previewed && "max-md:hidden",
-            )}
-          >
+          <div className="flex flex-1 flex-col pb-[calc(--spacing(4)+env(safe-area-inset-bottom))] md:min-h-0 md:overflow-y-auto md:overscroll-contain">
             {orgPrs.length === 0 ? (
               <NoPullRequests owner={owner} result={pullRequests} />
             ) : (
@@ -306,8 +292,17 @@ function OrgPage({
             )}
             <TruncationNote list={pullRequests.data} />
           </div>
-          {previewed && (
-            <Preview pr={previewed} viewer={viewer} onClose={() => setDrawerOpen(false)} />
+          {desktop ? (
+            previewed && (
+              <Preview pr={previewed} viewer={viewer} onClose={() => setDrawerOpen(false)} />
+            )
+          ) : (
+            <PreviewDrawer
+              pr={selected}
+              open={drawerOpen}
+              viewer={viewer}
+              onClose={() => setDrawerOpen(false)}
+            />
           )}
         </div>
       ) : pullRequests.isError ? (

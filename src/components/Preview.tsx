@@ -5,6 +5,7 @@ import { useResizeObserver } from "usehooks-ts";
 import { BadgeIcon, BadgePill, pillClassName } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Drawer, DrawerPanel, DrawerPopup, DrawerTitle } from "@/components/ui/drawer";
 import {
   Empty,
   EmptyDescription,
@@ -282,128 +283,172 @@ function FileList({ files, changedFiles }: { files: FileChange[]; changedFiles: 
   );
 }
 
+function PreviewHeading({ pr }: { pr: PullRequest }) {
+  return (
+    <div className="flex min-w-0 gap-2 font-semibold">
+      <span className="truncate">{pr.repo}</span>
+      <span className="font-medium text-muted-foreground/72">#{pr.number}</span>
+    </div>
+  );
+}
+
+function PreviewBody({
+  pr,
+  viewer,
+  className,
+}: {
+  pr: PullRequest;
+  viewer: string;
+  className: string;
+}) {
+  const query = usePullRequestDetail(pr.id);
+  const you = (login: string) => (login === viewer ? " (you)" : "");
+
+  return (
+    <div
+      className={cn("max-w-190 pb-[calc(--spacing(12)+env(safe-area-inset-bottom))]", className)}
+    >
+      <h2 className="mt-1.5 mb-2 wrap-break-word font-semibold text-2xl leading-[1.3] sm:text-xl tracking-[-0.01em]">
+        {pr.title}
+      </h2>
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-muted-foreground">
+        <span className="inline-flex items-center gap-1.25">
+          <UserAvatar login={pr.author} avatarUrl={pr.authorAvatarUrl} />
+          {pr.author}
+          {you(pr.author)}
+        </span>
+        <span>updated {updated(pr.updatedAt)}</span>
+        {query.data ? (
+          <span>
+            <span className="text-success-foreground">
+              +{query.data.additions.toLocaleString()}
+            </span>{" "}
+            <span className="text-destructive-foreground">
+              −{query.data.deletions.toLocaleString()}
+            </span>{" "}
+            · {query.data.changedFiles.toLocaleString()} files
+          </span>
+        ) : (
+          query.isPending && <Skeleton className="h-3.5 w-28" />
+        )}
+        {pr.mergeability === "conflict" && <BadgePill badge={CONFLICT_BADGE} />}
+        {pr.isDraft && (
+          <Badge variant="secondary" className={pillClassName}>
+            Draft
+          </Badge>
+        )}
+      </div>
+      <div className="mt-4 mb-5">
+        <Button render={<a href={pr.url} target="_blank" rel="noopener" />}>Open in GitHub</Button>
+      </div>
+      <Section title="Description">
+        <Detail
+          query={query}
+          skeleton={
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-3.5 w-full" />
+              <Skeleton className="h-3.5 w-4/5" />
+              <Skeleton className="h-3.5 w-3/5" />
+            </div>
+          }
+        >
+          {(detail) =>
+            detail.bodyHtml ? (
+              <Description html={detail.bodyHtml} />
+            ) : (
+              <p className="text-muted-foreground">No description.</p>
+            )
+          }
+        </Detail>
+      </Section>
+      <Section title="Reviewers">
+        <Lines>
+          {pr.reviewers.length === 0 && (
+            <Line>
+              <span className="text-muted-foreground">Nobody has reviewed this yet.</span>
+            </Line>
+          )}
+          {pr.reviewers.map((reviewer) => (
+            <Line key={reviewer.login}>
+              <UserAvatar login={reviewer.login} avatarUrl={reviewer.avatarUrl} />
+              <span className="min-w-0 flex-1 truncate">
+                {reviewer.login}
+                {you(reviewer.login)}
+              </span>
+              <BadgePill badge={REVIEW_BADGE[reviewer.verdict]} />
+            </Line>
+          ))}
+        </Lines>
+      </Section>
+      {!query.isError && (
+        <>
+          <Section title="Checks">
+            <Detail query={query} skeleton={<SkeletonLines />}>
+              {({ checks }) => <CheckList checks={checks} />}
+            </Detail>
+          </Section>
+          <Section
+            title={`Files changed${query.data ? ` · ${query.data.changedFiles.toLocaleString()}` : ""}`}
+          >
+            <Detail query={query} skeleton={<SkeletonLines />}>
+              {({ files, changedFiles }) => <FileList files={files} changedFiles={changedFiles} />}
+            </Detail>
+          </Section>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function Preview({ pr, viewer, onClose }: PreviewProps) {
   const ref = useRef<HTMLElement>(null);
   useEffect(() => {
     ref.current?.scrollTo({ top: 0 });
-    window.scrollTo({ top: 0 });
   }, [pr.id]);
-
-  const query = usePullRequestDetail(pr.id);
-  const you = (login: string) => (login === viewer ? " (you)" : "");
 
   return (
     <aside
       ref={ref}
       aria-label="Pull request preview"
-      className="bg-background max-md:overflow-x-clip md:min-h-0 md:overflow-x-hidden md:overflow-y-auto md:overscroll-contain md:border-l transition-[opacity,translate] duration-200 ease-out starting:translate-x-4 starting:opacity-0 motion-reduce:transition-none"
+      className="min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain border-l bg-background transition-[opacity,translate] duration-200 ease-out starting:translate-x-4 starting:opacity-0 motion-reduce:transition-none"
     >
-      <div className="sticky top-(--pinned-height) z-10 flex items-center justify-between gap-2 bg-background py-2 ps-6 pe-2">
-        <div className="flex min-w-0 gap-2 font-semibold">
-          <span className="truncate">{pr.repo}</span>
-          <span className="font-medium text-muted-foreground/72">#{pr.number}</span>
-        </div>
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-background py-2 ps-6 pe-2">
+        <PreviewHeading pr={pr} />
         <Button aria-label="Close" variant="ghost" size="icon" onClick={onClose}>
           <XIcon />
         </Button>
       </div>
-      <div
-        key={pr.id}
-        className="max-w-190 px-6 pt-1 pb-[calc(--spacing(12)+env(safe-area-inset-bottom))]"
-      >
-        <h2 className="mt-1.5 mb-2 wrap-break-word font-semibold text-2xl leading-[1.3] sm:text-xl tracking-[-0.01em]">
-          {pr.title}
-        </h2>
-        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-muted-foreground">
-          <span className="inline-flex items-center gap-1.25">
-            <UserAvatar login={pr.author} avatarUrl={pr.authorAvatarUrl} />
-            {pr.author}
-            {you(pr.author)}
-          </span>
-          <span>updated {updated(pr.updatedAt)}</span>
-          {query.data ? (
-            <span>
-              <span className="text-success-foreground">
-                +{query.data.additions.toLocaleString()}
-              </span>{" "}
-              <span className="text-destructive-foreground">
-                −{query.data.deletions.toLocaleString()}
-              </span>{" "}
-              · {query.data.changedFiles.toLocaleString()} files
-            </span>
-          ) : (
-            query.isPending && <Skeleton className="h-3.5 w-28" />
-          )}
-          {pr.mergeability === "conflict" && <BadgePill badge={CONFLICT_BADGE} />}
-          {pr.isDraft && (
-            <Badge variant="secondary" className={pillClassName}>
-              Draft
-            </Badge>
-          )}
-        </div>
-        <div className="mt-4 mb-5">
-          <Button render={<a href={pr.url} target="_blank" rel="noopener" />}>
-            Open in GitHub
-          </Button>
-        </div>
-        <Section title="Description">
-          <Detail
-            query={query}
-            skeleton={
-              <div className="flex flex-col gap-2">
-                <Skeleton className="h-3.5 w-full" />
-                <Skeleton className="h-3.5 w-4/5" />
-                <Skeleton className="h-3.5 w-3/5" />
-              </div>
-            }
-          >
-            {(detail) =>
-              detail.bodyHtml ? (
-                <Description html={detail.bodyHtml} />
-              ) : (
-                <p className="text-muted-foreground">No description.</p>
-              )
-            }
-          </Detail>
-        </Section>
-        <Section title="Reviewers">
-          <Lines>
-            {pr.reviewers.length === 0 && (
-              <Line>
-                <span className="text-muted-foreground">Nobody has reviewed this yet.</span>
-              </Line>
-            )}
-            {pr.reviewers.map((reviewer) => (
-              <Line key={reviewer.login}>
-                <UserAvatar login={reviewer.login} avatarUrl={reviewer.avatarUrl} />
-                <span className="min-w-0 flex-1 truncate">
-                  {reviewer.login}
-                  {you(reviewer.login)}
-                </span>
-                <BadgePill badge={REVIEW_BADGE[reviewer.verdict]} />
-              </Line>
-            ))}
-          </Lines>
-        </Section>
-        {!query.isError && (
-          <>
-            <Section title="Checks">
-              <Detail query={query} skeleton={<SkeletonLines />}>
-                {({ checks }) => <CheckList checks={checks} />}
-              </Detail>
-            </Section>
-            <Section
-              title={`Files changed${query.data ? ` · ${query.data.changedFiles.toLocaleString()}` : ""}`}
-            >
-              <Detail query={query} skeleton={<SkeletonLines />}>
-                {({ files, changedFiles }) => (
-                  <FileList files={files} changedFiles={changedFiles} />
-                )}
-              </Detail>
-            </Section>
-          </>
-        )}
-      </div>
+      <PreviewBody key={pr.id} pr={pr} viewer={viewer} className="px-6 pt-1" />
     </aside>
+  );
+}
+
+export interface PreviewDrawerProps {
+  pr: PullRequest | undefined;
+  open: boolean;
+  viewer: string;
+  onClose: () => void;
+}
+
+export function PreviewDrawer({ pr, open, viewer, onClose }: PreviewDrawerProps) {
+  return (
+    <Drawer open={open && pr !== undefined} onOpenChange={(next) => !next && onClose()}>
+      <DrawerPopup
+        showBar
+        className="h-[calc(100dvh-max(--spacing(2),env(safe-area-inset-top))---spacing(8))] text-base sm:text-sm"
+      >
+        {pr && (
+          <DrawerPanel className="p-0">
+            <DrawerTitle
+              render={<div />}
+              className="px-4 pt-3 font-normal text-base leading-normal sm:text-sm"
+            >
+              <PreviewHeading pr={pr} />
+            </DrawerTitle>
+            <PreviewBody key={pr.id} pr={pr} viewer={viewer} className="px-4 pt-1" />
+          </DrawerPanel>
+        )}
+      </DrawerPopup>
+    </Drawer>
   );
 }
