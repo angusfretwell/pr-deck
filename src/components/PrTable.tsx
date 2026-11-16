@@ -4,7 +4,8 @@ import { useEffect, useRef, type CSSProperties } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { BadgeIcon, BadgePill } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Empty, EmptyContent, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { UserAvatar } from "@/components/user-avatar";
 import type { PullRequestGroup } from "@/lib/filters";
 import { age, isStale, issueBadges, statusBadge } from "@/lib/pr";
@@ -39,7 +40,7 @@ export function PrTable({
   const ref = useRef<HTMLDivElement>(null);
   const summary = useMediaQuery("(max-width: 639px)") || compact;
   useEffect(() => {
-    ref.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: "nearest" });
+    ref.current?.querySelector("[data-selected]")?.scrollIntoView({ block: "nearest" });
   }, [selectedId]);
 
   if (groups.every(({ rows }) => rows.length === 0)) {
@@ -47,13 +48,15 @@ export function PrTable({
       <Empty>
         <EmptyHeader>
           <EmptyMedia variant="icon">{query ? <SearchXIcon /> : <FunnelXIcon />}</EmptyMedia>
-          <EmptyTitle className="text-base">
+          <EmptyTitle>
             {query ? `No results for "${query}"` : "Nothing matches this view"}
           </EmptyTitle>
         </EmptyHeader>
-        <Button size="sm" variant="outline" onClick={query ? onClearSearch : onShowAll}>
-          {query ? "Clear search" : "Show all open"}
-        </Button>
+        <EmptyContent>
+          <Button size="sm" variant="outline" onClick={query ? onClearSearch : onShowAll}>
+            {query ? "Clear search" : "Show all open"}
+          </Button>
+        </EmptyContent>
       </Empty>
     );
   }
@@ -75,8 +78,7 @@ export function PrTable({
     return (
       <div
         key={pr.id}
-        role="option"
-        aria-selected={selected}
+        data-selected={selected || undefined}
         onClick={(event) =>
           event.metaKey || event.ctrlKey
             ? window.open(pr.url, "_blank", "noopener")
@@ -94,11 +96,20 @@ export function PrTable({
           {pr.isDraft && (
             <GitPullRequestDraftIcon
               aria-label="Draft"
-              size={14}
-              className="shrink-0 text-muted-foreground"
+              className="size-3.5 shrink-0 text-muted-foreground"
             />
           )}
-          <bdi className="truncate">{pr.title}</bdi>
+          <a
+            href={pr.url}
+            aria-current={selected || undefined}
+            onClick={(event) => {
+              if (event.metaKey || event.ctrlKey || event.shiftKey) event.stopPropagation();
+              else event.preventDefault();
+            }}
+            className="truncate rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <bdi>{pr.title}</bdi>
+          </a>
           {!summary && !showRepo && (
             <span className="ms-0.5 shrink-0 font-normal text-muted-foreground/72">
               {group === "repo" ? "" : `${pr.repo} `}#{pr.number}
@@ -106,15 +117,13 @@ export function PrTable({
           )}
         </span>
         {summary ? (
-          <BadgeIcon badge={statusBadge(pr)} size={14} />
+          <BadgeIcon badge={statusBadge(pr)} className="size-3.5" />
         ) : (
-          <>
-            <span className="flex min-w-0 items-center justify-end gap-1 overflow-hidden">
-              {issueBadges(pr).map((badge) => (
-                <BadgePill key={badge.label} badge={badge} />
-              ))}
-            </span>
-          </>
+          <span className="flex min-w-0 items-center justify-end gap-1 overflow-hidden">
+            {issueBadges(pr).map((badge) => (
+              <BadgePill key={badge.label} badge={badge} />
+            ))}
+          </span>
         )}
         {showRepo && (
           <span
@@ -134,7 +143,7 @@ export function PrTable({
         {showFace && <UserAvatar login={pr.author} avatarUrl={pr.authorAvatarUrl} />}
         <span
           className={cn(
-            "text-right tabular-nums",
+            "text-end tabular-nums",
             isStale(pr.updatedAt) ? "text-warning-foreground" : "text-muted-foreground",
           )}
         >
@@ -147,50 +156,35 @@ export function PrTable({
   return (
     <div
       ref={ref}
-      role="listbox"
-      aria-label="Pull requests"
       className={cn("@container cursor-default px-2", group !== "none" && "pt-1")}
       style={{ "--columns": columns } as CSSProperties}
     >
-      {groups.map(({ key, rows }) => {
-        const collapsed = isCollapsed(key);
-        return (
-          <div
-            key={key}
-            role="group"
-            aria-label={group === "none" ? undefined : key}
-            className={cn(collapsed && "pb-1")}
-          >
-            {group !== "none" && (
-              <div className="sticky top-[calc(var(--pinned-height,0px)+--spacing(2))] z-10 mt-1 w-0">
-                <div className="w-[100cqw] bg-background shadow-[0_-8px_0_var(--background)]">
-                  <button
-                    type="button"
-                    aria-expanded={!collapsed}
-                    onClick={(event) => onToggleGroup(key, event.altKey)}
-                    className="flex h-9 w-full items-center gap-2 rounded-md bg-muted px-2 text-left font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-8"
-                  >
-                    <ChevronRightIcon
-                      className={cn(
-                        "size-4 shrink-0 text-muted-foreground transition-transform sm:size-3.5 duration-150 motion-reduce:transition-none",
-                        !collapsed && "rotate-90",
-                      )}
-                    />
-                    {group === "author" && rows[0] && (
-                      <UserAvatar login={key} avatarUrl={rows[0].authorAvatarUrl} />
-                    )}
-                    <span className="truncate">{key}</span>
-                    <span className="font-medium text-muted-foreground/72 tabular-nums">
-                      {rows.length}
-                    </span>
-                  </button>
-                </div>
+      {groups.map(({ key, rows }) => (
+        <Collapsible
+          key={key}
+          open={!isCollapsed(key)}
+          onOpenChange={(_, { event }) => onToggleGroup(key, "altKey" in event && event.altKey)}
+          className="data-closed:pb-1"
+        >
+          {group !== "none" && (
+            <div className="sticky top-[calc(var(--pinned-height,0px)+--spacing(2))] z-10 mt-1 w-0">
+              <div className="w-[100cqw] bg-background shadow-[0_-8px_0_var(--background)]">
+                <CollapsibleTrigger className="flex h-9 w-full items-center gap-2 rounded-md bg-muted px-2 text-start font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-8">
+                  <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground transition-transform duration-150 in-data-panel-open:rotate-90 motion-reduce:transition-none sm:size-3.5" />
+                  {group === "author" && rows[0] && (
+                    <UserAvatar login={key} avatarUrl={rows[0].authorAvatarUrl} />
+                  )}
+                  <span className="truncate">{key}</span>
+                  <span className="text-muted-foreground/72 tabular-nums">{rows.length}</span>
+                </CollapsibleTrigger>
               </div>
-            )}
-            {!collapsed && <div className="flex flex-col gap-0.5 pt-1">{rows.map(row)}</div>}
-          </div>
-        );
-      })}
+            </div>
+          )}
+          <CollapsiblePanel>
+            <div className="flex flex-col gap-0.5 pt-1">{rows.map(row)}</div>
+          </CollapsiblePanel>
+        </Collapsible>
+      ))}
     </div>
   );
 }
