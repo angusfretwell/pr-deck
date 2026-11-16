@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import type { PullRequest } from "../types";
-import { age, CI_BADGE, CHECK_BADGE, isStale, issueBadges, viewerReview } from "./pr";
+import { age, CI_BADGE, CHECK_BADGE, isStale, issueBadges, statusBadge, viewerReview } from "./pr";
 
 const pr = (overrides: Partial<PullRequest> = {}): PullRequest => ({
   id: "1",
@@ -44,6 +44,39 @@ describe("viewerReview", () => {
 
   it("returns none without a verdict", () => {
     expect(viewerReview(pr({ reviewers }), "someone")).toBe("none");
+  });
+});
+
+describe("statusBadge", () => {
+  const status = (overrides: Partial<PullRequest>) => {
+    const { tone, icon, label } = statusBadge(pr(overrides));
+    return [tone, icon, label];
+  };
+
+  it("lists every blocker under one failing icon", () => {
+    expect(status({ ci: "fail", mergeability: "conflict", review: "changes" })).toEqual([
+      "bad",
+      "fail",
+      "Checks failing, Conflicts, Changes requested",
+    ]);
+  });
+
+  it("puts blockers ahead of running checks", () => {
+    expect(status({ ci: "pending", review: "changes" })).toEqual([
+      "bad",
+      "fail",
+      "Changes requested",
+    ]);
+    expect(status({ ci: "pending" })).toEqual(["warn", "pending", "Checks running"]);
+  });
+
+  it("is ready only when approved, passing and clean", () => {
+    expect(status({ review: "approved" })).toEqual(["ok", "pass", "Ready to merge"]);
+    expect(status({ review: "approved", mergeability: "unknown" })).toEqual([
+      "mute",
+      "open",
+      "Awaiting review",
+    ]);
   });
 });
 

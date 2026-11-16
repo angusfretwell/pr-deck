@@ -1,12 +1,14 @@
+import { GitPullRequestDraftIcon } from "@primer/octicons-react";
 import { ChevronRightIcon } from "lucide-react";
 import { useEffect, useRef, type CSSProperties } from "react";
-import { BadgePill, pillClassName } from "@/components/status-badge";
+import { useMediaQuery } from "usehooks-ts";
+import { BadgeIcon, BadgePill, pillClassName } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription } from "@/components/ui/empty";
 import { UserAvatar } from "@/components/user-avatar";
 import type { PullRequestGroup } from "@/lib/filters";
-import { age, isStale, issueBadges } from "@/lib/pr";
+import { age, isStale, issueBadges, statusBadge } from "@/lib/pr";
 import { cn } from "@/lib/utils";
 import type { Group, PullRequest } from "@/types";
 
@@ -36,6 +38,7 @@ export function PrTable({
   onToggleGroup,
 }: PrTableProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const summary = useMediaQuery("(max-width: 639px)") || compact;
   useEffect(() => {
     ref.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: "nearest" });
   }, [selectedId]);
@@ -55,16 +58,16 @@ export function PrTable({
     );
   }
 
-  const showRepo = !compact && group !== "repo";
-  const showAuthor = !compact && group !== "author";
-  const showFace = compact && group !== "author";
+  const showRepo = !summary && group !== "repo";
+  const showAuthor = !summary && group !== "author";
+  const showFace = summary && group !== "author";
   const columns = [
     "minmax(0, 1fr)",
     "auto",
     ...(showRepo ? ["150px"] : []),
     ...(showAuthor ? ["150px"] : []),
     ...(showFace ? ["18px"] : []),
-    "52px",
+    summary ? "40px" : "52px",
   ].join(" ");
 
   const row = (pr: PullRequest) => {
@@ -87,24 +90,42 @@ export function PrTable({
           selected ? "bg-info/8 dark:bg-info/16" : "hover:bg-accent",
         )}
       >
-        <span className="truncate font-medium">
-          {pr.isDraft && (
-            <Badge variant="secondary" className={cn(pillClassName, "me-1.5")}>
-              Draft
-            </Badge>
-          )}
-          <bdi>{pr.title}</bdi>
-          {!showRepo && (
-            <span className="ms-2 font-normal text-muted-foreground/72">
-              {group === "repo" ? "" : `${pr.repo} `}#{pr.number}
+        {summary ? (
+          <>
+            <span className="flex min-w-0 items-center gap-1.5 font-medium">
+              {pr.isDraft && (
+                <GitPullRequestDraftIcon
+                  aria-label="Draft"
+                  size={14}
+                  className="shrink-0 text-muted-foreground"
+                />
+              )}
+              <bdi className="truncate">{pr.title}</bdi>
             </span>
-          )}
-        </span>
-        <span className="flex min-w-0 items-center justify-end gap-1 overflow-hidden">
-          {issueBadges(pr).map((badge) => (
-            <BadgePill key={badge.label} badge={badge} />
-          ))}
-        </span>
+            <BadgeIcon badge={statusBadge(pr)} size={14} />
+          </>
+        ) : (
+          <>
+            <span className="truncate font-medium">
+              {pr.isDraft && (
+                <Badge variant="secondary" className={cn(pillClassName, "me-1.5")}>
+                  Draft
+                </Badge>
+              )}
+              <bdi>{pr.title}</bdi>
+              {!showRepo && (
+                <span className="ms-2 font-normal text-muted-foreground/72">
+                  {group === "repo" ? "" : `${pr.repo} `}#{pr.number}
+                </span>
+              )}
+            </span>
+            <span className="flex min-w-0 items-center justify-end gap-1 overflow-hidden">
+              {issueBadges(pr).map((badge) => (
+                <BadgePill key={badge.label} badge={badge} />
+              ))}
+            </span>
+          </>
+        )}
         {showRepo && (
           <span
             title={`${pr.repo} #${pr.number}`}

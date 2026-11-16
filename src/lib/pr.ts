@@ -1,7 +1,16 @@
 import type { CheckState, CiState, PullRequest, ReviewState } from "../types";
 
 export type Tone = "ok" | "bad" | "warn" | "mute";
-export type BadgeIconName = "pass" | "fail" | "pending" | "ring" | "check" | "x" | "chat" | "alert";
+export type BadgeIconName =
+  | "pass"
+  | "fail"
+  | "pending"
+  | "ring"
+  | "open"
+  | "check"
+  | "x"
+  | "chat"
+  | "alert";
 
 export interface Badge {
   tone: Tone;
@@ -57,6 +66,19 @@ export function issueBadges(pr: PullRequest): Badge[] {
     badges.push({ ...REVIEW_BADGE.approved, label: "Ready" });
   }
   return badges;
+}
+
+export function statusBadge(pr: PullRequest): Badge {
+  const blockers = [
+    pr.ci === "fail" && "Checks failing",
+    pr.mergeability === "conflict" && "Conflicts",
+    pr.review === "changes" && "Changes requested",
+  ].filter((label) => label !== false);
+  if (blockers.length) return { tone: "bad", icon: "fail", label: blockers.join(", ") };
+  if (pr.ci === "pending") return { ...PENDING, label: "Checks running" };
+  if (pr.review === "approved" && pr.ci === "pass" && pr.mergeability === "clean")
+    return { tone: "ok", icon: "pass", label: "Ready to merge" };
+  return { tone: "mute", icon: "open", label: "Awaiting review" };
 }
 
 const HOUR_MS = 3_600_000;
