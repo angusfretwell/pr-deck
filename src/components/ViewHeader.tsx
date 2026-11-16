@@ -138,7 +138,7 @@ export function ViewHeader({
           <Button
             variant="outline"
             size="icon-sm"
-            className="ms-auto rounded-full before:rounded-full data-pressed:bg-accent"
+            className="ms-auto shrink-0 rounded-full before:rounded-full data-pressed:bg-accent"
             aria-label="Filter"
             ref={anchorRef("header")}
             data-pressed={filterMenu?.anchor === "header" ? "" : undefined}

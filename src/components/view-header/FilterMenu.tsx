@@ -2,6 +2,7 @@ import { ChevronRightIcon } from "lucide-react";
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverPopup } from "@/components/ui/popover";
+import { UserAvatar } from "@/components/user-avatar";
 import { type Option, passes, PROPERTIES, PROPERTY, type Property } from "@/lib/filters";
 import { cn } from "@/lib/utils";
 import type { Filter, PropertyKey, PullRequest } from "@/types";
@@ -83,6 +84,19 @@ function FilterMenuList({
   const [propertyKey, setPropertyKey] = useState(initialKey);
   const [query, setQuery] = useState("");
   const [highlight, setHighlight] = useState(0);
+
+  const avatarUrls = new Map(orgPrs.map((pr) => [pr.author, pr.authorAvatarUrl]));
+  const avatarOf = (item: Extract<Item, { kind: "value" }>) => {
+    if (item.property.key !== "author") return null;
+    const login = item.option.value === "@me" ? viewer : item.option.value;
+    return (
+      <UserAvatar
+        login={login}
+        avatarUrl={avatarUrls.get(login) ?? ""}
+        className="[--avatar-size:--spacing(4)]"
+      />
+    );
+  };
 
   const needle = query.trim().toLowerCase();
   const matches = (label: string) => label.toLowerCase().includes(needle);
@@ -166,6 +180,7 @@ function FilterMenuList({
           {item.kind === "value" ? (
             <>
               <Checkbox checked={item.checked} tabIndex={-1} aria-hidden />
+              {avatarOf(item)}
               {item.prefixed && (
                 <span className="shrink-0 text-muted-foreground">{item.property.name}</span>
               )}

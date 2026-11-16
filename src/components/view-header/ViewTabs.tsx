@@ -1,5 +1,5 @@
 import { XIcon } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   AlertDialog,
   AlertDialogClose,
@@ -43,45 +43,87 @@ export function ViewTabs({
   onRenameView,
   onDeleteView,
 }: ViewTabsProps) {
+  const scroller = useRef<HTMLDivElement>(null);
+  const [overflow, setOverflow] = useState({ start: false, end: false });
+
+  useEffect(() => {
+    const element = scroller.current;
+    if (!element) return;
+    const update = () =>
+      setOverflow({
+        start: element.scrollLeft > 1,
+        end: element.scrollLeft + element.clientWidth < element.scrollWidth - 1,
+      });
+    update();
+    element.addEventListener("scroll", update, { passive: true });
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
+    if (element.firstElementChild) observer.observe(element.firstElementChild);
+    return () => {
+      element.removeEventListener("scroll", update);
+      observer.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    scroller.current
+      ?.querySelector("[data-pressed]")
+      ?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [activeViewId, views.length]);
+
+  const left = overflow.start ? "transparent, #000 24px" : "#000, #000";
+  const right = overflow.end ? "#000 calc(100% - 24px), transparent" : "#000, #000";
+  const maskImage = `linear-gradient(to right, ${left}, ${right})`;
+
   return (
     <Tabs
+      className="min-w-0"
       value={activeViewId ?? ALL_OPEN_TAB}
       onValueChange={(value: string) => onSelectView(value === ALL_OPEN_TAB ? null : value)}
     >
-      <TabsList className="flex-wrap justify-start gap-1.5 bg-transparent p-0 *:data-[slot=tab-indicator]:hidden">
-        <TabPill active={activeViewId === null}>
-          <ViewTab value={ALL_OPEN_TAB} name={ALL_OPEN_NAME} count={allOpenCount} />
-        </TabPill>
-        {views.map((view) => {
-          const active = view.id === activeViewId;
-          const count = viewCounts[view.id];
-          if (view.id === renamingViewId) {
+      <div
+        ref={scroller}
+        className="-my-1 overflow-x-auto py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        style={{ maskImage, WebkitMaskImage: maskImage }}
+      >
+        <TabsList className="justify-start gap-1.5 bg-transparent p-0 *:data-[slot=tab-indicator]:hidden">
+          <TabPill active={activeViewId === null}>
+            <ViewTab value={ALL_OPEN_TAB} name={ALL_OPEN_NAME} count={allOpenCount} />
+          </TabPill>
+          {views.map((view) => {
+            const active = view.id === activeViewId;
+            const count = viewCounts[view.id];
+            if (view.id === renamingViewId) {
+              return (
+                <TabPill key={view.id} active={active}>
+                  <span className="px-3 leading-4">
+                    <RenameInput
+                      name={view.name}
+                      onCommit={(name) => onRenameView(view.id, name)}
+                    />
+                    <Count>{count}</Count>
+                  </span>
+                </TabPill>
+              );
+            }
+            const deletable = active && !view.isDefault;
             return (
               <TabPill key={view.id} active={active}>
-                <span className="px-3 leading-4">
-                  <RenameInput name={view.name} onCommit={(name) => onRenameView(view.id, name)} />
-                  <Count>{count}</Count>
-                </span>
+                <ViewTab
+                  value={view.id}
+                  name={view.name}
+                  count={count}
+                  className={cn(deletable && "pe-1.5")}
+                  onDoubleClick={() => onRenamingViewChange(view.id)}
+                />
+                {deletable && (
+                  <DeleteViewButton name={view.name} onConfirm={() => onDeleteView(view.id)} />
+                )}
               </TabPill>
             );
-          }
-          const deletable = active && !view.isDefault;
-          return (
-            <TabPill key={view.id} active={active}>
-              <ViewTab
-                value={view.id}
-                name={view.name}
-                count={count}
-                className={cn(deletable && "pe-1.5")}
-                onDoubleClick={() => onRenamingViewChange(view.id)}
-              />
-              {deletable && (
-                <DeleteViewButton name={view.name} onConfirm={() => onDeleteView(view.id)} />
-              )}
-            </TabPill>
-          );
-        })}
-      </TabsList>
+          })}
+        </TabsList>
+      </div>
     </Tabs>
   );
 }
@@ -127,7 +169,7 @@ function TabPill({ active, children }: { active: boolean; children: ReactNode })
       data-pressed={active ? "" : undefined}
       className={cn(
         toggleVariants({ variant: "outline", size: "sm" }),
-        "cursor-default gap-0 rounded-full px-0 text-[13px] before:rounded-full sm:text-[13px]",
+        "shrink-0 cursor-default gap-0 rounded-full px-0 text-[13px] before:rounded-full sm:text-[13px]",
       )}
     >
       {children}
@@ -153,8 +195,11 @@ function ViewTab({ value, name, count, className, onDoubleClick }: ViewTabProps)
       )}
       onDoubleClick={onDoubleClick}
     >
-      <span className="leading-4">
-        {name} <Count>{count}</Count>
+      <span className="flex max-w-50 items-center leading-4">
+        <span className="truncate" title={name}>
+          {name}
+        </span>
+        <Count>{count}</Count>
       </span>
     </TabsTab>
   );
@@ -163,7 +208,7 @@ function ViewTab({ value, name, count, className, onDoubleClick }: ViewTabProps)
 function Count({ children }: { children: number | undefined }) {
   if (children === undefined) return null;
   return (
-    <span className="ms-0.5 text-[11px] leading-none text-muted-foreground tabular-nums">
+    <span className="ms-1.5 shrink-0 text-[11px] leading-none text-muted-foreground tabular-nums">
       {children}
     </span>
   );
@@ -174,7 +219,7 @@ function RenameInput({ name, onCommit }: { name: string; onCommit: (name: string
   return (
     <input
       aria-label="View name"
-      className="bg-transparent font-medium outline-none"
+      className="max-w-50 bg-transparent font-medium outline-none"
       style={{ width: `${Math.max(draft.length, 4) + 1}ch` }}
       value={draft}
       autoFocus
