@@ -72,20 +72,15 @@ export function ViewTabs({
       ?.scrollIntoView({ inline: "center", block: "nearest" });
   }, [activeViewId, views.length, countsKey]);
 
-  const left = overflow.start ? "transparent, #000 24px" : "#000, #000";
-  const right = overflow.end ? "#000 calc(100% - 24px), transparent" : "#000, #000";
-  const maskImage = `linear-gradient(to right, ${left}, ${right})`;
-
   return (
     <Tabs
-      className="min-w-0"
+      className="relative min-w-0"
       value={activeViewId ?? ALL_OPEN_TAB}
       onValueChange={(value: string) => onSelectView(value === ALL_OPEN_TAB ? null : value)}
     >
       <div
         ref={scroller}
         className="-my-1 overflow-x-auto overflow-y-hidden py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        style={{ maskImage, WebkitMaskImage: maskImage }}
       >
         <TabsList className="justify-start gap-1.5 bg-transparent p-0 *:data-[slot=tab-indicator]:hidden">
           <TabPill active={activeViewId === null}>
@@ -125,7 +120,22 @@ export function ViewTabs({
           })}
         </TabsList>
       </div>
+      <EdgeFade side="start" visible={overflow.start} />
+      <EdgeFade side="end" visible={overflow.end} />
     </Tabs>
+  );
+}
+
+function EdgeFade({ side, visible }: { side: "start" | "end"; visible: boolean }) {
+  return (
+    <div
+      aria-hidden
+      className={cn(
+        "pointer-events-none absolute inset-y-0 w-6 from-background to-transparent transition-opacity",
+        side === "start" ? "start-0 bg-linear-to-r" : "end-0 bg-linear-to-l",
+        !visible && "opacity-0",
+      )}
+    />
   );
 }
 
