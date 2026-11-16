@@ -284,6 +284,7 @@ export function Preview({ pr, viewer, onClose }: PreviewProps) {
   const ref = useRef<HTMLElement>(null);
   useEffect(() => {
     ref.current?.scrollTo({ top: 0 });
+    window.scrollTo({ top: 0 });
   }, [pr.id]);
 
   const query = usePullRequestDetail(pr.id);
@@ -293,9 +294,9 @@ export function Preview({ pr, viewer, onClose }: PreviewProps) {
     <aside
       ref={ref}
       aria-label="Pull request preview"
-      className="min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain border-l bg-background text-[13px] transition-[opacity,translate] duration-200 ease-out starting:translate-x-4 starting:opacity-0 motion-reduce:transition-none"
+      className="bg-background text-[13px] max-md:overflow-x-clip md:min-h-0 md:overflow-x-hidden md:overflow-y-auto md:overscroll-contain md:border-l transition-[opacity,translate] duration-200 ease-out starting:translate-x-4 starting:opacity-0 motion-reduce:transition-none"
     >
-      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-background py-2 ps-6 pe-2">
+      <div className="sticky top-(--pinned-height) z-10 flex items-center justify-between gap-2 bg-background py-2 ps-6 pe-2">
         <div className="flex min-w-0 gap-2 font-semibold">
           <span className="truncate">{pr.repo}</span>
           <span className="font-medium text-muted-foreground/72">#{pr.number}</span>
@@ -304,7 +305,10 @@ export function Preview({ pr, viewer, onClose }: PreviewProps) {
           <XIcon />
         </Button>
       </div>
-      <div key={pr.id} className="max-w-190 px-6 pt-1 pb-12">
+      <div
+        key={pr.id}
+        className="max-w-190 px-6 pt-1 pb-[calc(--spacing(12)+env(safe-area-inset-bottom))]"
+      >
         <h2 className="mt-1.5 mb-2 wrap-break-word font-semibold text-[19px] leading-[1.3] tracking-[-0.01em]">
           {pr.title}
         </h2>

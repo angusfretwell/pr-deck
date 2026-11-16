@@ -39,8 +39,8 @@ export function SetupScreen({ initialError, onSignIn }: SetupScreenProps) {
   };
 
   return (
-    <main className="grid min-h-0 flex-1 overflow-y-auto lg:grid-cols-[minmax(360px,420px)_1fr]">
-      <section className="flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-10">
+    <main className="grid flex-1 md:min-h-0 md:overflow-y-auto lg:grid-cols-[minmax(360px,420px)_1fr]">
+      <section className="flex flex-col justify-center px-6 pt-12 pb-[calc(--spacing(12)+env(safe-area-inset-bottom))] sm:px-12 lg:px-10">
         <div className="mx-auto w-full max-w-sm">
           <div className="flex items-center gap-2 font-semibold text-sm">
             <Logo />

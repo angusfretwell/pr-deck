@@ -54,7 +54,7 @@ export function AppShell({
   const organisations = session.owners.filter((owner) => owner.login !== session.viewer.login);
 
   return (
-    <header className="flex h-[50px] shrink-0 items-center gap-3 border-b px-4">
+    <header className="flex h-[50px] shrink-0 items-center gap-3 border-b bg-background px-4 max-md:sticky max-md:top-0 max-md:z-20">
       <Tabs
         className="min-w-0 overflow-x-auto"
         value={activeOwner}

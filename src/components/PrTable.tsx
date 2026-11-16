@@ -81,7 +81,9 @@ export function PrTable({
         }
         className={cn(
           "grid h-9 grid-cols-(--columns) items-center gap-x-2.5 rounded-md px-2",
-          group !== "none" && "scroll-mt-11",
+          group === "none"
+            ? "scroll-mt-(--pinned-height)"
+            : "scroll-mt-[calc(var(--pinned-height,0px)+--spacing(11))]",
           selected ? "bg-info/8 dark:bg-info/16" : "hover:bg-accent",
         )}
       >
@@ -149,7 +151,7 @@ export function PrTable({
             className={cn(collapsed && "pb-1")}
           >
             {group !== "none" && (
-              <div className="sticky top-1 z-10 mt-1 bg-background shadow-[0_-4px_0_var(--background)]">
+              <div className="sticky top-[calc(var(--pinned-height,0px)+--spacing(1))] z-10 mt-1 bg-background shadow-[0_-4px_0_var(--background)]">
                 <button
                   type="button"
                   aria-expanded={!collapsed}

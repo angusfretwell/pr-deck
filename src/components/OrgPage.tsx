@@ -1,6 +1,7 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 import { CircleAlertIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useResizeObserver } from "usehooks-ts";
 import { Redirect, useLocation } from "wouter";
 import { Preview } from "@/components/Preview";
 import { PrTable } from "@/components/PrTable";
@@ -104,7 +105,14 @@ function OrgPage({
   const [filterMenu, setFilterMenu] = useState<FilterMenuState | null>(null);
   const [displayMenuOpen, setDisplayMenuOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerOpen, setDrawerOpenState] = useState(false);
+  const listScrollY = useRef(0);
+  const setDrawerOpen = (open: boolean) => {
+    if (open && !drawerOpen) listScrollY.current = window.scrollY;
+    setDrawerOpenState(open);
+  };
+  const viewHeaderRef = useRef<HTMLDivElement>(null!);
+  const { height: viewHeaderHeight = 0 } = useResizeObserver({ ref: viewHeaderRef });
   const pullRequests = usePullRequests(owner);
 
   const orgPrs = pullRequests.data?.pullRequests ?? [];
@@ -126,6 +134,11 @@ function OrgPage({
   );
   const selected = visible.find((pr) => pr.id === selectedId);
   const previewed = drawerOpen ? selected : undefined;
+  const previewOpen = previewed !== undefined;
+
+  useLayoutEffect(() => {
+    if (!previewOpen) window.scrollTo({ top: listScrollY.current });
+  }, [previewOpen]);
 
   useEffect(() => setLastPath(location), [location, setLastPath]);
 
@@ -213,50 +226,65 @@ function OrgPage({
   });
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <ViewHeader
-        views={views}
-        viewCounts={
-          pullRequests.data
-            ? Object.fromEntries(
-                views.map((view) => [
-                  view.id,
-                  orgPrs.filter((pr) => passes(pr, view.filters, viewer)).length,
-                ]),
-              )
-            : {}
-        }
-        allOpenCount={pullRequests.data?.pullRequests.length}
-        activeViewId={activeView?.id ?? null}
-        renamingViewId={renamingViewId}
-        onSelectView={(id) => navigate(viewPath(owner, views.find((view) => view.id === id)?.name))}
-        onRenamingViewChange={onRenamingViewChange}
-        onRenameView={renameView}
-        onDeleteView={deleteView}
-        filters={filters}
-        filtersChanged={filtersChanged}
-        onFiltersChange={setFilters}
-        onResetFilters={() => setFilters(savedFilters)}
-        onSaveView={() => activeView && replaceView({ ...activeView, filters })}
-        onSaveAsNewView={saveAsNewView}
-        filterMenu={filterMenu}
-        onFilterMenuChange={setFilterMenu}
-        displayMenuOpen={displayMenuOpen}
-        onDisplayMenuOpenChange={setDisplayMenuOpen}
-        group={group}
-        onGroupChange={setGroup}
-        orgPrs={orgPrs}
-        scopedPrs={scopedPrs}
-        viewer={viewer}
-      />
+    <div
+      className="flex min-h-0 flex-1 flex-col [--pinned-height:0px] max-md:[--pinned-height:calc(50px+var(--view-header-height))]"
+      style={{ "--view-header-height": `${viewHeaderHeight}px` } as CSSProperties}
+    >
+      <div
+        ref={viewHeaderRef}
+        className="bg-background max-md:sticky max-md:top-[50px] max-md:z-20"
+      >
+        <ViewHeader
+          views={views}
+          viewCounts={
+            pullRequests.data
+              ? Object.fromEntries(
+                  views.map((view) => [
+                    view.id,
+                    orgPrs.filter((pr) => passes(pr, view.filters, viewer)).length,
+                  ]),
+                )
+              : {}
+          }
+          allOpenCount={pullRequests.data?.pullRequests.length}
+          activeViewId={activeView?.id ?? null}
+          renamingViewId={renamingViewId}
+          onSelectView={(id) =>
+            navigate(viewPath(owner, views.find((view) => view.id === id)?.name))
+          }
+          onRenamingViewChange={onRenamingViewChange}
+          onRenameView={renameView}
+          onDeleteView={deleteView}
+          filters={filters}
+          filtersChanged={filtersChanged}
+          onFiltersChange={setFilters}
+          onResetFilters={() => setFilters(savedFilters)}
+          onSaveView={() => activeView && replaceView({ ...activeView, filters })}
+          onSaveAsNewView={saveAsNewView}
+          filterMenu={filterMenu}
+          onFilterMenuChange={setFilterMenu}
+          displayMenuOpen={displayMenuOpen}
+          onDisplayMenuOpenChange={setDisplayMenuOpen}
+          group={group}
+          onGroupChange={setGroup}
+          orgPrs={orgPrs}
+          scopedPrs={scopedPrs}
+          viewer={viewer}
+        />
+      </div>
       {pullRequests.data ? (
         <div
           className={cn(
-            "grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] overflow-hidden",
-            previewed && "grid-cols-[minmax(0,1fr)_minmax(380px,min(46%,800px))]",
+            "flex-1 md:grid md:min-h-0 md:grid-cols-[minmax(0,1fr)] md:overflow-hidden",
+            previewed && "md:grid-cols-[minmax(0,1fr)_minmax(380px,min(46%,800px))]",
           )}
         >
-          <div className="min-h-0 overflow-y-auto overscroll-contain pb-4">
+          <div
+            className={cn(
+              "pb-[calc(--spacing(4)+env(safe-area-inset-bottom))] md:min-h-0 md:overflow-y-auto md:overscroll-contain",
+              previewed && "max-md:hidden",
+            )}
+          >
             {orgPrs.length === 0 ? (
               <Empty>
                 <EmptyDescription>No open pull requests in {owner}.</EmptyDescription>
