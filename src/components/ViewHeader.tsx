@@ -9,11 +9,12 @@ import { FILTER_TRIGGER, FilterMenu } from "./view-header/FilterMenu";
 import { Hint } from "./view-header/Hint";
 import { ViewTabs } from "./view-header/ViewTabs";
 
-export type MenuAnchor = "add" | number;
+export type MenuAnchor = "header" | "add" | number;
 
 export interface FilterMenuState {
   anchor: MenuAnchor;
   propertyKey: PropertyKey | null;
+  deferBar?: boolean;
 }
 
 export interface ViewHeaderProps {
@@ -76,17 +77,22 @@ export function ViewHeader({
       };
     };
 
-  const toggleFilterMenu = (anchor: MenuAnchor) =>
-    onFilterMenuChange(
-      filterMenu?.anchor === anchor
-        ? null
-        : { anchor, propertyKey: anchor === "add" ? null : filters[anchor].key },
-    );
+  const toggleFilterMenu = (anchor: MenuAnchor) => {
+    if (filterMenu?.anchor === anchor) return onFilterMenuChange(null);
+    if (anchor === "header")
+      return onFilterMenuChange({ anchor, propertyKey: null, deferBar: !filtersChanged });
+    onFilterMenuChange({ anchor, propertyKey: anchor === "add" ? null : filters[anchor].key });
+  };
+
+  const barVisible = filtersChanged
+    ? !filterMenu?.deferBar
+    : filterMenu !== null && filterMenu.anchor !== "header";
 
   const toggleFilterValue = (key: PropertyKey, value: string) => {
     const next = toggleValue(filters, key, value);
     onFiltersChange(next);
-    if (next.length < filters.length && filterMenu?.anchor !== "add") onFilterMenuChange(null);
+    if (next.length < filters.length && typeof filterMenu?.anchor === "number")
+      onFilterMenuChange(null);
   };
 
   const removeFilter = (index: number) => {
@@ -134,9 +140,10 @@ export function ViewHeader({
             size="icon-sm"
             className="ms-auto rounded-full before:rounded-full data-pressed:bg-accent"
             aria-label="Filter"
-            data-pressed={filterMenu ? "" : undefined}
+            ref={anchorRef("header")}
+            data-pressed={filterMenu?.anchor === "header" ? "" : undefined}
             {...{ [FILTER_TRIGGER]: "" }}
-            onClick={() => toggleFilterMenu("add")}
+            onClick={() => toggleFilterMenu("header")}
           >
             <ListFilterIcon className="size-3.5 sm:size-3.5" />
           </Button>
@@ -148,7 +155,7 @@ export function ViewHeader({
           onGroupChange={onGroupChange}
         />
       </div>
-      {(filtersChanged || filterMenu) && (
+      {barVisible && (
         <FilterBar
           filters={filters}
           orgPrs={orgPrs}

@@ -100,6 +100,7 @@ function OrgPage({
   const [collapsedGroups, setCollapsedGroups] = useCollapsedGroups();
   const savedFilters = activeView?.filters ?? [];
   const [filters, setFilters] = useState<Filter[]>(savedFilters);
+  const filtersChanged = !sameFilters(filters, savedFilters);
   const [filterMenu, setFilterMenu] = useState<FilterMenuState | null>(null);
   const [displayMenuOpen, setDisplayMenuOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -186,7 +187,7 @@ function OrgPage({
         searchRef.current?.focus();
       } else if (event.key === "f" || event.key === "F") {
         event.preventDefault();
-        setFilterMenu({ anchor: "add", propertyKey: null });
+        setFilterMenu({ anchor: "header", propertyKey: null, deferBar: !filtersChanged });
       } else if (event.key === "o" || event.key === "O") {
         if (selected) window.open(selected.url, "_blank", "noopener");
       } else if (
@@ -224,7 +225,7 @@ function OrgPage({
         onRenameView={renameView}
         onDeleteView={deleteView}
         filters={filters}
-        filtersChanged={!sameFilters(filters, savedFilters)}
+        filtersChanged={filtersChanged}
         onFiltersChange={setFilters}
         onResetFilters={() => setFilters(savedFilters)}
         onSaveView={() => activeView && replaceView({ ...activeView, filters })}

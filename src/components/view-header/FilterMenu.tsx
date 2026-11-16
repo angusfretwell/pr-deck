@@ -46,13 +46,13 @@ export function FilterMenu({ menu, anchorOf, onClose, ...list }: FilterMenuProps
         <PopoverPopup
           key={menu.anchor}
           anchor={() => anchorOf(menu.anchor)}
-          align="start"
+          align={menu.anchor === "header" ? "end" : "start"}
           portalProps={{ className: "*:transition-none" }}
           className="w-62.5 *:data-[slot=popover-viewport]:p-1"
         >
           <FilterMenuList
             initialKey={menu.propertyKey}
-            canGoBack={menu.anchor === "add"}
+            canGoBack={typeof menu.anchor !== "number"}
             {...list}
           />
         </PopoverPopup>
