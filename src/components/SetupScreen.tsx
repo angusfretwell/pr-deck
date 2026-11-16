@@ -6,6 +6,7 @@ import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { errorMessage, fetchSession } from "@/github/api";
+import { cn } from "@/lib/utils";
 import type { Session } from "@/types";
 
 const NEW_TOKEN_URL =
@@ -25,6 +26,7 @@ export function SetupScreen({ initialError, onSignIn }: SetupScreenProps) {
   const [token, setToken] = useState("");
   const [error, setError] = useState(initialError);
   const [pending, setPending] = useState(false);
+  const [failures, setFailures] = useState(0);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -35,6 +37,7 @@ export function SetupScreen({ initialError, onSignIn }: SetupScreenProps) {
       onSignIn(trimmed, await fetchSession(trimmed));
     } catch (failure) {
       setError(errorMessage(failure));
+      setFailures((count) => count + 1);
       setPending(false);
     }
   };
@@ -56,7 +59,11 @@ export function SetupScreen({ initialError, onSignIn }: SetupScreenProps) {
               <Input
                 type="password"
                 size="lg"
-                className="font-mono"
+                className={cn(
+                  "font-mono motion-reduce:animate-none",
+                  failures > 0 &&
+                    (failures % 2 ? "animate-toast-error-odd" : "animate-toast-error-even"),
+                )}
                 autoComplete="off"
                 spellCheck={false}
                 autoFocus
