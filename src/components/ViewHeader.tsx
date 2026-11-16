@@ -130,7 +130,7 @@ export function ViewHeader({
 
   return (
     <div className="border-b">
-      <div className="flex items-center gap-1.5 px-4 py-2.5">
+      <div className="flex items-center gap-1.5 px-2 py-2.5 md:px-4">
         <ViewTabs {...tabs} />
         <Hint label="Filter">
           <Button

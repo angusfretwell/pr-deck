@@ -53,7 +53,7 @@ export function AppShell({
 
   return (
     <div className="h-[50px] shrink-0">
-      <header className="flex h-[50px] items-center gap-3 border-b bg-background px-4 max-md:fixed max-md:inset-x-0 max-md:top-0 max-md:z-20">
+      <header className="flex h-[50px] items-center gap-3 border-b bg-background px-2 max-md:fixed md:px-4 max-md:inset-x-0 max-md:top-0 max-md:z-20">
         <OwnerSwitcher
           owners={enabledOwners}
           viewerLogin={session.viewer.login}

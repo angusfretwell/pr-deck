@@ -74,13 +74,13 @@ export function ViewTabs({
 
   return (
     <Tabs
-      className="relative min-w-0"
+      className="relative -ms-2 min-w-0 md:-ms-4"
       value={activeViewId ?? ALL_OPEN_TAB}
       onValueChange={(value: string) => onSelectView(value === ALL_OPEN_TAB ? null : value)}
     >
       <div
         ref={scroller}
-        className="-my-1 overflow-x-auto overflow-y-hidden py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="-my-1 overflow-x-auto overflow-y-hidden py-1 ps-2 md:ps-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         <TabsList className="justify-start gap-1.5 bg-transparent p-0 *:data-[slot=tab-indicator]:hidden">
           <TabPill active={activeViewId === null}>

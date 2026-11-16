@@ -46,7 +46,7 @@ export function FilterBar({
   };
 
   return (
-    <div className="mx-4 mb-2.5 flex flex-wrap items-center gap-1.5 rounded-[10px] bg-muted px-2 py-1.5">
+    <div className="mx-2 mb-2.5 flex md:mx-4 flex-wrap items-center gap-1.5 rounded-[10px] bg-muted px-2 py-1.5">
       {filters.map((filter, index) => (
         <span
           key={filter.key}
