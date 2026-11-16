@@ -1,14 +1,15 @@
 import { skipToken, useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import { useToken } from "@/lib/storage";
 import type { Mergeability, PullRequestDetail, PullRequestList, Session } from "@/types";
-import {
-  fetchMergeability,
-  fetchPullRequestDetail,
-  fetchPullRequests,
-  fetchSession,
-  isRetryable,
-} from "./api";
+import * as realApi from "./api";
+import { isRetryable } from "./api";
+import * as mockApi from "./mock";
 import { withMergeability } from "./mapping";
+
+const { fetchMergeability, fetchPullRequestDetail, fetchPullRequests, fetchSession } = import.meta
+  .env.VITE_MOCK
+  ? mockApi
+  : realApi;
 
 const retry = (failureCount: number, error: Error) => isRetryable(error) && failureCount < 1;
 const RETRY_DELAY_MS = 1000;

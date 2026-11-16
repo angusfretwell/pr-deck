@@ -5,6 +5,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { persistOptions, queryClient, refetchRestoredQueries } from "@/lib/query-cache";
 import "./index.css";
 import App from "./App.tsx";
+import { TOKEN_KEY } from "@/lib/storage";
+
+if (import.meta.env.VITE_MOCK) localStorage.setItem(TOKEN_KEY, JSON.stringify("mock"));
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
