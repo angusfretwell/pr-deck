@@ -1,6 +1,6 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 import { CircleAlertIcon } from "lucide-react";
-import { useEffect, useState, type RefObject } from "react";
+import { useEffect, useState } from "react";
 import { Redirect, useLocation } from "wouter";
 import { Preview } from "@/components/Preview";
 import { PrTable } from "@/components/PrTable";
@@ -33,7 +33,7 @@ interface SearchProps {
   viewer: string;
   query: string;
   onQueryChange: (query: string) => void;
-  searchRef: RefObject<HTMLInputElement | null>;
+  onOpenSearch: () => void;
 }
 
 interface OrgRouteProps extends SearchProps {
@@ -92,7 +92,7 @@ function OrgPage({
   viewer,
   query,
   onQueryChange,
-  searchRef,
+  onOpenSearch,
 }: OrgPageProps) {
   const [location, navigate] = useLocation();
   const [, setLastPath] = useLastPath();
@@ -157,7 +157,13 @@ function OrgPage({
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.defaultPrevented) return;
+      if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "f") {
+        event.preventDefault();
+        onOpenSearch();
+        return;
+      }
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
       const target = event.target as HTMLElement;
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
 
@@ -184,7 +190,7 @@ function OrgPage({
       else if (event.key === "k" || event.key === "ArrowUp") move(-1);
       else if (event.key === "/") {
         event.preventDefault();
-        searchRef.current?.focus();
+        onOpenSearch();
       } else if (event.key === "f" || event.key === "F") {
         event.preventDefault();
         setFilterMenu({ anchor: "header", propertyKey: null, deferBar: !filtersChanged });

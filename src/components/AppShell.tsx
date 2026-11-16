@@ -29,6 +29,8 @@ interface AppShellProps {
   query: string;
   onQueryChange: (query: string) => void;
   searchRef: RefObject<HTMLInputElement | null>;
+  searchVisible: boolean;
+  onSearchBlur: () => void;
   onSignOut: () => void;
 }
 
@@ -41,6 +43,8 @@ export function AppShell({
   query,
   onQueryChange,
   searchRef,
+  searchVisible,
+  onSearchBlur,
   onSignOut,
 }: AppShellProps) {
   const [, navigate] = useLocation();
@@ -64,72 +68,79 @@ export function AppShell({
         </TabsList>
       </Tabs>
       <span className="grow" />
-      <Input
-        ref={searchRef}
-        type="search"
-        className="w-70 shrink-0"
-        placeholder="Search title, repo, author"
-        aria-label="Search pull requests"
-        autoComplete="off"
-        value={query}
-        onChange={(event) => onQueryChange(event.target.value)}
-      />
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Refresh"
-              onClick={() => queryClient.refetchQueries({ type: "active" })}
-            />
-          }
-        >
-          <RefreshCwIcon className={cn(fetching && "animate-spin")} />
-        </TooltipTrigger>
-        <TooltipPopup>Refresh</TooltipPopup>
-      </Tooltip>
-      <Menu>
-        <MenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Account" />}>
-          <AccountAvatar account={session.viewer} className="size-5.5" />
-        </MenuTrigger>
-        <MenuPopup align="end">
-          <MenuGroup>
-            <MenuGroupLabel>{session.viewer.login}</MenuGroupLabel>
-          </MenuGroup>
-          <MenuSeparator />
-          <MenuGroup>
-            <MenuGroupLabel>Organisations</MenuGroupLabel>
-            {session.owners.map((owner) => {
-              const enabled = !hiddenOwners.includes(owner.login);
-              return (
-                <MenuCheckboxItem
-                  key={owner.login}
-                  checked={enabled}
-                  disabled={enabled && enabledOwners.length === 1}
-                  onCheckedChange={(checked) =>
-                    onHiddenOwnersChange(
-                      checked
-                        ? hiddenOwners.filter((login) => login !== owner.login)
-                        : [...hiddenOwners, owner.login],
-                    )
-                  }
-                >
-                  <span className="flex items-center gap-2">
-                    <AccountAvatar account={owner} className="size-4 rounded-sm" />
-                    {owner.login}
-                  </span>
-                </MenuCheckboxItem>
-              );
-            })}
-          </MenuGroup>
-          <MenuSeparator />
-          <MenuItem onClick={onSignOut}>
-            <LogOutIcon />
-            Remove token
-          </MenuItem>
-        </MenuPopup>
-      </Menu>
+      {searchVisible ? (
+        <Input
+          ref={searchRef}
+          type="search"
+          className="w-70 shrink-0"
+          placeholder="Search title, repo, author"
+          aria-label="Search pull requests"
+          autoComplete="off"
+          autoFocus
+          value={query}
+          onChange={(event) => onQueryChange(event.target.value)}
+          onBlur={onSearchBlur}
+        />
+      ) : (
+        <>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Refresh"
+                  onClick={() => queryClient.refetchQueries({ type: "active" })}
+                />
+              }
+            >
+              <RefreshCwIcon className={cn(fetching && "animate-spin")} />
+            </TooltipTrigger>
+            <TooltipPopup>Refresh</TooltipPopup>
+          </Tooltip>
+          <Menu>
+            <MenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Account" />}>
+              <AccountAvatar account={session.viewer} className="size-5.5" />
+            </MenuTrigger>
+            <MenuPopup align="end">
+              <MenuGroup>
+                <MenuGroupLabel>{session.viewer.login}</MenuGroupLabel>
+              </MenuGroup>
+              <MenuSeparator />
+              <MenuGroup>
+                <MenuGroupLabel>Organisations</MenuGroupLabel>
+                {session.owners.map((owner) => {
+                  const enabled = !hiddenOwners.includes(owner.login);
+                  return (
+                    <MenuCheckboxItem
+                      key={owner.login}
+                      checked={enabled}
+                      disabled={enabled && enabledOwners.length === 1}
+                      onCheckedChange={(checked) =>
+                        onHiddenOwnersChange(
+                          checked
+                            ? hiddenOwners.filter((login) => login !== owner.login)
+                            : [...hiddenOwners, owner.login],
+                        )
+                      }
+                    >
+                      <span className="flex items-center gap-2">
+                        <AccountAvatar account={owner} className="size-4 rounded-sm" />
+                        {owner.login}
+                      </span>
+                    </MenuCheckboxItem>
+                  );
+                })}
+              </MenuGroup>
+              <MenuSeparator />
+              <MenuItem onClick={onSignOut}>
+                <LogOutIcon />
+                Remove token
+              </MenuItem>
+            </MenuPopup>
+          </Menu>
+        </>
+      )}
     </header>
   );
 }

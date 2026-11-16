@@ -84,6 +84,11 @@ function Workspace({ onSignOut }: { onSignOut: () => void }) {
 function Dashboard({ session, onSignOut }: { session: Session; onSignOut: () => void }) {
   const [query, setQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const openSearch = () => {
+    setSearchOpen(true);
+    searchRef.current?.focus();
+  };
   const [hiddenOwners, setHiddenOwners] = useHiddenOwners();
   const enabledOwners = session.owners.filter((owner) => !hiddenOwners.includes(owner.login));
   const owners = enabledOwners.map((owner) => owner.login);
@@ -103,6 +108,8 @@ function Dashboard({ session, onSignOut }: { session: Session; onSignOut: () => 
                 query={query}
                 onQueryChange={setQuery}
                 searchRef={searchRef}
+                searchVisible={searchOpen || query !== ""}
+                onSearchBlur={() => setSearchOpen(false)}
                 onSignOut={onSignOut}
               />
               <OrgRoute
@@ -112,7 +119,7 @@ function Dashboard({ session, onSignOut }: { session: Session; onSignOut: () => 
                 viewer={session.viewer.login}
                 query={query}
                 onQueryChange={setQuery}
-                searchRef={searchRef}
+                onOpenSearch={openSearch}
               />
             </>
           ) : (
