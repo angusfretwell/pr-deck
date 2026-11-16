@@ -131,7 +131,7 @@ export function ViewHeader({
     ));
 
   return (
-    <div className="text-[13px]">
+    <div className="border-b text-[13px]">
       <div className="flex items-center gap-1.5 px-4 py-2.5">
         <ViewTabs {...tabs} />
         <Hint label="Filter">
