@@ -158,7 +158,13 @@ function Description({ html }: { html: string }) {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className={cn(collapsed && "max-h-75 overflow-hidden mask-b-from-80%")}>
+      <div
+        className={cn(
+          collapsed && "h-75 overflow-hidden mask-b-from-80%",
+          expanded &&
+            "overflow-hidden transition-[height] duration-250 ease-snappy [interpolate-size:allow-keywords] motion-reduce:transition-none",
+        )}
+      >
         <div
           ref={ref}
           className="typeset [--typeset-flow:1em] [--typeset-leading:1.6] [--typeset-size:var(--text-sm)]"
