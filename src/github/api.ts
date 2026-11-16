@@ -1,14 +1,23 @@
 import { graphql, GraphqlResponseError } from "@octokit/graphql";
 import type { Mergeability, PullRequestDetail, PullRequestList, Session } from "@/types";
+import type {
+  MergeabilityQuery,
+  MergeabilityQueryVariables,
+  PullRequestDetailQuery,
+  PullRequestDetailQueryVariables,
+  PullRequestsQuery,
+  PullRequestsQueryVariables,
+  SessionQuery,
+  ViewerTeamsQuery,
+  ViewerTeamsQueryVariables,
+} from "./graphql.generated";
 import {
+  nodesOf,
   toPullRequest,
   toPullRequestDetail,
   toMergeability,
   toSession,
-  type RawMergeable,
   type RawPullRequest,
-  type RawPullRequestDetail,
-  type RawSession,
 } from "./mapping";
 import {
   MERGEABILITY_QUERY,
@@ -22,40 +31,16 @@ import {
 
 type Client = typeof graphql;
 
-interface OwnerResponse {
-  repositoryOwner: { login: string } | null;
-}
-
-interface PullRequestsResponse extends OwnerResponse {
-  search: {
-    issueCount: number;
-    pageInfo: { hasNextPage: boolean; endCursor: string | null };
-    nodes: (RawPullRequest | null)[];
-  };
-}
-
-interface MergeabilityResponse {
-  nodes: ({ id?: string; mergeable?: RawMergeable } | null)[];
-}
-
-interface ViewerTeamsResponse {
-  repositoryOwner: { teams?: { nodes: { slug: string }[] } } | null;
-}
-
-interface DetailResponse {
-  node: RawPullRequestDetail | null;
-}
-
 const createClient = (token: string): Client =>
   graphql.defaults({ headers: { authorization: `bearer ${token}` } });
 
-function assertOwnerFound({ repositoryOwner }: OwnerResponse, owner: string) {
+function assertOwnerFound({ repositoryOwner }: PullRequestsQuery, owner: string) {
   if (!repositoryOwner) throw new Error(`GitHub account "${owner}" was not found.`);
 }
 
 export async function fetchSession(token: string): Promise<Session> {
   try {
-    return toSession(await createClient(token)<RawSession>(SESSION_QUERY));
+    return toSession(await createClient(token)<SessionQuery>(SESSION_QUERY));
   } catch (error) {
     if (error instanceof GraphqlResponseError && error.data?.viewer) return toSession(error.data);
     throw error;
@@ -65,11 +50,12 @@ export async function fetchSession(token: string): Promise<Session> {
 async function fetchViewerTeams(client: Client, owner: string, viewer: string): Promise<string[]> {
   if (owner === viewer) return [];
   try {
-    const { repositoryOwner } = await client<ViewerTeamsResponse>(VIEWER_TEAMS_QUERY, {
+    const { repositoryOwner } = await client<ViewerTeamsQuery>(VIEWER_TEAMS_QUERY, {
       owner,
       viewer,
-    });
-    return repositoryOwner?.teams?.nodes.map((team) => team.slug) ?? [];
+    } satisfies ViewerTeamsQueryVariables);
+    if (repositoryOwner?.__typename !== "Organization") return [];
+    return nodesOf(repositoryOwner.teams).map((team) => team.slug);
   } catch {
     return [];
   }
@@ -80,16 +66,16 @@ async function fetchAllPullRequests(client: Client, owner: string) {
   let totalCount = 0;
   let after: string | null = null;
   do {
-    const response: PullRequestsResponse = await client<PullRequestsResponse>(PULL_REQUESTS_QUERY, {
+    const response: PullRequestsQuery = await client<PullRequestsQuery>(PULL_REQUESTS_QUERY, {
       owner,
       search: searchQuery(owner),
       first: PAGE_SIZE,
       after,
-    });
+    } satisfies PullRequestsQueryVariables);
     assertOwnerFound(response, owner);
     totalCount = response.search.issueCount;
-    for (const node of response.search.nodes) {
-      if (node?.id) nodes.set(node.id, node);
+    for (const node of nodesOf(response.search)) {
+      if (node.__typename === "PullRequest") nodes.set(node.id, node);
     }
     after = response.search.pageInfo.hasNextPage ? response.search.pageInfo.endCursor : null;
   } while (after);
@@ -124,11 +110,15 @@ export async function fetchMergeability(
     batches.push(ids.slice(start, start + MAX_NODE_IDS));
   }
   const responses = await Promise.all(
-    batches.map((batch) => client<MergeabilityResponse>(MERGEABILITY_QUERY, { ids: batch })),
+    batches.map((batch) =>
+      client<MergeabilityQuery>(MERGEABILITY_QUERY, {
+        ids: batch,
+      } satisfies MergeabilityQueryVariables),
+    ),
   );
   const states: Record<string, Mergeability> = {};
-  for (const node of responses.flatMap((response) => response.nodes)) {
-    if (node?.id && node.mergeable) states[node.id] = toMergeability(node.mergeable);
+  for (const node of responses.flatMap((response) => nodesOf(response))) {
+    if (node.__typename === "PullRequest") states[node.id] = toMergeability(node.mergeable);
   }
   return states;
 }
@@ -137,8 +127,10 @@ export async function fetchPullRequestDetail(
   token: string,
   id: string,
 ): Promise<PullRequestDetail> {
-  const { node } = await createClient(token)<DetailResponse>(PULL_REQUEST_DETAIL_QUERY, { id });
-  if (!node) throw new Error("Pull request was not found.");
+  const { node } = await createClient(token)<PullRequestDetailQuery>(PULL_REQUEST_DETAIL_QUERY, {
+    id,
+  } satisfies PullRequestDetailQueryVariables);
+  if (node?.__typename !== "PullRequest") throw new Error("Pull request was not found.");
   return toPullRequestDetail(node);
 }
 

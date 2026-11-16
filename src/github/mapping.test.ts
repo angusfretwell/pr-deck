@@ -1,15 +1,14 @@
 import { describe, expect, it } from "vite-plus/test";
+import type { CheckConclusionState, CheckStatusState, StatusState } from "./graphql.generated";
 import {
   toCheck,
   toPullRequest,
   toPullRequestDetail,
   toSession,
   withMergeability,
-  type RawCheckConclusion,
-  type RawCheckRunStatus,
   type RawPullRequest,
   type RawReview,
-  type RawRollupState,
+  type RawReviewRequest,
 } from "./mapping";
 
 const context = { viewer: "me", viewerTeams: ["core"] };
@@ -21,6 +20,7 @@ const review = (login: string, state: RawReview["state"]): RawReview => ({
 });
 
 const rawPullRequest = (overrides: Partial<RawPullRequest> = {}): RawPullRequest => ({
+  __typename: "PullRequest",
   id: "PR_1",
   number: 7,
   title: "Add things",
@@ -42,7 +42,7 @@ const rawPullRequest = (overrides: Partial<RawPullRequest> = {}): RawPullRequest
 const map = (overrides: Partial<RawPullRequest>) =>
   toPullRequest(rawPullRequest(overrides), context);
 
-const withRollup = (state: RawRollupState | null) => ({
+const withRollup = (state: StatusState | null) => ({
   commits: { nodes: [{ commit: { statusCheckRollup: state ? { state } : null } }] },
 });
 
@@ -166,9 +166,7 @@ describe("overall review", () => {
 });
 
 describe("reviewRequestedFromViewer", () => {
-  const requests = (
-    ...requestedReviewers: RawPullRequest["reviewRequests"]["nodes"][number]["requestedReviewer"][]
-  ) => ({
+  const requests = (...requestedReviewers: RawReviewRequest["requestedReviewer"][]) => ({
     reviewRequests: {
       nodes: requestedReviewers.map((requestedReviewer) => ({ requestedReviewer })),
     },
@@ -231,8 +229,8 @@ describe("toSession", () => {
 
 describe("toCheck", () => {
   const checkRun = (
-    status: RawCheckRunStatus,
-    conclusion: RawCheckConclusion | null,
+    status: CheckStatusState,
+    conclusion: CheckConclusionState | null,
     startedAt: string | null = null,
     completedAt: string | null = null,
   ) =>
@@ -317,6 +315,7 @@ describe("toPullRequestDetail", () => {
 
   it("maps the body, checks and files", () => {
     const detail = toPullRequestDetail({
+      __typename: "PullRequest",
       ...stats,
       bodyHTML: "<p>Hello</p>",
       commits: {
@@ -371,7 +370,13 @@ describe("toPullRequestDetail", () => {
 
   it("handles no rollup and no files", () => {
     expect(
-      toPullRequestDetail({ ...stats, bodyHTML: "", commits: { nodes: [] }, files: null }),
+      toPullRequestDetail({
+        __typename: "PullRequest",
+        ...stats,
+        bodyHTML: "",
+        commits: { nodes: [] },
+        files: null,
+      }),
     ).toEqual({
       ...stats,
       bodyHtml: "",

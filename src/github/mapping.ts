@@ -1,4 +1,15 @@
 import type {
+  CheckConclusionState,
+  CheckStatusState,
+  MergeableState,
+  PullRequestDetailQuery,
+  PullRequestReviewDecision,
+  PullRequestReviewState,
+  PullRequestsQuery,
+  SessionQuery,
+  StatusState,
+} from "./graphql.generated";
+import type {
   Account,
   Check,
   CheckState,
@@ -13,110 +24,27 @@ import type {
   Session,
 } from "@/types";
 
-export interface RawAccount {
-  login: string;
-  name: string | null;
-  avatarUrl: string;
+interface Connection<T> {
+  nodes: (T | null)[] | null;
 }
 
-export interface RawActor {
-  login: string;
-  avatarUrl: string;
-}
+export const nodesOf = <T>(connection: Connection<T> | null | undefined): T[] =>
+  (connection?.nodes ?? []).filter((node) => node !== null);
 
-export interface RawSession {
-  viewer: RawAccount & { organizations: { nodes: (RawAccount | null)[] } };
-}
+type NodeOf<C> = NonNullable<C> extends Connection<infer T> ? T : never;
+type PullRequestNode<T> = Extract<NonNullable<T>, { __typename: "PullRequest" }>;
 
-export type RawRollupState = "SUCCESS" | "FAILURE" | "ERROR" | "PENDING" | "EXPECTED";
-export type RawMergeable = "MERGEABLE" | "CONFLICTING" | "UNKNOWN";
-export type RawReviewDecision = "APPROVED" | "CHANGES_REQUESTED" | "REVIEW_REQUIRED";
-export type RawReviewState =
-  | "APPROVED"
-  | "CHANGES_REQUESTED"
-  | "COMMENTED"
-  | "DISMISSED"
-  | "PENDING";
-
-export interface RawReview {
-  state: RawReviewState;
-  author: RawActor | null;
-}
-
-export type RawRequestedReviewer =
-  | { __typename: "User"; login: string }
-  | { __typename: "Team"; slug: string }
-  | { __typename: "Bot" | "Mannequin" };
-
-export interface RawPullRequest {
-  id: string;
-  number: number;
-  title: string;
-  url: string;
-  isDraft: boolean;
-  updatedAt: string;
-  headRefName: string;
-  mergeable: RawMergeable;
-  reviewDecision: RawReviewDecision | null;
-  repository: { name: string; owner: { login: string } };
-  author: RawActor | null;
-  commits: { nodes: { commit: { statusCheckRollup: { state: RawRollupState } | null } }[] };
-  latestReviews: { nodes: RawReview[] };
-  latestOpinionatedReviews: { nodes: RawReview[] };
-  reviewRequests: { nodes: { requestedReviewer: RawRequestedReviewer | null }[] };
-}
-
-export type RawCheckRunStatus =
-  | "QUEUED"
-  | "IN_PROGRESS"
-  | "COMPLETED"
-  | "WAITING"
-  | "PENDING"
-  | "REQUESTED";
-export type RawCheckConclusion =
-  | "SUCCESS"
-  | "FAILURE"
-  | "TIMED_OUT"
-  | "CANCELLED"
-  | "ACTION_REQUIRED"
-  | "STARTUP_FAILURE"
-  | "SKIPPED"
-  | "NEUTRAL"
-  | "STALE";
-
-export interface RawCheckRun {
-  __typename: "CheckRun";
-  name: string;
-  status: RawCheckRunStatus;
-  conclusion: RawCheckConclusion | null;
-  startedAt: string | null;
-  completedAt: string | null;
-  detailsUrl: string | null;
-  isRequired: boolean;
-}
-
-export interface RawStatusContext {
-  __typename: "StatusContext";
-  context: string;
-  state: RawRollupState;
-  targetUrl: string | null;
-  isRequired: boolean;
-}
-
-export interface RawPullRequestDetail {
-  bodyHTML: string;
-  additions: number;
-  deletions: number;
-  changedFiles: number;
-  commits: {
-    nodes: {
-      commit: {
-        statusCheckRollup: { contexts: { nodes: (RawCheckRun | RawStatusContext)[] } } | null;
-      };
-    }[];
-  };
-  files: { nodes: { path: string; additions: number; deletions: number }[] } | null;
-}
+export type RawSession = SessionQuery;
+type RawAccount = NodeOf<SessionQuery["viewer"]["organizations"]>;
+export type RawPullRequest = PullRequestNode<NodeOf<PullRequestsQuery["search"]>>;
+export type RawReview = NodeOf<RawPullRequest["latestReviews"]>;
+export type RawReviewRequest = NodeOf<RawPullRequest["reviewRequests"]>;
+type RawActor = NonNullable<RawPullRequest["author"]>;
+export type RawPullRequestDetail = PullRequestNode<PullRequestDetailQuery["node"]>;
+type RawRollup = NonNullable<
+  NodeOf<RawPullRequestDetail["commits"]>["commit"]["statusCheckRollup"]
+>;
+export type RawCheckContext = NodeOf<RawRollup["contexts"]>;
 
 export interface ReviewContext {
   viewer: string;
@@ -128,7 +56,7 @@ const GHOST: RawActor = {
   avatarUrl: "https://avatars.githubusercontent.com/u/10137?v=4",
 };
 
-const CI_STATES: Record<RawRollupState, CiState> = {
+const CI_STATES: Record<StatusState, CiState> = {
   SUCCESS: "pass",
   FAILURE: "fail",
   ERROR: "fail",
@@ -136,19 +64,19 @@ const CI_STATES: Record<RawRollupState, CiState> = {
   EXPECTED: "pending",
 };
 
-const MERGEABILITY: Record<RawMergeable, Mergeability> = {
+const MERGEABILITY: Record<MergeableState, Mergeability> = {
   MERGEABLE: "clean",
   CONFLICTING: "conflict",
   UNKNOWN: "unknown",
 };
 
-const VERDICTS: Partial<Record<RawReviewState, ReviewVerdict>> = {
+const VERDICTS: Partial<Record<PullRequestReviewState, ReviewVerdict>> = {
   APPROVED: "approved",
   CHANGES_REQUESTED: "changes",
   COMMENTED: "comment",
 };
 
-const CHECK_STATES: Record<RawCheckRunStatus | RawCheckConclusion | RawRollupState, CheckState> = {
+const CHECK_STATES: Record<CheckStatusState | CheckConclusionState | StatusState, CheckState> = {
   SUCCESS: "pass",
   FAILURE: "fail",
   TIMED_OUT: "fail",
@@ -168,7 +96,7 @@ const CHECK_STATES: Record<RawCheckRunStatus | RawCheckConclusion | RawRollupSta
   STALE: "skipped",
 };
 
-export const toMergeability = (raw: RawMergeable): Mergeability => MERGEABILITY[raw];
+export const toMergeability = (raw: MergeableState): Mergeability => MERGEABILITY[raw];
 
 export function withMergeability(
   list: PullRequestList,
@@ -188,15 +116,14 @@ export function toAccount(raw: RawAccount): Account {
 
 export function toSession({ viewer }: RawSession): Session {
   const account = toAccount(viewer);
-  const orgs = viewer.organizations.nodes
-    .filter((org) => org !== null)
+  const orgs = nodesOf(viewer.organizations)
     .map(toAccount)
     .sort((a, b) => a.login.localeCompare(b.login));
   return { viewer: account, owners: [account, ...orgs] };
 }
 
 export function toCi(node: Pick<RawPullRequest, "commits">): CiState {
-  const rollup = node.commits.nodes[0]?.commit.statusCheckRollup;
+  const rollup = nodesOf(node.commits)[0]?.commit.statusCheckRollup;
   return rollup ? CI_STATES[rollup.state] : "none";
 }
 
@@ -205,7 +132,10 @@ export function toReviewers(
 ): Reviewer[] {
   const authorLogin = (node.author ?? GHOST).login;
   const reviewers = new Map<string, Reviewer>();
-  for (const review of [...node.latestReviews.nodes, ...node.latestOpinionatedReviews.nodes]) {
+  for (const review of [
+    ...nodesOf(node.latestReviews),
+    ...nodesOf(node.latestOpinionatedReviews),
+  ]) {
     const verdict = VERDICTS[review.state];
     const author = review.author ?? GHOST;
     if (!verdict || author.login === authorLogin) continue;
@@ -216,7 +146,7 @@ export function toReviewers(
 }
 
 export function toReviewState(
-  decision: RawReviewDecision | null,
+  decision: PullRequestReviewDecision | null,
   reviewers: Reviewer[],
 ): ReviewState {
   const verdicts = new Set(reviewers.map((reviewer) => reviewer.verdict));
@@ -233,7 +163,7 @@ export function isReviewRequestedFrom(
   node: Pick<RawPullRequest, "reviewRequests">,
   { viewer, viewerTeams }: ReviewContext,
 ): boolean {
-  return node.reviewRequests.nodes.some(({ requestedReviewer }) => {
+  return nodesOf(node.reviewRequests).some(({ requestedReviewer }) => {
     if (requestedReviewer?.__typename === "User") return requestedReviewer.login === viewer;
     if (requestedReviewer?.__typename === "Team")
       return viewerTeams.includes(requestedReviewer.slug);
@@ -270,7 +200,7 @@ function secondsBetween(startedAt: string | null, completedAt: string | null): n
   return Math.max(0, Math.round((Date.parse(completedAt) - Date.parse(startedAt)) / 1000));
 }
 
-export function toCheck(node: RawCheckRun | RawStatusContext): Check {
+export function toCheck(node: RawCheckContext): Check {
   if (node.__typename === "StatusContext") {
     return {
       name: node.context,
@@ -291,14 +221,14 @@ export function toCheck(node: RawCheckRun | RawStatusContext): Check {
 }
 
 export function toPullRequestDetail(node: RawPullRequestDetail): PullRequestDetail {
-  const contexts = node.commits.nodes[0]?.commit.statusCheckRollup?.contexts.nodes ?? [];
+  const contexts = nodesOf(nodesOf(node.commits)[0]?.commit.statusCheckRollup?.contexts);
   return {
     bodyHtml: node.bodyHTML,
     additions: node.additions,
     deletions: node.deletions,
     changedFiles: node.changedFiles,
     checks: contexts.map(toCheck),
-    files: (node.files?.nodes ?? []).map(({ path, additions, deletions }) => ({
+    files: nodesOf(node.files).map(({ path, additions, deletions }) => ({
       path,
       additions,
       deletions,

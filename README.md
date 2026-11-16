@@ -13,6 +13,7 @@ pnpm dev      # vp dev
 pnpm check    # format, lint, typecheck
 pnpm test     # unit tests
 pnpm build    # static build in dist/
+pnpm codegen  # regenerate GitHub query types after editing src/github/queries.ts
 ```
 
 Sign in with a classic token that has the `repo` and `read:org` scopes.
