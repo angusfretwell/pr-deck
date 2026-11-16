@@ -84,7 +84,9 @@ export function AppShell({
         ) : (
           <>
             <span className="flex size-8 shrink-0 items-center justify-center sm:size-7">
-              {fetching && <Spinner className="size-4.5 opacity-80 sm:size-4" />}
+              {fetching && (
+                <Spinner className="size-4.5 opacity-80 transition-opacity delay-300 duration-200 ease-snappy starting:opacity-0 sm:size-4" />
+              )}
             </span>
             <Button
               variant="ghost"
