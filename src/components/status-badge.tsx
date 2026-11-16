@@ -66,8 +66,10 @@ export function BadgeIcon({ badge, className }: { badge: Badge; className?: stri
 
 function PingDot({ className, ...props }: ComponentProps<"span">) {
   return (
-    <span className={cn("relative rounded-full bg-current", className)} {...props}>
-      <span className="absolute inset-0 animate-ping rounded-full bg-current opacity-72" />
+    <span className={cn("flex items-center justify-center", className)} {...props}>
+      <span className="relative size-2.5 rounded-full bg-current">
+        <span className="absolute inset-0 animate-ping rounded-full bg-current opacity-72" />
+      </span>
     </span>
   );
 }
