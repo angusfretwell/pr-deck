@@ -1,4 +1,4 @@
-import { ListFilterIcon } from "lucide-react";
+import { FilterIcon } from "@primer/octicons-react";
 import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsiblePanel } from "@/components/ui/collapsible";
@@ -154,7 +154,7 @@ export function ViewHeader({
               />
             }
           >
-            <ListFilterIcon />
+            <FilterIcon />
           </PopoverTrigger>
         </Hint>
         <DisplayMenu

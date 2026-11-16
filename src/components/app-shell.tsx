@@ -1,5 +1,5 @@
+import { SearchIcon, SignOutIcon } from "@primer/octicons-react";
 import { useIsFetching } from "@tanstack/react-query";
-import { LogOutIcon, SearchIcon } from "lucide-react";
 import { useState, type RefObject } from "react";
 import { useLocation } from "wouter";
 import { AccountAvatar } from "@/components/account-avatar";
@@ -154,7 +154,7 @@ export function AppShell({
                 )}
                 <MenuSeparator />
                 <MenuItem onClick={onSignOut}>
-                  <LogOutIcon />
+                  <SignOutIcon />
                   Remove token
                 </MenuItem>
               </MenuPopup>

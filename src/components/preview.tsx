@@ -1,6 +1,5 @@
-import { GitPullRequestDraftIcon } from "@primer/octicons-react";
+import { AlertIcon, ChevronDownIcon, GitPullRequestDraftIcon, XIcon } from "@primer/octicons-react";
 import type { UseQueryResult } from "@tanstack/react-query";
-import { ChevronDownIcon, CircleAlertIcon, XIcon } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useResizeObserver } from "usehooks-ts";
 import { BadgeIcon, BadgePill } from "@/components/status-badge";
@@ -109,7 +108,7 @@ function SkeletonLines() {
 function LoadError({ query }: { query: UseQueryResult<PullRequestDetail> }) {
   return (
     <Alert variant="error">
-      <CircleAlertIcon />
+      <AlertIcon />
       <AlertTitle>Couldn't load details</AlertTitle>
       <AlertDescription>{errorMessage(query.error)}</AlertDescription>
       <AlertAction>

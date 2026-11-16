@@ -1,5 +1,5 @@
+import { AlertIcon, GitPullRequestIcon, InfoIcon } from "@primer/octicons-react";
 import type { UseQueryResult } from "@tanstack/react-query";
-import { CircleAlertIcon, GitPullRequestIcon, InfoIcon } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useMediaQuery, useResizeObserver } from "usehooks-ts";
 import { Redirect, useLocation } from "wouter";
@@ -280,7 +280,7 @@ function LoadError({ result }: { result: UseQueryResult<PullRequestList> }) {
     <Empty>
       <EmptyHeader>
         <EmptyMedia variant="icon">
-          <CircleAlertIcon />
+          <AlertIcon />
         </EmptyMedia>
         <EmptyTitle>Couldn't load pull requests</EmptyTitle>
         <EmptyDescription>{errorMessage(result.error)}</EmptyDescription>

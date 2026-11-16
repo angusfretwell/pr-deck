@@ -1,4 +1,4 @@
-import { ChevronDownIcon, ChevronsUpDownIcon } from "lucide-react";
+import { ChevronDownIcon } from "@primer/octicons-react";
 import { useLayoutEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { Link } from "wouter";
@@ -41,7 +41,7 @@ function OwnerDropdown(props: OwnerSwitcherProps) {
       <span className="max-w-32 truncate" title={props.activeOwner}>
         {props.activeOwner}
       </span>
-      <ChevronsUpDownIcon />
+      <ChevronDownIcon />
     </OwnerMenu>
   );
 }

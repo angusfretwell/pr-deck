@@ -1,4 +1,4 @@
-import { SlidersHorizontalIcon } from "lucide-react";
+import { SlidersIcon } from "@primer/octicons-react";
 import {
   Menu,
   MenuGroup,
@@ -39,7 +39,7 @@ export function DisplayMenu({ open, onOpenChange, group, onGroupChange }: Displa
             />
           }
         >
-          <SlidersHorizontalIcon className="size-3.5" />
+          <SlidersIcon className="size-3.5" />
         </MenuTrigger>
       </Hint>
       <MenuPopup align="end" className="min-w-40">

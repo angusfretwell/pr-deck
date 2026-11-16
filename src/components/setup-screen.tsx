@@ -1,4 +1,4 @@
-import { EyeIcon, KeyRoundIcon } from "lucide-react";
+import { EyeIcon, KeyIcon } from "@primer/octicons-react";
 import { useState, type FormEvent } from "react";
 import { SetupPreview } from "@/components/setup-preview";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ const NEW_TOKEN_URL =
 
 const PROMISES = [
   { icon: EyeIcon, text: "Read-only, never writes to GitHub" },
-  { icon: KeyRoundIcon, text: "Your token is stored in your browser, and only sent to GitHub." },
+  { icon: KeyIcon, text: "Your token is stored in your browser, and only sent to GitHub." },
 ] as const;
 
 interface SetupScreenProps {

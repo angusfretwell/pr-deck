@@ -1,4 +1,4 @@
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, XIcon } from "@primer/octicons-react";
 import type { ReactNode } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Group, GroupSeparator, GroupText } from "@/components/ui/group";

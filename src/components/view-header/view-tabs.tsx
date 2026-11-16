@@ -1,4 +1,4 @@
-import { XIcon } from "lucide-react";
+import { XIcon } from "@primer/octicons-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import {

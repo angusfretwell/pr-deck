@@ -1,5 +1,9 @@
-import { GitPullRequestDraftIcon } from "@primer/octicons-react";
-import { ChevronRightIcon, FunnelXIcon, SearchXIcon } from "lucide-react";
+import {
+  ChevronRightIcon,
+  FilterRemoveIcon,
+  GitPullRequestDraftIcon,
+  SearchIcon,
+} from "@primer/octicons-react";
 import { useEffect, useRef, type CSSProperties } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { BadgeIcon, BadgePill } from "@/components/status-badge";
@@ -45,7 +49,7 @@ export function PrTable({
     return (
       <Empty>
         <EmptyHeader>
-          <EmptyMedia variant="icon">{query ? <SearchXIcon /> : <FunnelXIcon />}</EmptyMedia>
+          <EmptyMedia variant="icon">{query ? <SearchIcon /> : <FilterRemoveIcon />}</EmptyMedia>
           <EmptyTitle>
             {query ? `No results for "${query}"` : "Nothing matches this view"}
           </EmptyTitle>

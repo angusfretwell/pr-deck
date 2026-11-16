@@ -1,5 +1,5 @@
+import { CloudOfflineIcon } from "@primer/octicons-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { CloudOffIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Redirect, Route, Switch, useLocation } from "wouter";
 import { AppShell } from "@/components/app-shell";
@@ -75,7 +75,7 @@ function Workspace({ onSignOut }: { onSignOut: () => void }) {
       <Empty>
         <EmptyHeader>
           <EmptyMedia variant="icon">
-            <CloudOffIcon />
+            <CloudOfflineIcon />
           </EmptyMedia>
           <EmptyTitle>Couldn't reach GitHub</EmptyTitle>
           <EmptyDescription>{errorMessage(session.error)}</EmptyDescription>
