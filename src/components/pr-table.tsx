@@ -112,9 +112,9 @@ export function PrTable({
           >
             <bdi>{pr.title}</bdi>
           </a>
-          {!summary && !showRepo && (
+          {!showRepo && (
             <span className="ms-0.5 shrink-0 font-normal text-muted-foreground/72">
-              {group === "repo" ? "" : `${pr.repo} `}#{pr.number}
+              #{pr.number}
             </span>
           )}
         </span>
