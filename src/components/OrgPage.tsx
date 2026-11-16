@@ -347,7 +347,7 @@ function NoPullRequests({
 }) {
   return (
     <Empty>
-      <EmptyHeader>
+      <EmptyHeader className="animate-rise motion-reduce:animate-none">
         <EmptyMedia variant="icon">
           <GitPullRequestIcon />
         </EmptyMedia>
