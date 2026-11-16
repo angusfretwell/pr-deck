@@ -168,7 +168,7 @@ export function AppShell({
                 <MenuSeparator />
                 <MenuItem onClick={onSignOut}>
                   <SignOutIcon />
-                  Remove token
+                  Clear token
                 </MenuItem>
               </MenuPopup>
             </Menu>
