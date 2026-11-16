@@ -44,7 +44,7 @@ function DiffBar({ file }: { file: FileChange }) {
     (file.additions / (file.additions + file.deletions || 1)) * DIFF_SQUARES,
   );
   return (
-    <span className="inline-flex gap-px">
+    <span className="inline-flex shrink-0 gap-px">
       {Array.from({ length: DIFF_SQUARES }, (_, i) => (
         <i
           key={i}
@@ -236,9 +236,9 @@ const linesChanged = (file: FileChange) => file.additions + file.deletions;
 function FilePath({ path }: { path: string }) {
   const split = path.lastIndexOf("/") + 1;
   return (
-    <span title={path} className="flex min-w-0 flex-1 font-mono text-xs">
+    <span title={path} className="flex min-w-0 flex-1 font-mono text-sm sm:text-xs">
       <span className="truncate">{path.slice(0, split)}</span>
-      <span className="shrink-0">{path.slice(split)}</span>
+      <span className="max-w-full shrink-0 truncate">{path.slice(split)}</span>
     </span>
   );
 }
@@ -258,10 +258,10 @@ function FileList({ files, changedFiles }: { files: FileChange[]; changedFiles: 
       {shown.map((file) => (
         <Line key={file.path}>
           <FilePath path={file.path} />
-          <span className="text-success-foreground tabular-nums">
+          <span className="shrink-0 text-success-foreground tabular-nums">
             +{file.additions.toLocaleString()}
           </span>
-          <span className="text-destructive-foreground tabular-nums">
+          <span className="shrink-0 text-destructive-foreground tabular-nums">
             −{file.deletions.toLocaleString()}
           </span>
           <DiffBar file={file} />
@@ -452,6 +452,7 @@ export function PreviewDrawer({ pr, open, viewer, onClose }: PreviewDrawerProps)
       <DrawerPopup
         showBar
         showCloseButton
+        finalFocus={(closeType) => closeType === "keyboard"}
         className="h-[calc(100dvh-max(--spacing(2),env(safe-area-inset-top))---spacing(8))]"
       >
         {pr && (
