@@ -8,4 +8,23 @@ export const useStoredViews = () => useLocalStorage<Record<string, View[]>>("pr-
 export const useGroup = () => useLocalStorage<Group>("pr-deck:group", "repo");
 export const useLastPath = () => useLocalStorage<string | null>("pr-deck:last-path", null);
 export const useHiddenOwners = () => useLocalStorage<string[]>("pr-deck:hidden-owners", []);
-export const useCollapsedGroups = () => useLocalStorage<string[]>("pr-deck:collapsed-groups", []);
+
+type CollapsedGroupsByOwner = Record<string, string[]>;
+
+export function parseCollapsedGroups(stored: string): CollapsedGroupsByOwner {
+  const parsed: unknown = JSON.parse(stored);
+  return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
+    ? (parsed as CollapsedGroupsByOwner)
+    : {};
+}
+
+export function useCollapsedGroups(owner: string) {
+  const [byOwner, setByOwner] = useLocalStorage<CollapsedGroupsByOwner>(
+    "pr-deck:collapsed-groups",
+    {},
+    { deserializer: parseCollapsedGroups },
+  );
+  const setCollapsed = (collapsed: string[]) =>
+    setByOwner((prev) => ({ ...prev, [owner]: collapsed }));
+  return [byOwner[owner] ?? [], setCollapsed] as const;
+}
