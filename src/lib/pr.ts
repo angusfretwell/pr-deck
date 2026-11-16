@@ -56,15 +56,7 @@ export function issueBadges(pr: PullRequest): Badge[] {
   const badges: Badge[] = [];
   if (pr.ci === "fail" || pr.ci === "pending") badges.push({ ...CI_BADGE[pr.ci], label: "Checks" });
   if (pr.mergeability === "conflict") badges.push(CONFLICT_BADGE);
-  if (pr.review === "changes") badges.push(REVIEW_BADGE.changes);
-  if (
-    !badges.length &&
-    pr.review === "approved" &&
-    pr.ci === "pass" &&
-    pr.mergeability === "clean"
-  ) {
-    badges.push({ ...REVIEW_BADGE.approved, label: "Ready" });
-  }
+  if (pr.review === "changes" || pr.review === "approved") badges.push(REVIEW_BADGE[pr.review]);
   return badges;
 }
 

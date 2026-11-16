@@ -110,11 +110,12 @@ describe("issueBadges", () => {
     ]);
   });
 
-  it("shows Ready only when approved, passing and clean", () => {
-    expect(labels({ review: "approved" })).toEqual([["ok", "Ready"]]);
-    expect(labels({ review: "approved", ci: "none" })).toEqual([]);
-    expect(labels({ review: "approved", mergeability: "unknown" })).toEqual([]);
-    expect(labels({ review: "approved", ci: "fail" })).toEqual([["bad", "Checks"]]);
+  it("shows Approved whenever the PR is approved", () => {
+    expect(labels({ review: "approved" })).toEqual([["ok", "Approved"]]);
+    expect(labels({ review: "approved", ci: "fail" })).toEqual([
+      ["bad", "Checks"],
+      ["ok", "Approved"],
+    ]);
     expect(labels({ review: "comment" })).toEqual([]);
   });
 });
