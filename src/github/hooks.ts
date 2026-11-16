@@ -5,6 +5,7 @@ import * as realApi from "./api";
 import { isRetryable } from "./api";
 import * as mockApi from "./mock";
 import { withMergeability } from "./mapping";
+import { mergeabilityPollInterval } from "./polling";
 
 const { fetchMergeability, fetchPullRequestDetail, fetchPullRequests, fetchSession } = import.meta
   .env.VITE_MOCK
@@ -15,9 +16,6 @@ export { fetchSession };
 
 const retry = (failureCount: number, error: Error) => isRetryable(error) && failureCount < 1;
 const RETRY_DELAY_MS = 1000;
-
-const MERGEABILITY_POLL_MS = 10_000;
-const MERGEABILITY_POLL_ATTEMPTS = 4;
 
 const live = {
   staleTime: 30_000,
@@ -72,10 +70,7 @@ function usePendingMergeability(owner: string, list: PullRequestList | undefined
         : skipToken,
     initialData: {},
     staleTime: Infinity,
-    refetchInterval: ({ state }) =>
-      state.dataUpdateCount < MERGEABILITY_POLL_ATTEMPTS
-        ? MERGEABILITY_POLL_MS * 2 ** state.dataUpdateCount
-        : false,
+    refetchInterval: ({ state }) => mergeabilityPollInterval(state),
     retry,
     retryDelay: RETRY_DELAY_MS,
   });
