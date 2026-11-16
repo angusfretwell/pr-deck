@@ -6,7 +6,7 @@ import { PopoverTrigger } from "@/components/ui/popover";
 import { PROPERTY } from "@/lib/filters";
 import { cn } from "@/lib/utils";
 import type { Filter, PullRequest } from "@/types";
-import type { FilterTriggerProps, MenuAnchor } from "../ViewHeader";
+import type { FilterTriggerProps, MenuAnchor } from "../view-header";
 
 interface FilterBarProps {
   filters: Filter[];

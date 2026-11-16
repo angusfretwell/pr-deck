@@ -1,7 +1,7 @@
 import { useRef } from "react";
-import { AppShell } from "@/components/AppShell";
-import { PrTable } from "@/components/PrTable";
-import { ViewHeader } from "@/components/ViewHeader";
+import { AppShell } from "@/components/app-shell";
+import { PrTable } from "@/components/pr-table";
+import { ViewHeader } from "@/components/view-header";
 import { groupPullRequests, passes } from "@/lib/filters";
 import { cn } from "@/lib/utils";
 import type { Account, PullRequest, Session, View } from "@/types";

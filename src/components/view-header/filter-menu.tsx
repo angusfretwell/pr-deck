@@ -12,7 +12,7 @@ import { Popover, PopoverPopup, type PopoverPrimitive } from "@/components/ui/po
 import { UserAvatar } from "@/components/user-avatar";
 import { type Option, passes, PROPERTIES, PROPERTY, type Property } from "@/lib/filters";
 import type { Filter, PropertyKey, PullRequest } from "@/types";
-import type { MenuAnchor } from "../ViewHeader";
+import type { MenuAnchor } from "../view-header";
 
 type Item =
   | { kind: "property"; property: Property }

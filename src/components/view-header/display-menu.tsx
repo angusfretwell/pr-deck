@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/menu";
 import { Button } from "@/components/ui/button";
 import type { Group } from "@/types";
-import { Hint } from "./Hint";
+import { Hint } from "./hint";
 
 const GROUPS: { value: Group; label: string }[] = [
   { value: "repo", label: "Repository" },

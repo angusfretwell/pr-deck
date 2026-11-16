@@ -3,8 +3,8 @@ import { CircleAlertIcon, GitPullRequestIcon, InfoIcon } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { Redirect, useLocation } from "wouter";
-import { Preview, PreviewDrawer } from "@/components/Preview";
-import { PrTable } from "@/components/PrTable";
+import { Preview, PreviewDrawer } from "@/components/preview";
+import { PrTable } from "@/components/pr-table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +16,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ViewHeader, type FilterMenuState } from "@/components/ViewHeader";
+import { ViewHeader, type FilterMenuState } from "@/components/view-header";
 import { errorMessage } from "@/github/api";
 import { usePullRequests } from "@/github/hooks";
 import { groupPullRequests, matchesText, passes, sameFilters } from "@/lib/filters";

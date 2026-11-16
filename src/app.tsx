@@ -2,9 +2,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CloudOffIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Redirect, Route, Switch, useLocation } from "wouter";
-import { AppShell } from "@/components/AppShell";
-import { OrgRoute } from "@/components/OrgPage";
-import { SetupScreen } from "@/components/SetupScreen";
+import { AppShell } from "@/components/app-shell";
+import { OrgRoute } from "@/components/org-page";
+import { SetupScreen } from "@/components/setup-screen";
 import { Button } from "@/components/ui/button";
 import {
   Empty,

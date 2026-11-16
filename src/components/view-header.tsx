@@ -9,11 +9,11 @@ import {
 } from "@/components/ui/popover";
 import { toggleValue } from "@/lib/filters";
 import type { Filter, Group, PropertyKey, PullRequest, View } from "@/types";
-import { DisplayMenu } from "./view-header/DisplayMenu";
-import { FilterBar } from "./view-header/FilterBar";
-import { FilterMenu } from "./view-header/FilterMenu";
-import { Hint } from "./view-header/Hint";
-import { ViewTabs } from "./view-header/ViewTabs";
+import { DisplayMenu } from "./view-header/display-menu";
+import { FilterBar } from "./view-header/filter-bar";
+import { FilterMenu } from "./view-header/filter-menu";
+import { Hint } from "./view-header/hint";
+import { ViewTabs } from "./view-header/view-tabs";
 
 export type MenuAnchor = "header" | "add" | PropertyKey;
 

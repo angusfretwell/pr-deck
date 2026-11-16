@@ -3,7 +3,7 @@ import { LogOutIcon, SearchIcon } from "lucide-react";
 import { useState, type RefObject } from "react";
 import { useLocation } from "wouter";
 import { AccountAvatar } from "@/components/account-avatar";
-import { OwnerSwitcher } from "@/components/OwnerSwitcher";
+import { OwnerSwitcher } from "@/components/owner-switcher";
 import {
   Menu,
   MenuCheckboxItem,

@@ -1,6 +1,6 @@
 import { EyeIcon, KeyRoundIcon } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import { SetupPreview } from "@/components/SetupPreview";
+import { SetupPreview } from "@/components/setup-preview";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";

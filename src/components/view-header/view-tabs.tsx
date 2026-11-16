@@ -17,7 +17,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { ALL_OPEN_NAME } from "@/lib/views";
 import type { View } from "@/types";
-import { Hint } from "./Hint";
+import { Hint } from "./hint";
 
 interface ViewTabsProps {
   views: View[];
