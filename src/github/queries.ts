@@ -98,6 +98,17 @@ export const PULL_REQUESTS_QUERY = `
   }
 `;
 
+export const MERGEABILITY_QUERY = `
+  query Mergeability($ids: [ID!]!) {
+    nodes(ids: $ids) {
+      ... on PullRequest {
+        id
+        mergeable
+      }
+    }
+  }
+`;
+
 export const VIEWER_TEAMS_QUERY = `
   query ViewerTeams($owner: String!, $viewer: String!) {
     repositoryOwner(login: $owner) {

@@ -1,14 +1,17 @@
 import { graphql, GraphqlResponseError } from "@octokit/graphql";
-import type { PullRequestDetail, PullRequestList, Session } from "@/types";
+import type { Mergeability, PullRequestDetail, PullRequestList, Session } from "@/types";
 import {
   toPullRequest,
   toPullRequestDetail,
+  toMergeability,
   toSession,
+  type RawMergeable,
   type RawPullRequest,
   type RawPullRequestDetail,
   type RawSession,
 } from "./mapping";
 import {
+  MERGEABILITY_QUERY,
   PAGE_SIZE,
   PULL_REQUEST_DETAIL_QUERY,
   PULL_REQUESTS_QUERY,
@@ -29,6 +32,10 @@ interface PullRequestsResponse extends OwnerResponse {
     pageInfo: { hasNextPage: boolean; endCursor: string | null };
     nodes: (RawPullRequest | null)[];
   };
+}
+
+interface MergeabilityResponse {
+  nodes: ({ id?: string; mergeable?: RawMergeable } | null)[];
 }
 
 interface ViewerTeamsResponse {
@@ -103,6 +110,27 @@ export async function fetchPullRequests(
     pullRequests: nodes.map((node) => toPullRequest(node, { viewer, viewerTeams })),
     totalCount,
   };
+}
+
+const MAX_NODE_IDS = 100;
+
+export async function fetchMergeability(
+  token: string,
+  ids: string[],
+): Promise<Record<string, Mergeability>> {
+  const client = createClient(token);
+  const batches: string[][] = [];
+  for (let start = 0; start < ids.length; start += MAX_NODE_IDS) {
+    batches.push(ids.slice(start, start + MAX_NODE_IDS));
+  }
+  const responses = await Promise.all(
+    batches.map((batch) => client<MergeabilityResponse>(MERGEABILITY_QUERY, { ids: batch })),
+  );
+  const states: Record<string, Mergeability> = {};
+  for (const node of responses.flatMap((response) => response.nodes)) {
+    if (node?.id && node.mergeable) states[node.id] = toMergeability(node.mergeable);
+  }
+  return states;
 }
 
 export async function fetchPullRequestDetail(

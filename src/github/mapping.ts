@@ -6,6 +6,7 @@ import type {
   Mergeability,
   PullRequest,
   PullRequestDetail,
+  PullRequestList,
   Reviewer,
   ReviewState,
   ReviewVerdict,
@@ -165,6 +166,20 @@ const CHECK_STATES: Record<RawCheckRunStatus | RawCheckConclusion | RawRollupSta
   STALE: "skipped",
 };
 
+export const toMergeability = (raw: RawMergeable): Mergeability => MERGEABILITY[raw];
+
+export function withMergeability(
+  list: PullRequestList,
+  states: Record<string, Mergeability>,
+): PullRequestList {
+  return {
+    ...list,
+    pullRequests: list.pullRequests.map((pr) =>
+      pr.id in states ? { ...pr, mergeability: states[pr.id] } : pr,
+    ),
+  };
+}
+
 export function toAccount(raw: RawAccount): Account {
   return { login: raw.login, name: raw.name || raw.login, avatarUrl: raw.avatarUrl };
 }
@@ -240,7 +255,7 @@ export function toPullRequest(node: RawPullRequest, context: ReviewContext): Pul
     branch: node.headRefName,
     updatedAt: node.updatedAt,
     ci: toCi(node),
-    mergeability: MERGEABILITY[node.mergeable],
+    mergeability: toMergeability(node.mergeable),
     review: toReviewState(node.reviewDecision, reviewers),
     reviewers,
     reviewRequestedFromViewer:

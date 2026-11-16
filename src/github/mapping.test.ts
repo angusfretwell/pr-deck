@@ -4,6 +4,7 @@ import {
   toPullRequest,
   toPullRequestDetail,
   toSession,
+  withMergeability,
   type RawCheckConclusion,
   type RawCheckRunStatus,
   type RawPullRequest,
@@ -360,5 +361,20 @@ describe("toPullRequestDetail", () => {
       checks: [],
       files: [],
     });
+  });
+});
+
+describe("withMergeability", () => {
+  it("updates only the pull requests it has a state for", () => {
+    const list = {
+      pullRequests: [
+        map({ id: "PR_1", mergeable: "UNKNOWN" }),
+        map({ id: "PR_2", mergeable: "UNKNOWN" }),
+      ],
+      totalCount: 2,
+    };
+    const updated = withMergeability(list, { PR_1: "conflict" });
+    expect(updated.pullRequests.map((pr) => pr.mergeability)).toEqual(["conflict", "unknown"]);
+    expect(updated.totalCount).toBe(2);
   });
 });
