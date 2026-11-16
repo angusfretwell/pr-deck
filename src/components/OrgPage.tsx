@@ -1,5 +1,5 @@
 import type { UseQueryResult } from "@tanstack/react-query";
-import { CircleAlertIcon } from "lucide-react";
+import { CircleAlertIcon, GitPullRequestIcon } from "lucide-react";
 import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useResizeObserver } from "usehooks-ts";
 import { Redirect, useLocation } from "wouter";
@@ -275,20 +275,18 @@ function OrgPage({
       {pullRequests.data ? (
         <div
           className={cn(
-            "flex-1 md:grid md:min-h-0 md:grid-cols-[minmax(0,1fr)] md:overflow-hidden",
+            "flex flex-1 flex-col md:grid md:min-h-0 md:grid-cols-[minmax(0,1fr)] md:overflow-hidden",
             previewed && "md:grid-cols-[minmax(0,1fr)_minmax(380px,min(46%,800px))]",
           )}
         >
           <div
             className={cn(
-              "pb-[calc(--spacing(4)+env(safe-area-inset-bottom))] md:min-h-0 md:overflow-y-auto md:overscroll-contain",
+              "flex flex-1 flex-col pb-[calc(--spacing(4)+env(safe-area-inset-bottom))] md:min-h-0 md:overflow-y-auto md:overscroll-contain",
               previewed && "max-md:hidden",
             )}
           >
             {orgPrs.length === 0 ? (
-              <Empty>
-                <EmptyDescription>No open pull requests in {owner}.</EmptyDescription>
-              </Empty>
+              <NoPullRequests owner={owner} result={pullRequests} />
             ) : (
               <PrTable
                 groups={groups}
@@ -328,6 +326,34 @@ function TruncationNote({ list }: { list: PullRequestList }) {
       Showing the {list.pullRequests.length} most recently updated of {list.totalCount} open pull
       requests.
     </p>
+  );
+}
+
+function NoPullRequests({
+  owner,
+  result,
+}: {
+  owner: string;
+  result: UseQueryResult<PullRequestList>;
+}) {
+  return (
+    <Empty>
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <GitPullRequestIcon />
+        </EmptyMedia>
+        <EmptyTitle className="text-base">No open pull requests</EmptyTitle>
+        <EmptyDescription>{owner} is all clear.</EmptyDescription>
+      </EmptyHeader>
+      <Button
+        size="sm"
+        variant="outline"
+        loading={result.isFetching}
+        onClick={() => result.refetch()}
+      >
+        Refresh
+      </Button>
+    </Empty>
   );
 }
 

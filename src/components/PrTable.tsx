@@ -1,11 +1,11 @@
 import { GitPullRequestDraftIcon } from "@primer/octicons-react";
-import { ChevronRightIcon } from "lucide-react";
+import { ChevronRightIcon, FunnelXIcon, SearchXIcon } from "lucide-react";
 import { useEffect, useRef, type CSSProperties } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { BadgeIcon, BadgePill, pillClassName } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Empty, EmptyContent, EmptyDescription } from "@/components/ui/empty";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { UserAvatar } from "@/components/user-avatar";
 import type { PullRequestGroup } from "@/lib/filters";
 import { age, isStale, issueBadges, statusBadge } from "@/lib/pr";
@@ -46,14 +46,15 @@ export function PrTable({
   if (groups.every(({ rows }) => rows.length === 0)) {
     return (
       <Empty>
-        <EmptyDescription>
-          {query ? `No pull requests match "${query}".` : "No pull requests match this view."}
-        </EmptyDescription>
-        <EmptyContent>
-          <Button variant="outline" onClick={query ? onClearSearch : onShowAll}>
-            {query ? "Clear search" : "Show all open"}
-          </Button>
-        </EmptyContent>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">{query ? <SearchXIcon /> : <FunnelXIcon />}</EmptyMedia>
+          <EmptyTitle className="text-base">
+            {query ? `No results for "${query}"` : "Nothing matches this view"}
+          </EmptyTitle>
+        </EmptyHeader>
+        <Button size="sm" variant="outline" onClick={query ? onClearSearch : onShowAll}>
+          {query ? "Clear search" : "Show all open"}
+        </Button>
       </Empty>
     );
   }
