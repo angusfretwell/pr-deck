@@ -119,13 +119,11 @@ function Logo() {
   return (
     <svg viewBox="0 0 32 32" aria-hidden className="size-6">
       <rect width="32" height="32" rx="7" className="fill-foreground" />
-      <path
-        d="M9 11h14M9 16h14M9 21h8"
-        fill="none"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        className="stroke-background"
-      />
+      <rect x="7" y="7" width="18" height="10.5" rx="2.5" className="fill-background" />
+      <g fill="none" strokeWidth="2.4" strokeLinecap="round" className="stroke-background">
+        <path d="M10 21.3h12" opacity=".6" />
+        <path d="M13 25h6" opacity=".3" />
+      </g>
     </svg>
   );
 }
