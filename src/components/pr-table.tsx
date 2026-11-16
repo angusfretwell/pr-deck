@@ -166,7 +166,7 @@ export function PrTable({
           key={key}
           open={!collapsed}
           onOpenChange={(_, { event }) => onToggleGroup(key, "altKey" in event && event.altKey)}
-          className="data-closed:pb-1"
+          className={cn(group !== "none" && "pb-1")}
         >
           {group !== "none" && (
             <div className="sticky top-[calc(var(--pinned-height,0px)+--spacing(2))] z-10 mt-1 w-0">
