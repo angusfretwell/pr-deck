@@ -1,5 +1,5 @@
-import { useIsFetching, useQueryClient } from "@tanstack/react-query";
-import { LogOutIcon, RefreshCwIcon } from "lucide-react";
+import { useIsFetching } from "@tanstack/react-query";
+import { LogOutIcon } from "lucide-react";
 import type { RefObject } from "react";
 import { useLocation } from "wouter";
 import { AccountAvatar } from "@/components/account-avatar";
@@ -16,8 +16,7 @@ import {
   MenuSeparator,
   MenuTrigger,
 } from "@/components/ui/menu";
-import { Tooltip, TooltipPopup, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { Spinner } from "@/components/ui/spinner";
 import type { Account, Session } from "@/types";
 
 interface AppShellProps {
@@ -48,7 +47,6 @@ export function AppShell({
   onSignOut,
 }: AppShellProps) {
   const [, navigate] = useLocation();
-  const queryClient = useQueryClient();
   const fetching = useIsFetching() > 0;
   const personal = session.owners.filter((owner) => owner.login === session.viewer.login);
   const organisations = session.owners.filter((owner) => owner.login !== session.viewer.login);
@@ -76,21 +74,9 @@ export function AppShell({
         />
       ) : (
         <>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Refresh"
-                  onClick={() => queryClient.refetchQueries({ type: "active" })}
-                />
-              }
-            >
-              <RefreshCwIcon className={cn(fetching && "animate-spin")} />
-            </TooltipTrigger>
-            <TooltipPopup>Refresh</TooltipPopup>
-          </Tooltip>
+          <span className="flex size-8 shrink-0 items-center justify-center sm:size-7">
+            {fetching && <Spinner className="size-4.5 opacity-80 sm:size-4" />}
+          </span>
           <Menu>
             <MenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Account" />}>
               <AccountAvatar account={session.viewer} className="size-5.5" />
