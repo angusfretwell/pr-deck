@@ -247,7 +247,7 @@ function OrgPage({
             previewed && "grid-cols-[minmax(0,1fr)_minmax(380px,46%)]",
           )}
         >
-          <div className="min-h-0 overflow-y-auto pb-12">
+          <div className="min-h-0 overflow-y-auto pb-4">
             {orgPrs.length === 0 ? (
               <Empty>
                 <EmptyDescription>No open pull requests in {owner}.</EmptyDescription>

@@ -75,13 +75,13 @@ export function PrTable({
         }
         className={cn(
           "grid h-9 grid-cols-(--columns) items-center gap-x-2.5 rounded-md px-2",
-          group !== "none" && "scroll-mt-11",
+          group !== "none" && "scroll-mt-10",
           selected ? "bg-info/8 dark:bg-info/16" : "hover:bg-accent",
         )}
       >
         <span className="truncate font-medium">
           {pr.isDraft && (
-            <Badge variant="secondary" className="me-1.5 text-muted-foreground">
+            <Badge variant="outline" className="me-1.5 bg-transparent text-muted-foreground">
               Draft
             </Badge>
           )}
@@ -126,7 +126,7 @@ export function PrTable({
       ref={ref}
       role="listbox"
       aria-label="Pull requests"
-      className="cursor-default px-2 pb-12 text-[13px]"
+      className="cursor-default px-2 text-[13px]"
       style={{ "--columns": columns } as CSSProperties}
     >
       {groups.map(({ key, rows }) => {
@@ -134,12 +134,12 @@ export function PrTable({
         return (
           <div key={key} role="group" aria-label={group === "none" ? undefined : key}>
             {group !== "none" && (
-              <div className="sticky top-0 z-10 bg-background py-1">
+              <div className="sticky top-0 z-10 my-1 rounded-md bg-background">
                 <button
                   type="button"
                   aria-expanded={!collapsed}
                   onClick={() => onToggleGroup(key)}
-                  className="flex h-9 w-full items-center gap-2 rounded-md bg-muted px-2 text-left font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex h-9 w-full items-center gap-2 rounded-md bg-muted px-2 text-left font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <ChevronRightIcon
                     className={cn(

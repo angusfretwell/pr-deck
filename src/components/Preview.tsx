@@ -158,7 +158,7 @@ export function Preview({ pr, viewer, onClose }: PreviewProps) {
           )}
           {pr.mergeability === "conflict" && <BadgePill badge={CONFLICT_BADGE} />}
           {pr.isDraft && (
-            <Badge variant="secondary" className="text-muted-foreground">
+            <Badge variant="outline" className="text-muted-foreground">
               Draft
             </Badge>
           )}
