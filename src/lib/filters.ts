@@ -14,7 +14,7 @@ export interface Property {
   valueOf: (pr: PullRequest, viewer: string) => string;
 }
 
-const VIEWER_VALUE = "@me";
+export const VIEWER_VALUE = "@me";
 
 const fromBadges = (badges: Record<string, { label: string }>) =>
   Object.entries(badges).map(([value, badge]) => ({ value, label: badge.label }));

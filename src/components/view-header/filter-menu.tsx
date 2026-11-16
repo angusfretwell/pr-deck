@@ -10,7 +10,14 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverPopup, type PopoverPrimitive } from "@/components/ui/popover";
 import { UserAvatar } from "@/components/user-avatar";
-import { type Option, passes, PROPERTIES, PROPERTY, type Property } from "@/lib/filters";
+import {
+  type Option,
+  passes,
+  PROPERTIES,
+  PROPERTY,
+  type Property,
+  VIEWER_VALUE,
+} from "@/lib/filters";
 import type { Filter, PropertyKey, PullRequest } from "@/types";
 import type { MenuAnchor } from "../view-header";
 
@@ -93,7 +100,7 @@ function FilterMenuList({
   const avatarUrls = new Map(orgPrs.map((pr) => [pr.author, pr.authorAvatarUrl]));
   const avatarOf = (item: Extract<Item, { kind: "value" }>) => {
     if (item.property.key !== "author") return null;
-    const login = item.option.value === "@me" ? viewer : item.option.value;
+    const login = item.option.value === VIEWER_VALUE ? viewer : item.option.value;
     return (
       <UserAvatar
         login={login}

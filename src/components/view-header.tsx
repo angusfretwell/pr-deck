@@ -33,6 +33,7 @@ export interface ViewHeaderProps {
   viewCounts: Record<string, number>;
   allOpenCount: number | undefined;
   activeViewId: string | null;
+  deletableViewId: string | null;
   renamingViewId: string | null;
   viewHref: (id: string | null) => string;
   onRenamingViewChange: (id: string | null) => void;
@@ -47,7 +48,7 @@ export interface ViewHeaderProps {
   onSaveAsNewView: () => void;
 
   filterMenu: FilterMenuState | null;
-  onFilterMenuChange: (menu: FilterMenuState | null) => void;
+  onFilterMenuChange: (anchor: MenuAnchor | null) => void;
   displayMenuOpen: boolean;
   onDisplayMenuOpenChange: (open: boolean) => void;
   group: Group;
@@ -88,7 +89,7 @@ export function ViewHeader({
     if (!open) return onFilterMenuChange(null);
     const anchors: MenuAnchor[] = ["header", "add", ...filters.map((filter) => filter.key)];
     const anchor = anchors.find((candidate) => filterTrigger(candidate).id === trigger?.id);
-    if (anchor) onFilterMenuChange({ anchor, deferBar: anchor === "header" && !filtersChanged });
+    if (anchor) onFilterMenuChange(anchor);
   };
 
   const barVisible = filtersChanged
