@@ -7,13 +7,7 @@ import { BadgeIcon, BadgePill } from "@/components/status-badge";
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Drawer,
-  DrawerHeader,
-  DrawerPanel,
-  DrawerPopup,
-  DrawerTitle,
-} from "@/components/ui/drawer";
+import { Drawer, DrawerPanel, DrawerPopup, DrawerTitle } from "@/components/ui/drawer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { errorMessage } from "@/github/api";
@@ -451,16 +445,12 @@ export function PreviewDrawer({ pr, open, viewer, onClose }: PreviewDrawerProps)
         className="h-[calc(100dvh-max(--spacing(2),env(safe-area-inset-top))---spacing(8))]"
       >
         {pr && (
-          <>
-            <DrawerHeader>
-              <DrawerTitle className="flex min-w-0 gap-2 text-base leading-normal">
-                <PreviewHeading pr={pr} />
-              </DrawerTitle>
-            </DrawerHeader>
-            <DrawerPanel>
-              <PreviewBody key={pr.id} pr={pr} viewer={viewer} />
-            </DrawerPanel>
-          </>
+          <DrawerPanel className="flex flex-col gap-5">
+            <DrawerTitle className="flex min-w-0 gap-2 text-base leading-normal">
+              <PreviewHeading pr={pr} />
+            </DrawerTitle>
+            <PreviewBody key={pr.id} pr={pr} viewer={viewer} />
+          </DrawerPanel>
         )}
       </DrawerPopup>
     </Drawer>
