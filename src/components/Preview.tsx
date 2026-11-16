@@ -133,8 +133,11 @@ function Description({ html }: { html: string }) {
         />
       </div>
       {collapsed && (
-        <div className="-mx-3">
-          <ShowMore onClick={() => setExpanded(true)}>Show more</ShowMore>
+        <div className="mt-2 flex justify-center">
+          <Button variant="outline" size="sm" onClick={() => setExpanded(true)}>
+            <ChevronDownIcon />
+            Show more
+          </Button>
         </div>
       )}
     </>
@@ -173,9 +176,8 @@ const linesChanged = (file: FileChange) => file.additions + file.deletions;
 
 function FileList({ files, changedFiles }: { files: FileChange[]; changedFiles: number }) {
   const [expanded, setExpanded] = useState(false);
-  const shown = expanded
-    ? files
-    : files.toSorted((a, b) => linesChanged(b) - linesChanged(a)).slice(0, PREVIEWED_FILES);
+  const sorted = files.toSorted((a, b) => linesChanged(b) - linesChanged(a));
+  const shown = expanded ? sorted : sorted.slice(0, PREVIEWED_FILES);
 
   return (
     <Lines>
