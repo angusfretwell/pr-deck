@@ -18,7 +18,7 @@ const MERGEABILITY_POLL_ATTEMPTS = 4;
 const live = {
   staleTime: 30_000,
   gcTime: Infinity,
-  refetchInterval: 120_000,
+  refetchInterval: 15 * 60_000,
   refetchOnWindowFocus: true,
   retry,
 };
