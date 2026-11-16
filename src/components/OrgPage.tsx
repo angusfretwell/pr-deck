@@ -322,7 +322,7 @@ function LoadError({ result }: { result: UseQueryResult<PullRequestList> }) {
 
 function LoadingRows() {
   return (
-    <div className="min-h-0 flex-1 overflow-hidden px-2" aria-busy="true">
+    <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden px-2" aria-busy="true">
       {Array.from({ length: 12 }, (_, index) => (
         <div key={index} className="flex h-9 items-center gap-3 px-2">
           <Skeleton className="size-4 rounded-full" />

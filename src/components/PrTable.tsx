@@ -75,7 +75,7 @@ export function PrTable({
         }
         className={cn(
           "grid h-9 grid-cols-(--columns) items-center gap-x-2.5 rounded-md px-2",
-          group !== "none" && "scroll-mt-10",
+          group !== "none" && "scroll-mt-9",
           selected ? "bg-info/8 dark:bg-info/16" : "hover:bg-accent",
         )}
       >
@@ -139,7 +139,7 @@ export function PrTable({
                   type="button"
                   aria-expanded={!collapsed}
                   onClick={() => onToggleGroup(key)}
-                  className="flex h-9 w-full items-center gap-2 rounded-md bg-muted px-2 text-left font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex h-8 w-full items-center gap-2 rounded-md bg-muted px-2 text-left font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <ChevronRightIcon
                     className={cn(
@@ -157,7 +157,7 @@ export function PrTable({
                 </button>
               </div>
             )}
-            {!collapsed && rows.map(row)}
+            {!collapsed && <div className="flex flex-col gap-0.5">{rows.map(row)}</div>}
           </div>
         );
       })}
