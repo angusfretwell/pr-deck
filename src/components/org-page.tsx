@@ -108,7 +108,7 @@ function OrgPage({
   const [location, navigate] = useLocation();
   const [, setLastPath] = useLastPath();
   const [group, setGroup] = useGroup();
-  const [collapsedGroups, setCollapsedGroups] = useCollapsedGroups();
+  const [collapsedGroups, setCollapsedGroups] = useCollapsedGroups(owner);
   const savedFilters = activeView?.filters ?? [];
   const [filters, setFilters] = useState<Filter[]>(savedFilters);
   const filtersChanged = !sameFilters(filters, savedFilters);
