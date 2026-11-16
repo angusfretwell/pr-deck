@@ -54,7 +54,10 @@ export function ViewTabs({
   }, [activeViewId, views.length, countsKey]);
 
   return (
-    <ScrollArea scrollFade className="-my-2 -ms-2 min-w-0 md:-ms-4">
+    <ScrollArea
+      scrollFade
+      className="-my-2 -ms-2 min-w-0 *:data-[slot=scroll-area-scrollbar]:hidden md:-ms-4"
+    >
       <nav ref={nav} aria-label="Views" className="flex w-max gap-1.5 py-2 ps-2 md:ps-4">
         <ViewLink
           href={viewHref(null)}
