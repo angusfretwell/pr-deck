@@ -16,10 +16,9 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ViewHeader, type FilterMenuState } from "@/components/view-header";
+import { ViewHeader, type FilterMenuState, type MenuAnchor } from "@/components/view-header";
 import { errorMessage } from "@/github/api";
 import { usePullRequests } from "@/github/hooks";
-import { passes, sameFilters } from "@/lib/filters";
 import {
   applySelectionAction,
   derivePrList,
@@ -28,17 +27,11 @@ import {
   toggleGroup,
   type SelectionAction,
 } from "@/lib/pr-list";
-import { useCollapsedGroups, useGroup, useLastPath, useStoredViews } from "@/lib/storage";
-import {
-  findViewBySlug,
-  markDefaultViews,
-  needsDefaultMarks,
-  seedViews,
-  slugify,
-  uniqueName,
-} from "@/lib/views";
+import { useCollapsedGroups, useGroup, useLastPath } from "@/lib/storage";
+import { useViews } from "@/lib/use-views";
 import { cn } from "@/lib/utils";
-import type { Filter, PullRequestList, View } from "@/types";
+import { countByView, type Views, type ViewsChange } from "@/lib/views";
+import type { PullRequestList } from "@/types";
 
 interface SearchProps {
   viewer: string;
@@ -52,33 +45,18 @@ interface OrgRouteProps extends SearchProps {
   viewSlug: string | null;
 }
 
-const viewPath = (owner: string, viewName?: string) =>
-  viewName === undefined ? `/${owner}` : `/${owner}/${slugify(viewName)}`;
-
 export function OrgRoute({ owner, viewSlug, ...searchProps }: OrgRouteProps) {
-  const [storedViews, setStoredViews] = useStoredViews();
-  const [renamingViewId, setRenamingViewId] = useState<string | null>(null);
-  const views = storedViews[owner];
-
-  useEffect(() => {
-    if (!views) setStoredViews((prev) => (prev[owner] ? prev : { ...prev, [owner]: seedViews() }));
-    else if (needsDefaultMarks(views))
-      setStoredViews((prev) => ({ ...prev, [owner]: markDefaultViews(prev[owner] ?? []) }));
-  }, [views, owner, setStoredViews]);
-
-  if (!views) return null;
-  const activeView = viewSlug === null ? null : findViewBySlug(views, viewSlug);
-  if (activeView === undefined) return <Redirect to={viewPath(owner)} replace />;
+  const state = useViews(owner, viewSlug);
+  if (!state) return null;
+  const { views, commit } = state;
+  if (views.redirectTo) return <Redirect to={views.redirectTo} replace />;
 
   return (
     <OrgPage
-      key={activeView?.id ?? ""}
+      key={views.active?.id ?? ""}
       owner={owner}
       views={views}
-      activeView={activeView}
-      onViewsChange={(next) => setStoredViews((prev) => ({ ...prev, [owner]: next }))}
-      renamingViewId={renamingViewId}
-      onRenamingViewChange={setRenamingViewId}
+      commit={commit}
       {...searchProps}
     />
   );
@@ -86,33 +64,27 @@ export function OrgRoute({ owner, viewSlug, ...searchProps }: OrgRouteProps) {
 
 interface OrgPageProps extends SearchProps {
   owner: string;
-  views: View[];
-  activeView: View | null;
-  onViewsChange: (views: View[]) => void;
-  renamingViewId: string | null;
-  onRenamingViewChange: (id: string | null) => void;
+  views: Views;
+  commit: (change: ViewsChange) => void;
 }
 
 function OrgPage({
   owner,
   views,
-  activeView,
-  onViewsChange,
-  renamingViewId,
-  onRenamingViewChange,
+  commit,
   viewer,
   query,
   onQueryChange,
   onOpenSearch,
 }: OrgPageProps) {
-  const [location, navigate] = useLocation();
+  const [location] = useLocation();
   const [, setLastPath] = useLastPath();
   const [group, setGroup] = useGroup();
   const [collapsedGroups, setCollapsedGroups] = useCollapsedGroups(owner);
-  const savedFilters = activeView?.filters ?? [];
-  const [filters, setFilters] = useState<Filter[]>(savedFilters);
-  const filtersChanged = !sameFilters(filters, savedFilters);
+  const { filters, filtersChanged } = views;
   const [filterMenu, setFilterMenu] = useState<FilterMenuState | null>(null);
+  const changeFilterMenu = (anchor: MenuAnchor | null) =>
+    setFilterMenu(anchor && { anchor, deferBar: anchor === "header" && !filtersChanged });
   const [displayMenuOpen, setDisplayMenuOpen] = useState(false);
   const [selection, setSelection] = useState(NO_SELECTION);
   const desktop = useMediaQuery("(min-width: 768px)");
@@ -144,33 +116,9 @@ function OrgPage({
 
   useEffect(() => setLastPath(location), [location, setLastPath]);
 
-  const replaceView = (view: View) =>
-    onViewsChange(views.map((existing) => (existing.id === view.id ? view : existing)));
-
-  const saveAsNewView = () => {
-    const view = { id: crypto.randomUUID(), name: uniqueName(views, "New view"), filters };
-    onViewsChange([...views, view]);
-    onRenamingViewChange(view.id);
-    navigate(viewPath(owner, view.name));
-  };
-
-  const renameView = (id: string, requestedName: string) => {
-    const name = uniqueName(views, requestedName, id);
-    const view = views.find((existing) => existing.id === id);
-    if (view) replaceView({ ...view, name });
-    onRenamingViewChange(null);
-    if (id === activeView?.id) navigate(viewPath(owner, name), { replace: true });
-  };
-
-  const deleteView = (id: string) => {
-    onViewsChange(views.filter((view) => view.id !== id));
-    navigate(viewPath(owner));
-  };
-
   const showAll = () => {
-    setFilters([]);
+    commit(views.showAll());
     onQueryChange("");
-    navigate(viewPath(owner));
   };
 
   useEffect(() => {
@@ -190,8 +138,7 @@ function OrgPage({
       if (command.preventDefault) event.preventDefault();
       if (command.type === "selection") setSelection(command.selection);
       else if (command.type === "openSearch") onOpenSearch();
-      else if (command.type === "openFilters")
-        setFilterMenu({ anchor: "header", deferBar: !filtersChanged });
+      else if (command.type === "openFilters") changeFilterMenu("header");
       else if (command.type === "openUrl") window.open(command.url, "_blank", "noopener");
       else target.blur();
     };
@@ -210,32 +157,24 @@ function OrgPage({
           className="bg-background max-md:fixed max-md:inset-x-0 max-md:top-12.5 max-md:z-20"
         >
           <ViewHeader
-            views={views}
-            viewCounts={
-              pullRequests.data
-                ? Object.fromEntries(
-                    views.map((view) => [
-                      view.id,
-                      orgPrs.filter((pr) => passes(pr, view.filters, viewer)).length,
-                    ]),
-                  )
-                : {}
-            }
+            views={views.list}
+            viewCounts={pullRequests.data ? countByView(views.list, orgPrs, viewer) : {}}
             allOpenCount={pullRequests.data?.pullRequests.length}
-            activeViewId={activeView?.id ?? null}
-            renamingViewId={renamingViewId}
-            viewHref={(id) => viewPath(owner, views.find((view) => view.id === id)?.name)}
-            onRenamingViewChange={onRenamingViewChange}
-            onRenameView={renameView}
-            onDeleteView={deleteView}
+            activeViewId={views.active?.id ?? null}
+            deletableViewId={views.deletableViewId}
+            renamingViewId={views.session.renamingViewId}
+            viewHref={views.hrefFor}
+            onRenamingViewChange={(id) => commit(views.setRenaming(id))}
+            onRenameView={(id, name) => commit(views.rename(id, name))}
+            onDeleteView={(id) => commit(views.remove(id))}
             filters={filters}
             filtersChanged={filtersChanged}
-            onFiltersChange={setFilters}
-            onResetFilters={() => setFilters(savedFilters)}
-            onSaveView={() => activeView && replaceView({ ...activeView, filters })}
-            onSaveAsNewView={saveAsNewView}
+            onFiltersChange={(next) => commit(views.setFilters(next))}
+            onResetFilters={() => commit(views.resetFilters())}
+            onSaveView={() => commit(views.save())}
+            onSaveAsNewView={() => commit(views.saveAsNew())}
             filterMenu={filterMenu}
-            onFilterMenuChange={setFilterMenu}
+            onFilterMenuChange={changeFilterMenu}
             displayMenuOpen={displayMenuOpen}
             onDisplayMenuOpenChange={setDisplayMenuOpen}
             group={group}

@@ -2,10 +2,10 @@ import { useRef } from "react";
 import { AppShell } from "@/components/app-shell";
 import { PrTable } from "@/components/pr-table";
 import { ViewHeader } from "@/components/view-header";
-import { passes } from "@/lib/filters";
 import { derivePrList, NO_SELECTION } from "@/lib/pr-list";
 import { cn } from "@/lib/utils";
-import type { Account, PullRequest, Session, View } from "@/types";
+import { countByView, openViews } from "@/lib/views";
+import type { Account, PullRequest, Session } from "@/types";
 
 const VIEWER = "sam-k";
 const OWNER = "northwind";
@@ -26,30 +26,7 @@ const SESSION: Session = {
   ],
 };
 
-const VIEWS: View[] = [
-  {
-    id: "mine",
-    name: "Mine",
-    isDefault: true,
-    filters: [{ key: "author", values: ["@me"], negated: false }],
-  },
-  {
-    id: "review",
-    name: "Needs my review",
-    isDefault: true,
-    filters: [{ key: "myReview", values: ["requested"], negated: false }],
-  },
-  {
-    id: "ready",
-    name: "Ready to merge",
-    isDefault: true,
-    filters: [
-      { key: "ci", values: ["pass"], negated: false },
-      { key: "conflicts", values: ["clean"], negated: false },
-      { key: "review", values: ["approved"], negated: false },
-    ],
-  },
-];
+const VIEWS = openViews({ owner: OWNER, stored: undefined, slug: null }).list;
 
 type Seed = [
   repo: string,
@@ -143,12 +120,7 @@ const PULL_REQUESTS: PullRequest[] = SEEDS.map(
   }),
 );
 
-const VIEW_COUNTS = Object.fromEntries(
-  VIEWS.map((view) => [
-    view.id,
-    PULL_REQUESTS.filter((pr) => passes(pr, view.filters, VIEWER)).length,
-  ]),
-);
+const VIEW_COUNTS = countByView(VIEWS, PULL_REQUESTS, VIEWER);
 
 const { groups: GROUPS } = derivePrList({
   pullRequests: PULL_REQUESTS,
@@ -192,6 +164,7 @@ export function SetupPreview({ className }: { className?: string }) {
         viewCounts={VIEW_COUNTS}
         allOpenCount={PULL_REQUESTS.length}
         activeViewId={null}
+        deletableViewId={null}
         renamingViewId={null}
         viewHref={() => "#"}
         onRenamingViewChange={noop}

@@ -24,6 +24,7 @@ interface ViewTabsProps {
   viewCounts: Record<string, number>;
   allOpenCount: number | undefined;
   activeViewId: string | null;
+  deletableViewId: string | null;
   renamingViewId: string | null;
   viewHref: (id: string | null) => string;
   onRenamingViewChange: (id: string | null) => void;
@@ -38,6 +39,7 @@ export function ViewTabs({
   viewCounts,
   allOpenCount,
   activeViewId,
+  deletableViewId,
   renamingViewId,
   viewHref,
   onRenamingViewChange,
@@ -78,7 +80,7 @@ export function ViewTabs({
               />
             );
           }
-          const deletable = active && !view.isDefault;
+          const deletable = view.id === deletableViewId;
           return (
             <div key={view.id} className="relative flex">
               <ViewLink
