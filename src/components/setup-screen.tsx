@@ -61,7 +61,8 @@ export function SetupScreen({ initialError, onSignIn }: SetupScreenProps) {
                 type="password"
                 size="lg"
                 className={cn(
-                  "font-mono motion-reduce:animate-none",
+                  "motion-reduce:animate-none",
+                  token && "tracking-[0.25em]",
                   failures > 0 &&
                     (failures % 2 ? "animate-toast-error-odd" : "animate-toast-error-even"),
                 )}
