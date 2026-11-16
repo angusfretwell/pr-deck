@@ -286,7 +286,7 @@ function OrgPage({
                 groups={groups}
                 group={group}
                 compact={!!previewed}
-                selectedId={selectedId}
+                selectedId={desktop || drawerOpen ? selectedId : null}
                 onSelect={(id) => {
                   setSelectedId(id);
                   setDrawerOpen(true);
