@@ -411,7 +411,7 @@ export function Preview({ pr, viewer, onClose }: PreviewProps) {
       aria-label="Pull request preview"
       className="min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain border-s bg-background transition-[opacity,translate] duration-200 ease-out starting:translate-x-4 starting:opacity-0 motion-reduce:transition-none"
     >
-      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-background py-2 ps-6 pe-2">
+      <div className="flex items-center justify-between gap-2 py-2 ps-6 pe-2">
         <div className="flex min-w-0 gap-2 font-semibold">
           <PreviewHeading pr={pr} />
         </div>
