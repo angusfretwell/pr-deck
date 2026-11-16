@@ -92,7 +92,7 @@ export function ViewTabs({
             if (view.id === renamingViewId) {
               return (
                 <TabPill key={view.id} active={active}>
-                  <span className="px-3 leading-4">
+                  <span className="px-3 leading-5">
                     <RenameInput
                       name={view.name}
                       onCommit={(name) => onRenameView(view.id, name)}
@@ -206,7 +206,7 @@ function ViewTab({ value, name, count, className, onDoubleClick }: ViewTabProps)
       )}
       onDoubleClick={onDoubleClick}
     >
-      <span className="flex max-w-50 items-center leading-4">
+      <span className="flex max-w-50 items-center leading-5">
         <span className="truncate" title={name}>
           {name}
         </span>
