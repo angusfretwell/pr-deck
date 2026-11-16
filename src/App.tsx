@@ -9,7 +9,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/u
 import { Spinner } from "@/components/ui/spinner";
 import { errorMessage, isAuthError } from "@/github/api";
 import { useSession } from "@/github/hooks";
-import { useLastPath, useToken } from "@/lib/storage";
+import { useHiddenOwners, useLastPath, useToken } from "@/lib/storage";
 import type { Session } from "@/types";
 
 export default function App() {
@@ -84,7 +84,9 @@ function Workspace({ onSignOut }: { onSignOut: () => void }) {
 function Dashboard({ session, onSignOut }: { session: Session; onSignOut: () => void }) {
   const [query, setQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
-  const owners = session.owners.map((owner) => owner.login);
+  const [hiddenOwners, setHiddenOwners] = useHiddenOwners();
+  const enabledOwners = session.owners.filter((owner) => !hiddenOwners.includes(owner.login));
+  const owners = enabledOwners.map((owner) => owner.login);
 
   return (
     <Switch>
@@ -94,6 +96,9 @@ function Dashboard({ session, onSignOut }: { session: Session; onSignOut: () => 
             <>
               <AppShell
                 session={session}
+                enabledOwners={enabledOwners}
+                hiddenOwners={hiddenOwners}
+                onHiddenOwnersChange={setHiddenOwners}
                 activeOwner={org}
                 query={query}
                 onQueryChange={setQuery}

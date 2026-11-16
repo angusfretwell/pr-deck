@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Menu,
+  MenuCheckboxItem,
   MenuGroup,
   MenuGroupLabel,
   MenuItem,
@@ -21,6 +22,9 @@ import type { Account, Session } from "@/types";
 
 interface AppShellProps {
   session: Session;
+  enabledOwners: Account[];
+  hiddenOwners: string[];
+  onHiddenOwnersChange: (hiddenOwners: string[]) => void;
   activeOwner: string;
   query: string;
   onQueryChange: (query: string) => void;
@@ -30,6 +34,9 @@ interface AppShellProps {
 
 export function AppShell({
   session,
+  enabledOwners,
+  hiddenOwners,
+  onHiddenOwnersChange,
   activeOwner,
   query,
   onQueryChange,
@@ -48,7 +55,7 @@ export function AppShell({
         onValueChange={(owner) => navigate(`/${owner}`)}
       >
         <TabsList>
-          {session.owners.map((owner) => (
+          {enabledOwners.map((owner) => (
             <TabsTab key={owner.login} value={owner.login}>
               <AccountAvatar account={owner} className="size-4.5 rounded-sm" />
               {owner.login}
@@ -89,6 +96,32 @@ export function AppShell({
         <MenuPopup align="end">
           <MenuGroup>
             <MenuGroupLabel>{session.viewer.login}</MenuGroupLabel>
+          </MenuGroup>
+          <MenuSeparator />
+          <MenuGroup>
+            <MenuGroupLabel>Organisations</MenuGroupLabel>
+            {session.owners.map((owner) => {
+              const enabled = !hiddenOwners.includes(owner.login);
+              return (
+                <MenuCheckboxItem
+                  key={owner.login}
+                  checked={enabled}
+                  disabled={enabled && enabledOwners.length === 1}
+                  onCheckedChange={(checked) =>
+                    onHiddenOwnersChange(
+                      checked
+                        ? hiddenOwners.filter((login) => login !== owner.login)
+                        : [...hiddenOwners, owner.login],
+                    )
+                  }
+                >
+                  <span className="flex items-center gap-2">
+                    <AccountAvatar account={owner} className="size-4 rounded-sm" />
+                    {owner.login}
+                  </span>
+                </MenuCheckboxItem>
+              );
+            })}
           </MenuGroup>
           <MenuSeparator />
           <MenuItem onClick={onSignOut}>
