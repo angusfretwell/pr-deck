@@ -123,10 +123,19 @@ export function isAuthError(error: unknown): boolean {
   return httpStatus(error) === 401;
 }
 
+export function isRetryable(error: unknown): boolean {
+  const status = httpStatus(error);
+  if (status === 401 || status === 403 || status === 429) return false;
+  return !(
+    error instanceof GraphqlResponseError &&
+    error.errors?.some((entry) => entry.type === "RATE_LIMITED")
+  );
+}
+
 export function errorMessage(error: unknown): string {
   const status = httpStatus(error);
   if (status === 401) return "Your GitHub token is invalid or has expired.";
-  if (status === 403)
+  if (status === 403 || status === 429)
     return "GitHub refused the request. You may be rate limited or the token lacks access.";
   if (status !== undefined && status >= 500)
     return `GitHub did not respond in time (HTTP ${status}). Try again shortly.`;

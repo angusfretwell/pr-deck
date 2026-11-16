@@ -1,9 +1,9 @@
 import { skipToken, useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { useToken } from "@/lib/storage";
 import type { PullRequestDetail, PullRequestList, Session } from "@/types";
-import { fetchPullRequestDetail, fetchPullRequests, fetchSession, isAuthError } from "./api";
+import { fetchPullRequestDetail, fetchPullRequests, fetchSession, isRetryable } from "./api";
 
-const retry = (failureCount: number, error: Error) => !isAuthError(error) && failureCount < 3;
+const retry = (failureCount: number, error: Error) => isRetryable(error) && failureCount < 3;
 
 const MERGEABILITY_PENDING_REFETCH_MS = 10_000;
 
