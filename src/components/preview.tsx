@@ -1,4 +1,10 @@
-import { AlertIcon, ChevronDownIcon, GitPullRequestDraftIcon, XIcon } from "@primer/octicons-react";
+import {
+  AlertIcon,
+  ChevronDownIcon,
+  GitPullRequestDraftIcon,
+  MarkGithubIcon,
+  XIcon,
+} from "@primer/octicons-react";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useResizeObserver } from "usehooks-ts";
@@ -339,6 +345,7 @@ function PreviewBody({
         </div>
       </div>
       <Button className="self-start" render={<a href={pr.url} target="_blank" rel="noopener" />}>
+        <MarkGithubIcon />
         Open in GitHub
       </Button>
       {query.isError ? (
