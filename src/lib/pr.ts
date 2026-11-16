@@ -1,7 +1,7 @@
 import type { CheckState, CiState, PullRequest, ReviewState } from "../types";
 
 export type Tone = "ok" | "bad" | "warn" | "mute";
-export type BadgeIconName = "check" | "x" | "dot" | "ring" | "chat";
+export type BadgeIconName = "pass" | "fail" | "pending" | "ring" | "check" | "x" | "chat" | "alert";
 
 export interface Badge {
   tone: Tone;
@@ -9,9 +9,9 @@ export interface Badge {
   label: string;
 }
 
-const PASS: Badge = { tone: "ok", icon: "check", label: "Passing" };
-const FAIL: Badge = { tone: "bad", icon: "x", label: "Failing" };
-const PENDING: Badge = { tone: "warn", icon: "dot", label: "Running" };
+const PASS: Badge = { tone: "ok", icon: "pass", label: "Passing" };
+const FAIL: Badge = { tone: "bad", icon: "fail", label: "Failing" };
+const PENDING: Badge = { tone: "warn", icon: "pending", label: "Running" };
 
 export const CI_BADGE: Record<CiState, Badge> = {
   pass: PASS,
@@ -34,7 +34,7 @@ export const REVIEW_BADGE: Record<ReviewState, Badge> = {
   approved: { tone: "ok", icon: "check", label: "Approved" },
 };
 
-export const CONFLICT_BADGE: Badge = { tone: "bad", icon: "x", label: "Conflicts" };
+export const CONFLICT_BADGE: Badge = { tone: "bad", icon: "alert", label: "Conflicts" };
 
 export type ViewerReviewState = ReviewState | "requested";
 
