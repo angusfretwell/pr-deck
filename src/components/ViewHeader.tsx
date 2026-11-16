@@ -1,6 +1,7 @@
 import { ListFilterIcon } from "lucide-react";
 import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsiblePanel } from "@/components/ui/collapsible";
 import {
   PopoverCreateHandle,
   type PopoverPrimitive,
@@ -162,17 +163,19 @@ export function ViewHeader({
           onGroupChange={onGroupChange}
         />
       </div>
-      {barVisible && (
-        <FilterBar
-          filters={filters}
-          orgPrs={orgPrs}
-          viewer={viewer}
-          actions={actions}
-          filterTrigger={filterTrigger}
-          onNegate={negateFilter}
-          onRemove={removeFilter}
-        />
-      )}
+      <Collapsible open={barVisible}>
+        <CollapsiblePanel className="transition-[height,opacity] ease-snappy data-ending-style:opacity-0 data-starting-style:opacity-0 motion-reduce:transition-opacity">
+          <FilterBar
+            filters={filters}
+            orgPrs={orgPrs}
+            viewer={viewer}
+            actions={actions}
+            filterTrigger={filterTrigger}
+            onNegate={negateFilter}
+            onRemove={removeFilter}
+          />
+        </CollapsiblePanel>
+      </Collapsible>
       <FilterMenu
         handle={filterMenuHandle}
         triggerId={filterMenu && filterTrigger(filterMenu.anchor).id}

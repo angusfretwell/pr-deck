@@ -1,6 +1,6 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 import { CircleAlertIcon, GitPullRequestIcon, InfoIcon } from "lucide-react";
-import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { Redirect, useLocation } from "wouter";
 import { Preview, PreviewDrawer } from "@/components/Preview";
@@ -109,11 +109,12 @@ function OrgPage({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const desktop = useMediaQuery("(min-width: 768px)");
+  const pageRef = useRef<HTMLDivElement>(null!);
   const viewHeaderRef = useRef<HTMLDivElement>(null!);
-  const [viewHeaderHeight, setViewHeaderHeight] = useState(0);
   useLayoutEffect(() => {
     const element = viewHeaderRef.current;
-    const measure = () => setViewHeaderHeight(element.offsetHeight);
+    const measure = () =>
+      pageRef.current.style.setProperty("--view-header-height", `${element.offsetHeight}px`);
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(element);
@@ -226,8 +227,8 @@ function OrgPage({
 
   return (
     <div
+      ref={pageRef}
       className="flex min-h-0 flex-1 flex-col [--pinned-height:0px] max-md:[--pinned-height:calc(--spacing(12.5)+var(--view-header-height))]"
-      style={{ "--view-header-height": `${viewHeaderHeight}px` } as CSSProperties}
     >
       <div className="max-md:h-(--view-header-height)">
         <div
