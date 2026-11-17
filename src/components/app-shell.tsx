@@ -57,8 +57,6 @@ export function AppShell({
   const searching = searchVisible || searchTapped;
   const fetching = useIsFetching() > 0;
   const { ternaryDarkMode, setTernaryDarkMode } = useColorMode();
-  const personal = session.owners.filter((owner) => owner.login === session.viewer.login);
-  const organisations = session.owners.filter((owner) => owner.login !== session.viewer.login);
   const dismissSearch = () => {
     onQueryChange("");
     setSearchTapped(false);
@@ -128,56 +126,34 @@ export function AppShell({
                 <AccountAvatar account={session.viewer} className="size-5.5" />
               </MenuTrigger>
               <MenuPopup align="end" className="w-64">
-                <div className="flex items-center gap-2 px-2 py-1.5">
-                  <AccountAvatar account={session.viewer} className="size-6" />
-                  <div className="flex min-w-0 flex-col leading-tight">
-                    <span className="truncate font-medium">
-                      {session.viewer.name || session.viewer.login}
-                    </span>
-                    {session.viewer.name && (
-                      <span className="truncate text-muted-foreground text-xs">
-                        {session.viewer.login}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <MenuSeparator />
-                {[
-                  { label: "Personal account", accounts: personal },
-                  { label: "Organisations", accounts: organisations },
-                ].map(
-                  ({ label, accounts }) =>
-                    accounts.length > 0 && (
-                      <MenuGroup key={label}>
-                        <MenuGroupLabel>{label}</MenuGroupLabel>
-                        {accounts.map((owner) => {
-                          const enabled = !hiddenOwners.includes(owner.login);
-                          return (
-                            <MenuCheckboxItem
-                              className="grid-cols-[.75rem_minmax(0,1fr)]"
-                              key={owner.login}
-                              checked={enabled}
-                              disabled={enabled && enabledOwners.length === 1}
-                              onCheckedChange={(checked) =>
-                                onHiddenOwnersChange(
-                                  checked
-                                    ? hiddenOwners.filter((login) => login !== owner.login)
-                                    : [...hiddenOwners, owner.login],
-                                )
-                              }
-                            >
-                              <span className="flex min-w-0 items-center gap-2">
-                                <AccountAvatar account={owner} className="size-4 rounded-sm" />
-                                <span className="truncate" title={owner.login}>
-                                  {owner.login}
-                                </span>
-                              </span>
-                            </MenuCheckboxItem>
-                          );
-                        })}
-                      </MenuGroup>
-                    ),
-                )}
+                <MenuGroup>
+                  <MenuGroupLabel>Organisations</MenuGroupLabel>
+                  {session.owners.map((owner) => {
+                    const enabled = !hiddenOwners.includes(owner.login);
+                    return (
+                      <MenuCheckboxItem
+                        className="grid-cols-[.75rem_minmax(0,1fr)]"
+                        key={owner.login}
+                        checked={enabled}
+                        disabled={enabled && enabledOwners.length === 1}
+                        onCheckedChange={(checked) =>
+                          onHiddenOwnersChange(
+                            checked
+                              ? hiddenOwners.filter((login) => login !== owner.login)
+                              : [...hiddenOwners, owner.login],
+                          )
+                        }
+                      >
+                        <span className="flex min-w-0 items-center gap-2">
+                          <AccountAvatar account={owner} className="size-4 rounded-sm" />
+                          <span className="truncate" title={owner.login}>
+                            {owner.login}
+                          </span>
+                        </span>
+                      </MenuCheckboxItem>
+                    );
+                  })}
+                </MenuGroup>
                 <MenuSeparator />
                 <MenuGroup>
                   <MenuGroupLabel>Theme</MenuGroupLabel>
