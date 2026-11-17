@@ -60,15 +60,7 @@ export function OrgRoute({ owner, viewSlug, ...searchProps }: OrgRouteProps) {
   const { views, commit } = state;
   if (views.redirectTo) return <Redirect to={views.redirectTo} replace />;
 
-  return (
-    <OrgPage
-      key={views.active?.id ?? ""}
-      owner={owner}
-      views={views}
-      commit={commit}
-      {...searchProps}
-    />
-  );
+  return <OrgPage owner={owner} views={views} commit={commit} {...searchProps} />;
 }
 
 interface OrgPageProps extends SearchProps {
@@ -97,6 +89,13 @@ function OrgPage({
     setFilterMenu(anchor && { anchor, deferBar: anchor === "header" && !filtersChanged });
   const [displayMenuOpen, setDisplayMenuOpen] = useState(false);
   const [selection, setSelection] = useState(NO_SELECTION);
+  const viewId = views.active?.id ?? null;
+  const [shownViewId, setShownViewId] = useState(viewId);
+  if (shownViewId !== viewId) {
+    setShownViewId(viewId);
+    setSelection(NO_SELECTION);
+    setFilterMenu(null);
+  }
   const desktop = useMediaQuery("(min-width: 768px)");
   const viewHeaderRef = useRef<HTMLDivElement>(null!);
   const { height: viewHeaderHeight = 0 } = useResizeObserver({
