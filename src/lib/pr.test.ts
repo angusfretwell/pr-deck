@@ -94,7 +94,7 @@ describe("issueBadges", () => {
   });
 
   it("flags conflicts but not unknown mergeability", () => {
-    expect(labels({ mergeability: "conflict" })).toEqual([["bad", "Conflicts"]]);
+    expect(labels({ mergeability: "conflict" })).toEqual([["severe", "Conflicts"]]);
     expect(labels({ mergeability: "unknown" })).toEqual([]);
   });
 
@@ -105,7 +105,7 @@ describe("issueBadges", () => {
   it("combines issues in order", () => {
     expect(labels({ ci: "fail", mergeability: "conflict", review: "changes" })).toEqual([
       ["bad", "Checks"],
-      ["bad", "Conflicts"],
+      ["severe", "Conflicts"],
       ["bad", "Changes requested"],
     ]);
   });
