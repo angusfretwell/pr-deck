@@ -26,6 +26,7 @@ import {
 import { DisplayMenu } from "@/components/view-header/display-menu";
 import { DraftsToggle } from "@/components/view-header/drafts-toggle";
 import { ViewTabs } from "@/components/view-header/view-tabs";
+import { ViewSwipe, type SwipeNeighbour } from "@/components/view-swipe";
 import { errorMessage } from "@/github/api";
 import { usePullRequests } from "@/github/hooks";
 import {
@@ -33,6 +34,7 @@ import {
   derivePrList,
   NO_SELECTION,
   toggleGroup,
+  type PrListGroup,
   type SelectionAction,
 } from "@/lib/pr-list";
 import { deriveStacks } from "@/lib/stacks";
@@ -114,17 +116,16 @@ function OrgPage({
     [pullRequests.data],
   );
   const orgPrs = hideDrafts ? allPrs.filter((pr) => !pr.isDraft) : allPrs;
-  const list = derivePrList({
+  const listInput = {
     pullRequests: orgPrs,
     stacks,
     query: deferredQuery,
-    filters,
     viewer,
     group,
     collapsed: collapsedGroups,
-    selection,
     desktop,
-  });
+  };
+  const list = derivePrList({ ...listInput, filters, selection });
   const act = (action: SelectionAction) => setSelection(applySelectionAction(list, action));
   const select = useEventCallback((id: string) => act({ type: "select", id }));
 
@@ -133,6 +134,37 @@ function OrgPage({
   const showAll = () => {
     commit(views.showAll());
     onQueryChange("");
+  };
+
+  const prTable = (groups: PrListGroup[], selectedId: string | null) => (
+    <PrTable
+      groups={groups}
+      group={group}
+      compact={!!list.previewed}
+      selectedId={selectedId}
+      onSelect={select}
+      now={now}
+      query={deferredQuery}
+      onShowAll={showAll}
+      onClearSearch={() => onQueryChange("")}
+      onToggleGroup={(key, all) => setCollapsedGroups(toggleGroup(list, key, all))}
+    />
+  );
+
+  const viewIds = [null, ...views.list.map((view) => view.id)];
+  const neighbour = (offset: 1 | -1): SwipeNeighbour | null => {
+    if (desktop || allPrs.length === 0) return null;
+
+    const id = viewIds[viewIds.indexOf(viewId) + offset];
+    if (id === undefined) return null;
+
+    const neighbourFilters = views.list.find((view) => view.id === id)?.filters ?? [];
+    const { groups } = derivePrList({
+      ...listInput,
+      filters: neighbourFilters,
+      selection: NO_SELECTION,
+    });
+    return { href: views.hrefFor(id), content: prTable(groups, null) };
   };
 
   const idle = !filterMenu && !displayMenuOpen;
@@ -223,29 +255,23 @@ function OrgPage({
       {pullRequests.data ? (
         <div
           className={cn(
-            "flex flex-1 flex-col md:grid md:min-h-0 md:grid-cols-[minmax(0,1fr)] md:overflow-hidden",
+            "flex flex-1 flex-col max-md:overflow-x-clip md:grid md:min-h-0 md:grid-cols-[minmax(0,1fr)] md:overflow-hidden",
             list.previewed && "md:grid-cols-[minmax(0,1fr)_minmax(380px,min(46%,800px))]",
           )}
         >
-          <div className="flex flex-1 flex-col pb-[calc(--spacing(4)+env(safe-area-inset-bottom))] md:min-h-0 md:overflow-y-auto md:overscroll-contain">
+          <ViewSwipe
+            previous={neighbour(-1)}
+            next={neighbour(1)}
+            topInset={() => viewHeaderRef.current.getBoundingClientRect().bottom}
+            className="flex flex-1 flex-col pb-[calc(--spacing(4)+env(safe-area-inset-bottom))] md:min-h-0 md:overflow-y-auto md:overscroll-contain"
+          >
             {allPrs.length === 0 ? (
               <NoPullRequests owner={owner} result={pullRequests} />
             ) : (
-              <PrTable
-                groups={list.groups}
-                group={group}
-                compact={!!list.previewed}
-                selectedId={list.highlightedId}
-                onSelect={select}
-                now={now}
-                query={deferredQuery}
-                onShowAll={showAll}
-                onClearSearch={() => onQueryChange("")}
-                onToggleGroup={(key, all) => setCollapsedGroups(toggleGroup(list, key, all))}
-              />
+              prTable(list.groups, list.highlightedId)
             )}
             <TruncationNote list={pullRequests.data} />
-          </div>
+          </ViewSwipe>
           {desktop ? (
             list.previewed && (
               <Preview
