@@ -1,5 +1,5 @@
 import { FilterIcon } from "@primer/octicons-react";
-import { useId, useState } from "react";
+import { createContext, use, useId, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsiblePanel } from "@/components/ui/collapsible";
 import {
@@ -8,13 +8,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { toggleValue } from "@/lib/filters";
-import type { Filter, Group, PropertyKey, PullRequest, View } from "@/types";
-import { DisplayMenu } from "./view-header/display-menu";
-import { DraftsToggle } from "./view-header/drafts-toggle";
+import type { Filter, PropertyKey, PullRequest } from "@/types";
 import { FilterBar } from "./view-header/filter-bar";
 import { FilterMenu } from "./view-header/filter-menu";
 import { Hint } from "./view-header/hint";
-import { ViewTabs } from "./view-header/view-tabs";
 
 export type MenuAnchor = "header" | "add" | PropertyKey;
 
@@ -29,33 +26,22 @@ export interface FilterTriggerProps {
   id: string;
 }
 
+const FilterTriggerContext = createContext<((anchor: MenuAnchor) => FilterTriggerProps) | null>(
+  null,
+);
+
 export interface ViewHeaderProps {
-  views: View[];
-  viewCounts: Record<string, number>;
-  allOpenCount: number | undefined;
-  activeViewId: string | null;
-  deletableViewId: string | null;
-  renamingViewId: string | null;
-  viewHref: (id: string | null) => string;
-  onRenamingViewChange: (id: string | null) => void;
-  onRenameView: (id: string, name: string) => void;
-  onDeleteView: (id: string) => void;
+  children: ReactNode;
 
   filters: Filter[];
   filtersChanged: boolean;
   onFiltersChange: (filters: Filter[]) => void;
   onResetFilters: () => void;
-  onSaveView: () => void;
+  onSaveView?: () => void;
   onSaveAsNewView: () => void;
 
   filterMenu: FilterMenuState | null;
   onFilterMenuChange: (anchor: MenuAnchor | null) => void;
-  displayMenuOpen: boolean;
-  onDisplayMenuOpenChange: (open: boolean) => void;
-  group: Group;
-  onGroupChange: (group: Group) => void;
-  hideDrafts: boolean;
-  onHideDraftsChange: (hideDrafts: boolean) => void;
 
   orgPrs: PullRequest[];
   scopedPrs: PullRequest[];
@@ -63,6 +49,7 @@ export interface ViewHeaderProps {
 }
 
 export function ViewHeader({
+  children,
   filters,
   filtersChanged,
   onFiltersChange,
@@ -71,16 +58,9 @@ export function ViewHeader({
   onSaveAsNewView,
   filterMenu,
   onFilterMenuChange,
-  displayMenuOpen,
-  onDisplayMenuOpenChange,
-  group,
-  onGroupChange,
-  hideDrafts,
-  onHideDraftsChange,
   orgPrs,
   scopedPrs,
   viewer,
-  ...tabs
 }: ViewHeaderProps) {
   const [filterMenuHandle] = useState(() => PopoverCreateHandle<MenuAnchor>());
   const triggerIdPrefix = useId();
@@ -120,16 +100,7 @@ export function ViewHeader({
 
   const actions =
     filtersChanged &&
-    (tabs.activeViewId === null ? (
-      <>
-        <Button variant="ghost" size="sm" onClick={onResetFilters}>
-          Clear
-        </Button>
-        <Button size="sm" onClick={onSaveAsNewView}>
-          Save as view
-        </Button>
-      </>
-    ) : (
+    (onSaveView ? (
       <>
         <Button variant="ghost" size="sm" onClick={onResetFilters}>
           Reset
@@ -141,35 +112,22 @@ export function ViewHeader({
           Save
         </Button>
       </>
+    ) : (
+      <>
+        <Button variant="ghost" size="sm" onClick={onResetFilters}>
+          Clear
+        </Button>
+        <Button size="sm" onClick={onSaveAsNewView}>
+          Save as view
+        </Button>
+      </>
     ));
 
   return (
     <div className="border-b">
-      <div className="flex items-center gap-1.5 px-2 py-2.5 md:px-4">
-        <ViewTabs {...tabs} />
-        <DraftsToggle hideDrafts={hideDrafts} onHideDraftsChange={onHideDraftsChange} />
-        <Hint label="Filter">
-          <PopoverTrigger
-            {...filterTrigger("header")}
-            render={
-              <Button
-                variant="outline"
-                size="icon-sm"
-                className="rounded-full before:rounded-full max-md:ms-auto"
-                aria-label="Filter"
-              />
-            }
-          >
-            <FilterIcon />
-          </PopoverTrigger>
-        </Hint>
-        <DisplayMenu
-          open={displayMenuOpen}
-          onOpenChange={onDisplayMenuOpenChange}
-          group={group}
-          onGroupChange={onGroupChange}
-        />
-      </div>
+      <FilterTriggerContext value={filterTrigger}>
+        <div className="flex items-center gap-1.5 px-2 py-2.5 md:px-4">{children}</div>
+      </FilterTriggerContext>
       <Collapsible open={barVisible}>
         <CollapsiblePanel className="transition-[height,opacity] ease-snappy data-ending-style:opacity-0 data-starting-style:opacity-0 motion-reduce:transition-opacity">
           <FilterBar
@@ -194,5 +152,27 @@ export function ViewHeader({
         onToggle={toggleFilterValue}
       />
     </div>
+  );
+}
+
+export function FilterButton() {
+  const filterTrigger = use(FilterTriggerContext);
+  if (!filterTrigger) throw new Error("FilterButton must be rendered inside ViewHeader");
+  return (
+    <Hint label="Filter">
+      <PopoverTrigger
+        {...filterTrigger("header")}
+        render={
+          <Button
+            variant="outline"
+            size="icon-sm"
+            className="rounded-full before:rounded-full max-md:ms-auto"
+            aria-label="Filter"
+          />
+        }
+      >
+        <FilterIcon />
+      </PopoverTrigger>
+    </Hint>
   );
 }

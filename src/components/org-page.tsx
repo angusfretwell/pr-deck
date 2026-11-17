@@ -17,7 +17,15 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ViewHeader, type FilterMenuState, type MenuAnchor } from "@/components/view-header";
+import {
+  FilterButton,
+  ViewHeader,
+  type FilterMenuState,
+  type MenuAnchor,
+} from "@/components/view-header";
+import { DisplayMenu } from "@/components/view-header/display-menu";
+import { DraftsToggle } from "@/components/view-header/drafts-toggle";
+import { ViewTabs } from "@/components/view-header/view-tabs";
 import { errorMessage } from "@/github/api";
 import { usePullRequests } from "@/github/hooks";
 import {
@@ -172,34 +180,39 @@ function OrgPage({
           className="bg-background max-md:fixed max-md:inset-x-0 max-md:top-12.5 max-md:z-20"
         >
           <ViewHeader
-            views={views.list}
-            viewCounts={pullRequests.data ? countByView(views.list, orgPrs, viewer) : {}}
-            allOpenCount={pullRequests.data && orgPrs.length}
-            activeViewId={views.active?.id ?? null}
-            deletableViewId={views.deletableViewId}
-            renamingViewId={views.session.renamingViewId}
-            viewHref={views.hrefFor}
-            onRenamingViewChange={(id) => commit(views.setRenaming(id))}
-            onRenameView={(id, name) => commit(views.rename(id, name))}
-            onDeleteView={(id) => commit(views.remove(id))}
             filters={filters}
             filtersChanged={filtersChanged}
             onFiltersChange={(next) => commit(views.setFilters(next))}
             onResetFilters={() => commit(views.resetFilters())}
-            onSaveView={() => commit(views.save())}
+            onSaveView={views.active ? () => commit(views.save()) : undefined}
             onSaveAsNewView={() => commit(views.saveAsNew())}
             filterMenu={filterMenu}
             onFilterMenuChange={changeFilterMenu}
-            displayMenuOpen={displayMenuOpen}
-            onDisplayMenuOpenChange={setDisplayMenuOpen}
-            group={group}
-            onGroupChange={setGroup}
-            hideDrafts={hideDrafts}
-            onHideDraftsChange={setHideDrafts}
             orgPrs={orgPrs}
             scopedPrs={list.scoped}
             viewer={viewer}
-          />
+          >
+            <ViewTabs
+              views={views.list}
+              viewCounts={pullRequests.data ? countByView(views.list, orgPrs, viewer) : {}}
+              allOpenCount={pullRequests.data && orgPrs.length}
+              activeViewId={views.active?.id ?? null}
+              deletableViewId={views.deletableViewId}
+              renamingViewId={views.session.renamingViewId}
+              viewHref={views.hrefFor}
+              onRenamingViewChange={(id) => commit(views.setRenaming(id))}
+              onRenameView={(id, name) => commit(views.rename(id, name))}
+              onDeleteView={(id) => commit(views.remove(id))}
+            />
+            <DraftsToggle hideDrafts={hideDrafts} onHideDraftsChange={setHideDrafts} />
+            <FilterButton />
+            <DisplayMenu
+              open={displayMenuOpen}
+              onOpenChange={setDisplayMenuOpen}
+              group={group}
+              onGroupChange={setGroup}
+            />
+          </ViewHeader>
         </div>
       </div>
       {pullRequests.data ? (
