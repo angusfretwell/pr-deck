@@ -1,13 +1,13 @@
-import { ChevronRightIcon } from "@primer/octicons-react";
+import { ChevronRightIcon, SearchIcon } from "@primer/octicons-react";
 import { useState } from "react";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Command,
-  CommandEmpty,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+  AutocompleteEmpty,
+  AutocompleteInput,
+  AutocompleteItem,
+  AutocompleteList,
+} from "@/components/ui/autocomplete";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Command } from "@/components/ui/command";
 import { Popover, PopoverPopup, type PopoverPrimitive } from "@/components/ui/popover";
 import { UserAvatar } from "@/components/user-avatar";
 import {
@@ -155,19 +155,24 @@ function FilterMenuList({
         value={query}
         onValueChange={(value, { reason }) => reason !== "item-press" && setQuery(value)}
       >
-        <CommandInput
-          placeholder={propertyKey ? `${PROPERTY[propertyKey].name}…` : "Filter…"}
-          spellCheck={false}
-          onKeyDown={(event) => {
-            if (event.key === "Backspace" && !query && propertyKey && canGoBack)
-              setPropertyKey(null);
-          }}
-        />
-        <CommandEmpty>No matches</CommandEmpty>
+        <div className="p-2">
+          <AutocompleteInput
+            autoFocus
+            className="rounded-md before:rounded-[calc(var(--radius-md)-1px)]"
+            placeholder={propertyKey ? `${PROPERTY[propertyKey].name}…` : "Filter…"}
+            spellCheck={false}
+            startAddon={<SearchIcon />}
+            onKeyDown={(event) => {
+              if (event.key === "Backspace" && !query && propertyKey && canGoBack)
+                setPropertyKey(null);
+            }}
+          />
+        </div>
+        <AutocompleteEmpty>No matches</AutocompleteEmpty>
         <div className="grid min-h-0 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)]">
-          <CommandList>
+          <AutocompleteList>
             {(item: Item) => (
-              <CommandItem
+              <AutocompleteItem
                 key={itemKey(item)}
                 value={item}
                 className="gap-2"
@@ -191,9 +196,9 @@ function FilterMenuList({
                     <ChevronRightIcon className="ms-auto size-4 text-muted-foreground sm:size-3.5" />
                   </>
                 )}
-              </CommandItem>
+              </AutocompleteItem>
             )}
-          </CommandList>
+          </AutocompleteList>
         </div>
       </Command>
     </div>
