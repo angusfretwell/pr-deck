@@ -1,6 +1,5 @@
 import { ChevronDownIcon } from "@primer/octicons-react";
 import { useLayoutEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
-import { useMediaQuery } from "usehooks-ts";
 import { Link } from "wouter";
 import { AccountAvatar } from "@/components/account-avatar";
 import {
@@ -14,6 +13,7 @@ import {
 } from "@/components/responsive-menu";
 import { Button } from "@/components/ui/button";
 import { SegmentedControl, SegmentedControlItem } from "@/components/ui/segmented-control";
+import { useDesktop } from "@/lib/use-desktop";
 import type { Account } from "@/types";
 
 const OVERFLOW_TRIGGER_WIDTH = 64;
@@ -26,7 +26,7 @@ interface OwnerSwitcherProps {
 }
 
 export function OwnerSwitcher(props: OwnerSwitcherProps) {
-  const desktop = useMediaQuery("(min-width: 768px)");
+  const desktop = useDesktop();
   return desktop ? <OwnerLinks {...props} /> : <OwnerDropdown {...props} />;
 }
 

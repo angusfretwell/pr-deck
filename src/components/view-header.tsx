@@ -1,11 +1,11 @@
 import { FilterIcon } from "@primer/octicons-react";
 import { useId, useState, type ReactNode } from "react";
-import { useMediaQuery } from "usehooks-ts";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsiblePanel } from "@/components/ui/collapsible";
 import { DrawerCreateHandle } from "@/components/ui/drawer";
 import { PopoverCreateHandle } from "@/components/ui/popover";
 import { toggleValue } from "@/lib/filters";
+import { useDesktop } from "@/lib/use-desktop";
 import type { Filter, PropertyKey, PullRequest } from "@/types";
 import { FilterBar } from "./view-header/filter-bar";
 import { FilterDrawer } from "./view-header/filter-drawer";
@@ -53,7 +53,7 @@ export function ViewHeader({
   scopedPrs,
   viewer,
 }: ViewHeaderProps) {
-  const drawer = !useMediaQuery("(min-width: 768px)");
+  const desktop = useDesktop();
   const [popoverHandle] = useState(() => PopoverCreateHandle<MenuAnchor>());
   const [drawerHandle] = useState(() => DrawerCreateHandle<MenuAnchor>());
   const triggerIdPrefix = useId();
@@ -87,11 +87,6 @@ export function ViewHeader({
     onFilterMenuChange(null);
   };
 
-  const negateFilter = (index: number) =>
-    onFiltersChange(
-      filters.map((filter, i) => (i === index ? { ...filter, negated: !filter.negated } : filter)),
-    );
-
   const setFilterNegated = (key: PropertyKey, negated: boolean) =>
     onFiltersChange(
       filters.map((filter) => (filter.key === key ? { ...filter, negated } : filter)),
@@ -124,7 +119,7 @@ export function ViewHeader({
 
   return (
     <div className="border-b">
-      <FilterTriggerContext value={{ drawer, popoverHandle, drawerHandle, triggerId }}>
+      <FilterTriggerContext value={{ drawer: !desktop, popoverHandle, drawerHandle, triggerId }}>
         <div className="flex items-center gap-1.5 px-2 py-2.5 md:px-4">{children}</div>
         <Collapsible open={barVisible}>
           <CollapsiblePanel className="transition-[height,opacity] ease-snappy data-ending-style:opacity-0 data-starting-style:opacity-0 motion-reduce:transition-opacity">
@@ -133,13 +128,24 @@ export function ViewHeader({
               orgPrs={orgPrs}
               viewer={viewer}
               actions={actions}
-              onNegate={negateFilter}
+              onNegatedChange={setFilterNegated}
               onRemove={removeFilter}
             />
           </CollapsiblePanel>
         </Collapsible>
       </FilterTriggerContext>
-      {drawer ? (
+      {desktop ? (
+        <FilterMenu
+          handle={popoverHandle}
+          triggerId={filterMenu && triggerId(filterMenu.anchor)}
+          onOpenChange={changeFilterMenu}
+          orgPrs={orgPrs}
+          scopedPrs={scopedPrs}
+          filters={filters}
+          viewer={viewer}
+          onToggle={toggleFilterValue}
+        />
+      ) : (
         <FilterDrawer
           handle={drawerHandle}
           triggerId={filterMenu && triggerId(filterMenu.anchor)}
@@ -152,17 +158,6 @@ export function ViewHeader({
           onNegatedChange={setFilterNegated}
           onClear={(key) => changeFilters(filters.filter((filter) => filter.key !== key))}
           onClearAll={() => changeFilters([])}
-        />
-      ) : (
-        <FilterMenu
-          handle={popoverHandle}
-          triggerId={filterMenu && triggerId(filterMenu.anchor)}
-          onOpenChange={changeFilterMenu}
-          orgPrs={orgPrs}
-          scopedPrs={scopedPrs}
-          filters={filters}
-          viewer={viewer}
-          onToggle={toggleFilterValue}
         />
       )}
     </div>

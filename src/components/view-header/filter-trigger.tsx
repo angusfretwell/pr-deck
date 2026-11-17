@@ -1,12 +1,13 @@
-import { use, type ComponentProps } from "react";
+import { use, type ReactElement, type ReactNode } from "react";
 import { DrawerTrigger } from "@/components/ui/drawer";
 import { PopoverTrigger } from "@/components/ui/popover";
 import { FilterTriggerContext, type MenuAnchor } from "./filter-trigger-context";
 
-type FilterTriggerProps = Omit<
-  ComponentProps<typeof PopoverTrigger>,
-  "handle" | "payload" | "id"
-> & { anchor: MenuAnchor };
+interface FilterTriggerProps {
+  anchor: MenuAnchor;
+  render: ReactElement;
+  children: ReactNode;
+}
 
 export function FilterTrigger({ anchor, ...props }: FilterTriggerProps) {
   const context = use(FilterTriggerContext);

@@ -74,7 +74,7 @@ function PropertyList(props: FilterDrawerContentProps) {
       <DrawerHeader>
         <DrawerTitle className="text-lg">Filters</DrawerTitle>
       </DrawerHeader>
-      <DrawerPanel className="pt-1!">
+      <DrawerPanel>
         <DrawerMenu>
           {PROPERTIES.map((property) => {
             const filter = filters.find((candidate) => candidate.key === property.key);
@@ -131,7 +131,7 @@ function PropertyPane({
 }: PropertyPaneProps) {
   const property = PROPERTY[propertyKey];
   const filter = filters.find((candidate) => candidate.key === propertyKey);
-  const [pendingNegated, setPendingNegated] = useState(false);
+  const [pendingNegated, setPendingNegated] = useState(filter?.negated ?? false);
   const negated = filter?.negated ?? pendingNegated;
   const [query, setQuery] = useState("");
 
@@ -164,7 +164,7 @@ function PropertyPane({
         </SegmentedControl>
       </DrawerHeader>
       {all.length > SEARCH_THRESHOLD && (
-        <div className="px-6 pb-2">
+        <div className="px-6 pb-4">
           <InputGroup>
             <InputGroupInput
               type="search"
@@ -180,7 +180,7 @@ function PropertyPane({
           </InputGroup>
         </div>
       )}
-      <DrawerPanel className="pt-3!">
+      <DrawerPanel>
         <DrawerMenu>
           {shown.map(({ option, checked, count }) => {
             const login = option.value === VIEWER_VALUE ? viewer : option.value;

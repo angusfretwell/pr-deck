@@ -2,7 +2,7 @@ import { AlertIcon, GitPullRequestIcon, InfoIcon } from "@primer/octicons-react"
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useHotkeys } from "@tanstack/react-hotkeys";
 import { useDeferredValue, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { useEventCallback, useInterval, useMediaQuery, useResizeObserver } from "usehooks-ts";
+import { useEventCallback, useInterval, useResizeObserver } from "usehooks-ts";
 import { Redirect, useLocation } from "wouter";
 import { Preview, PreviewDrawer } from "@/components/preview";
 import { PrTable } from "@/components/pr-table";
@@ -39,6 +39,7 @@ import {
 } from "@/lib/pr-list";
 import { deriveStacks } from "@/lib/stacks";
 import { useCollapsedGroups, useGroup, useHideDrafts, useLastPath } from "@/lib/storage";
+import { useDesktop } from "@/lib/use-desktop";
 import { useViews } from "@/lib/use-views";
 import { cn } from "@/lib/utils";
 import { countByView, type Views, type ViewsChange } from "@/lib/views";
@@ -98,7 +99,7 @@ function OrgPage({
     setSelection(NO_SELECTION);
     setFilterMenu(null);
   }
-  const desktop = useMediaQuery("(min-width: 768px)");
+  const desktop = useDesktop();
   const viewHeaderRef = useRef<HTMLDivElement>(null!);
   const { height: viewHeaderHeight = 0 } = useResizeObserver({
     ref: viewHeaderRef,

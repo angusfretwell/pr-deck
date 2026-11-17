@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, type ComponentProps, type ReactNode } from "react";
-import { useMediaQuery } from "usehooks-ts";
 import {
   Drawer,
   DrawerMenu,
@@ -27,6 +26,7 @@ import {
   MenuSeparator,
   MenuTrigger,
 } from "@/components/ui/menu";
+import { useDesktop } from "@/lib/use-desktop";
 
 const ResponsiveMenuContext = createContext({ drawer: false, close: () => {} });
 
@@ -37,15 +37,15 @@ interface ResponsiveMenuProps {
 }
 
 export function ResponsiveMenu({ open: openProp, onOpenChange, children }: ResponsiveMenuProps) {
-  const drawer = !useMediaQuery("(min-width: 768px)");
+  const desktop = useDesktop();
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const setOpen = (next: boolean) => {
     setUncontrolledOpen(next);
     onOpenChange?.(next);
   };
-  const Root = drawer ? Drawer : Menu;
+  const Root = desktop ? Menu : Drawer;
   return (
-    <ResponsiveMenuContext value={{ drawer, close: () => setOpen(false) }}>
+    <ResponsiveMenuContext value={{ drawer: !desktop, close: () => setOpen(false) }}>
       <Root open={openProp ?? uncontrolledOpen} onOpenChange={setOpen}>
         {children}
       </Root>

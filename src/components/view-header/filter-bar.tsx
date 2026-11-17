@@ -4,7 +4,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Group, GroupSeparator, GroupText } from "@/components/ui/group";
 import { filterSummary, PROPERTY } from "@/lib/filters";
 import { cn } from "@/lib/utils";
-import type { Filter, PullRequest } from "@/types";
+import type { Filter, PropertyKey, PullRequest } from "@/types";
 import { FilterTrigger } from "./filter-trigger";
 
 interface FilterBarProps {
@@ -12,7 +12,7 @@ interface FilterBarProps {
   orgPrs: PullRequest[];
   viewer: string;
   actions: ReactNode;
-  onNegate: (index: number) => void;
+  onNegatedChange: (key: PropertyKey, negated: boolean) => void;
   onRemove: (index: number) => void;
 }
 
@@ -26,7 +26,7 @@ export function FilterBar({
   orgPrs,
   viewer,
   actions,
-  onNegate,
+  onNegatedChange,
   onRemove,
 }: FilterBarProps) {
   return (
@@ -50,7 +50,7 @@ export function FilterBar({
             variant="outline"
             size="sm"
             className="text-muted-foreground"
-            onClick={() => onNegate(index)}
+            onClick={() => onNegatedChange(filter.key, !filter.negated)}
           >
             {operator(filter)}
           </Button>
