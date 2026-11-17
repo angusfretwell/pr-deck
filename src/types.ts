@@ -72,6 +72,7 @@ export interface PullRequestDetail {
 
 export type PropertyKey = "author" | "ci" | "conflicts" | "review" | "myReview" | "repo";
 export type Group = "repo" | "author" | "none";
+export type OpenIn = "github" | "diffshub" | "t3code";
 
 export interface Filter {
   key: PropertyKey;

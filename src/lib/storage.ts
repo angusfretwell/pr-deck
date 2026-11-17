@@ -1,5 +1,5 @@
 import { useLocalStorage, useTernaryDarkMode } from "usehooks-ts";
-import type { Group, View } from "@/types";
+import type { Group, OpenIn, View } from "@/types";
 
 export const TOKEN_KEY = "pr-deck:token";
 
@@ -30,3 +30,4 @@ export function useCollapsedGroups(owner: string) {
     setByOwner((prev) => ({ ...prev, [owner]: collapsed }));
   return [byOwner[owner] ?? [], setCollapsed] as const;
 }
+export const useOpenIn = () => useLocalStorage<OpenIn>("pr-deck:open-in", "github");
