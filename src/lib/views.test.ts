@@ -15,6 +15,8 @@ const pr = (overrides: Partial<PullRequest> = {}): PullRequest => ({
   authorAvatarUrl: "",
   isDraft: false,
   branch: "feature",
+  baseBranch: "main",
+  isCrossRepository: false,
   updatedAt: "2026-01-01T00:00:00Z",
   ci: "pass",
   mergeability: "clean",

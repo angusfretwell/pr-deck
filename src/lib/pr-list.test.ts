@@ -9,6 +9,7 @@ import {
   type Selection,
   type SelectionAction,
 } from "./pr-list";
+import { deriveStacks } from "./stacks";
 
 const pr = (id: string, repo: string, author: string): PullRequest => ({
   id,
@@ -21,6 +22,8 @@ const pr = (id: string, repo: string, author: string): PullRequest => ({
   authorAvatarUrl: "",
   isDraft: false,
   branch: "feature",
+  baseBranch: "main",
+  isCrossRepository: false,
   updatedAt: "2026-01-01T00:00:00Z",
   ci: "pass",
   mergeability: "clean",
@@ -39,6 +42,7 @@ const PRS = [
 const list = (overrides: Partial<PrListInput> = {}) =>
   derivePrList({
     pullRequests: PRS,
+    stacks: new Map(),
     query: "",
     filters: [],
     viewer: "me",
@@ -79,6 +83,20 @@ describe("pipeline", () => {
     const { groups, order } = list({ group: "none" });
     expect(rowIds(groups)).toEqual([["", ["1", "2", "3", "4"]]]);
     expect(order).toEqual(["1", "2", "3", "4"]);
+  });
+
+  it("gathers a stack in merge order, and navigates it in that order", () => {
+    const stacked = [
+      { ...pr("1", "web", "bob"), branch: "top", baseBranch: "bottom" },
+      pr("2", "web", "alice"),
+      { ...pr("3", "web", "alice"), branch: "bottom" },
+    ];
+    const { groups, order } = list({ pullRequests: stacked, stacks: deriveStacks(stacked) });
+    expect(order).toEqual(["3", "1", "2"]);
+    expect(groups[0]?.clusters.map((cluster) => cluster.rows.map((row) => row.id))).toEqual([
+      ["3", "1"],
+      ["2"],
+    ]);
   });
 
   it("applies the search before the filters and reports the searched set", () => {

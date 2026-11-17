@@ -185,6 +185,8 @@ export function toPullRequest(node: RawPullRequest, context: ReviewContext): Pul
     authorAvatarUrl: author.avatarUrl,
     isDraft: node.isDraft,
     branch: node.headRefName,
+    baseBranch: node.baseRefName,
+    isCrossRepository: node.isCrossRepository,
     updatedAt: node.updatedAt,
     ci: toCi(node),
     mergeability: toMergeability(node.mergeable),

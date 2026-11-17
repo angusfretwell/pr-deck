@@ -41,6 +41,8 @@ export const PULL_REQUESTS_QUERY = /* GraphQL */ `
           isDraft
           updatedAt
           headRefName
+          baseRefName
+          isCrossRepository
           mergeable
           reviewDecision
           repository {

@@ -112,7 +112,9 @@ const PULL_REQUESTS: PullRequest[] = SEEDS.map(
     author,
     authorAvatarUrl: identicon(author),
     isDraft: false,
-    branch: "main",
+    branch: `preview/${number}`,
+    baseBranch: "main",
+    isCrossRepository: false,
     updatedAt: new Date(now - hoursAgo * 3_600_000).toISOString(),
     ci,
     mergeability: "clean",
@@ -127,6 +129,7 @@ const VIEW_COUNTS = countByView(VIEWS, PULL_REQUESTS, VIEWER);
 
 const { groups: GROUPS } = derivePrList({
   pullRequests: PULL_REQUESTS,
+  stacks: new Map(),
   query: "",
   filters: [],
   viewer: VIEWER,

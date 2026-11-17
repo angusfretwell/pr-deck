@@ -32,6 +32,8 @@ export interface PullRequest {
   authorAvatarUrl: string;
   isDraft: boolean;
   branch: string;
+  baseBranch: string;
+  isCrossRepository: boolean;
   updatedAt: string;
   ci: CiState;
   mergeability: Mergeability;

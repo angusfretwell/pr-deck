@@ -1,5 +1,6 @@
 import type { Filter, Group, PullRequest } from "../types";
 import { matchesText, passes } from "./filters";
+import { clusterByStack, type Cluster, type StackIndex } from "./stacks";
 
 export interface Selection {
   selectedId: string | null;
@@ -10,6 +11,7 @@ export const NO_SELECTION: Selection = { selectedId: null, previewOpen: false };
 
 export interface PrListInput {
   pullRequests: PullRequest[];
+  stacks: StackIndex;
   query: string;
   filters: Filter[];
   viewer: string;
@@ -22,6 +24,7 @@ export interface PrListInput {
 export interface PrListGroup {
   key: string;
   rows: PullRequest[];
+  clusters: Cluster[];
   collapsed: boolean;
 }
 
@@ -54,6 +57,7 @@ function groupRows(prs: PullRequest[], group: Group) {
 
 export function derivePrList({
   pullRequests,
+  stacks,
   query,
   filters,
   viewer,
@@ -64,10 +68,15 @@ export function derivePrList({
 }: PrListInput): PrList {
   const scoped = pullRequests.filter((pr) => matchesText(pr, query));
   const visible = scoped.filter((pr) => passes(pr, filters, viewer));
-  const groups = groupRows(visible, group).map((entry) => ({
-    ...entry,
-    collapsed: collapsed.includes(collapsedId(group, entry.key)),
-  }));
+  const groups = groupRows(visible, group).map(({ key, rows }) => {
+    const clusters = clusterByStack(rows, stacks);
+    return {
+      key,
+      rows: clusters.flatMap((cluster) => cluster.rows),
+      clusters,
+      collapsed: collapsed.includes(collapsedId(group, key)),
+    };
+  });
   const selected = visible.find((pr) => pr.id === selection.selectedId);
   return {
     scoped,

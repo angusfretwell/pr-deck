@@ -104,7 +104,7 @@ export type PullRequestsQuery = { repositoryOwner:
       | { __typename: 'Issue' }
       | { __typename: 'MarketplaceListing' }
       | { __typename: 'Organization' }
-      | { __typename: 'PullRequest', id: string, number: number, title: string, url: string, isDraft: boolean, updatedAt: string, headRefName: string, mergeable: MergeableState, reviewDecision: PullRequestReviewDecision | null, repository: { name: string, owner:
+      | { __typename: 'PullRequest', id: string, number: number, title: string, url: string, isDraft: boolean, updatedAt: string, headRefName: string, baseRefName: string, isCrossRepository: boolean, mergeable: MergeableState, reviewDecision: PullRequestReviewDecision | null, repository: { name: string, owner:
             | { login: string }
             | { login: string }
            }, author:

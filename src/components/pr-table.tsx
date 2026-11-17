@@ -4,16 +4,20 @@ import {
   GitPullRequestDraftIcon,
   GitPullRequestIcon,
   SearchIcon,
+  StackCheckIcon,
+  StackIcon,
 } from "@primer/octicons-react";
 import { memo, useEffect, useRef, type CSSProperties } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { BadgeIcon, BadgePill } from "@/components/status-badge";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Empty, EmptyContent, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { UserAvatar } from "@/components/user-avatar";
 import { age, isStale, issueBadges, statusBadge } from "@/lib/pr";
 import type { PrListGroup } from "@/lib/pr-list";
+import type { Cluster, Stack } from "@/lib/stacks";
 import { cn } from "@/lib/utils";
 import type { Group, PullRequest } from "@/types";
 
@@ -88,7 +92,7 @@ export function PrTable({
       className={cn("@container cursor-default px-2", group !== "none" && "pt-1")}
       style={{ "--columns": columns } as CSSProperties}
     >
-      {groups.map(({ key, rows, collapsed }) => (
+      {groups.map(({ key, rows, clusters, collapsed }) => (
         <Collapsible
           key={key}
           open={!collapsed}
@@ -111,11 +115,11 @@ export function PrTable({
           )}
           <CollapsiblePanel>
             <div className="flex flex-col gap-0.5 pt-1">
-              {rows.map((pr) => (
-                <PrRow
-                  key={pr.id}
-                  pr={pr}
-                  selected={pr.id === selectedId}
+              {clusters.map((cluster) => (
+                <ClusterRows
+                  key={cluster.stack?.id ?? cluster.rows[0]?.id}
+                  cluster={cluster}
+                  selectedId={selectedId}
                   group={group}
                   summary={summary}
                   now={now}
@@ -130,16 +134,98 @@ export function PrTable({
   );
 }
 
-interface PrRowProps {
-  pr: PullRequest;
-  selected: boolean;
+interface RowContext {
   group: Group;
   summary: boolean;
   now: number;
   onSelect: (id: string) => void;
 }
 
-const PrRow = memo(function PrRow({ pr, selected, group, summary, now, onSelect }: PrRowProps) {
+interface ClusterRowsProps extends RowContext {
+  cluster: Cluster;
+  selectedId: string | null;
+}
+
+function ClusterRows({ cluster, selectedId, ...context }: ClusterRowsProps) {
+  const { stack, rows } = cluster;
+  const row = (pr: PullRequest, index: number) => (
+    <PrRow
+      key={pr.id}
+      pr={pr}
+      selected={pr.id === selectedId}
+      stack={index === 0 ? stack : null}
+      nested={index > 0}
+      {...context}
+    />
+  );
+  if (!stack) return rows.map(row);
+  return (
+    <div className="relative flex flex-col gap-0.5 [--row:--spacing(10)] sm:[--row:--spacing(9)]">
+      {rows.map(row)}
+      {rows.length > 1 && <StackTree nested={rows.length - 1} />}
+    </div>
+  );
+}
+
+const BRANCH = "absolute border-black/17 dark:border-white/18";
+const ROOT_ICON_CLEARANCE = "15px";
+const rowCentre = (index: number) => `calc(${index} * (var(--row) + 2px) + var(--row) / 2)`;
+
+function StackTree({ nested }: { nested: number }) {
+  return (
+    <span aria-hidden className="pointer-events-none absolute inset-0">
+      <span
+        className={cn(BRANCH, "left-[14px] w-3 rounded-bl-[3px] border-b border-l")}
+        style={{
+          top: `calc(var(--row) / 2 + ${ROOT_ICON_CLEARANCE})`,
+          height: `calc(${nested} * (var(--row) + 2px) - ${ROOT_ICON_CLEARANCE} + 1px)`,
+        }}
+      />
+      {Array.from({ length: nested - 1 }, (_, index) => (
+        <span
+          key={index}
+          className={cn(BRANCH, "left-[15px] w-[11px] border-t")}
+          style={{ top: rowCentre(index + 1) }}
+        />
+      ))}
+    </span>
+  );
+}
+
+function StackBadge({ stack }: { stack: Stack }) {
+  const ready = stack.layers.every((layer) => statusBadge(layer).tone === "ok");
+  const Glyph = ready ? StackCheckIcon : StackIcon;
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        "ms-1 bg-transparent tabular-nums dark:bg-transparent",
+        ready ? "border-success/40 text-success-foreground" : "text-muted-foreground",
+      )}
+    >
+      <Glyph aria-label={ready ? "Stack, ready to merge" : "Stack"} />
+      {stack.layers.length}
+    </Badge>
+  );
+}
+
+interface PrRowProps extends RowContext {
+  pr: PullRequest;
+  selected: boolean;
+  stack: Stack | null;
+  nested: boolean;
+}
+
+const PrRow = memo(function PrRow({
+  pr,
+  selected,
+  stack,
+  nested,
+  group,
+  summary,
+  now,
+  onSelect,
+}: PrRowProps) {
   const shown = shownColumns(group, summary);
   return (
     <div
@@ -156,6 +242,7 @@ const PrRow = memo(function PrRow({ pr, selected, group, summary, now, onSelect 
       )}
     >
       <span className="flex min-w-0 items-center gap-1.5 font-medium">
+        {nested && <span className="w-5 shrink-0" />}
         {pr.isDraft ? (
           <GitPullRequestDraftIcon
             aria-label="Draft"
@@ -178,6 +265,7 @@ const PrRow = memo(function PrRow({ pr, selected, group, summary, now, onSelect 
         {!shown.repo && (
           <span className="ms-0.5 shrink-0 font-normal text-muted-foreground/72">#{pr.number}</span>
         )}
+        {stack && <StackBadge stack={stack} />}
       </span>
       {summary ? (
         <BadgeIcon badge={statusBadge(pr)} className="size-3.5" />

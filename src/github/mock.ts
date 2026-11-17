@@ -47,6 +47,9 @@ const titles = [
   "Remove the unused feature flag for search v1",
 ];
 
+const branch = (index: number) => `feature/change-${index}`;
+const STACKED_ON: Record<number, number> = { 6: 0, 12: 6, 18: 12, 7: 1 };
+
 const pollsUntilMergeable = new Map<string, number>();
 const settledMergeability = (index: number) => mergeStates[index % mergeStates.length]!;
 
@@ -68,7 +71,9 @@ function pullRequests(owner: string): PullRequest[] {
       author,
       authorAvatarUrl: avatar(author),
       isDraft: index % 9 === 4,
-      branch: `feature/change-${index}`,
+      branch: branch(index),
+      baseBranch: index in STACKED_ON ? branch(STACKED_ON[index]!) : "main",
+      isCrossRepository: false,
       updatedAt: new Date(Date.now() - index * 47 * 60_000).toISOString(),
       ci: ciStates[index % ciStates.length]!,
       mergeability: pollsUntilMergeable.get(id) ? "unknown" : settledMergeability(index),

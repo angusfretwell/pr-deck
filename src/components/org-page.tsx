@@ -1,7 +1,7 @@
 import { AlertIcon, GitPullRequestIcon, InfoIcon } from "@primer/octicons-react";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useHotkeys } from "@tanstack/react-hotkeys";
-import { useDeferredValue, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useEventCallback, useInterval, useMediaQuery, useResizeObserver } from "usehooks-ts";
 import { Redirect, useLocation } from "wouter";
 import { Preview, PreviewDrawer } from "@/components/preview";
@@ -35,6 +35,7 @@ import {
   toggleGroup,
   type SelectionAction,
 } from "@/lib/pr-list";
+import { deriveStacks } from "@/lib/stacks";
 import { useCollapsedGroups, useGroup, useHideDrafts, useLastPath } from "@/lib/storage";
 import { useViews } from "@/lib/use-views";
 import { cn } from "@/lib/utils";
@@ -109,9 +110,14 @@ function OrgPage({
 
   const hideDrafts = desktop && hideDraftsPreference;
   const allPrs = pullRequests.data?.pullRequests ?? [];
+  const stacks = useMemo(
+    () => deriveStacks(pullRequests.data?.pullRequests ?? []),
+    [pullRequests.data],
+  );
   const orgPrs = hideDrafts ? allPrs.filter((pr) => !pr.isDraft) : allPrs;
   const list = derivePrList({
     pullRequests: orgPrs,
+    stacks,
     query: deferredQuery,
     filters,
     viewer,
