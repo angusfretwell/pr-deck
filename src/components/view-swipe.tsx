@@ -125,13 +125,23 @@ export function ViewSwipe({ previous, next, topInset, className, children }: Vie
       }}
     >
       {previous && (
-        <NeighbourPane paneRef={previousPane} opacity={neighbourOpacity} className="right-full">
+        <NeighbourPane
+          paneRef={previousPane}
+          opacity={neighbourOpacity}
+          className="right-full"
+          contentClassName={className}
+        >
           {previous.content}
         </NeighbourPane>
       )}
       {children}
       {next && (
-        <NeighbourPane paneRef={nextPane} opacity={neighbourOpacity} className="left-full">
+        <NeighbourPane
+          paneRef={nextPane}
+          opacity={neighbourOpacity}
+          className="left-full"
+          contentClassName={className}
+        >
           {next.content}
         </NeighbourPane>
       )}
@@ -143,10 +153,17 @@ interface NeighbourPaneProps {
   paneRef: RefObject<HTMLDivElement | null>;
   opacity: MotionValue<number>;
   className: string;
+  contentClassName?: string;
   children: ReactNode;
 }
 
-function NeighbourPane({ paneRef, opacity, className, children }: NeighbourPaneProps) {
+function NeighbourPane({
+  paneRef,
+  opacity,
+  className,
+  contentClassName,
+  children,
+}: NeighbourPaneProps) {
   return (
     <motion.div
       inert
@@ -155,7 +172,9 @@ function NeighbourPane({ paneRef, opacity, className, children }: NeighbourPaneP
       style={{ opacity }}
     >
       <div ref={paneRef} className="absolute inset-x-0 h-0 overflow-clip">
-        {children}
+        <div className={cn(contentClassName, "min-h-[calc(100dvh-var(--pinned-height))]")}>
+          {children}
+        </div>
       </div>
     </motion.div>
   );
