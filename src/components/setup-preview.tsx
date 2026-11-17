@@ -1,7 +1,10 @@
 import { useRef } from "react";
 import { AppShell } from "@/components/app-shell";
 import { PrTable } from "@/components/pr-table";
-import { ViewHeader } from "@/components/view-header";
+import { FilterButton, ViewHeader } from "@/components/view-header";
+import { DisplayMenu } from "@/components/view-header/display-menu";
+import { DraftsToggle } from "@/components/view-header/drafts-toggle";
+import { ViewTabs } from "@/components/view-header/view-tabs";
 import { derivePrList, NO_SELECTION } from "@/lib/pr-list";
 import { cn } from "@/lib/utils";
 import { countByView, openViews } from "@/lib/views";
@@ -160,34 +163,33 @@ export function SetupPreview({ className }: { className?: string }) {
         onSignOut={noop}
       />
       <ViewHeader
-        views={VIEWS}
-        viewCounts={VIEW_COUNTS}
-        allOpenCount={PULL_REQUESTS.length}
-        activeViewId={null}
-        deletableViewId={null}
-        renamingViewId={null}
-        viewHref={() => "#"}
-        onRenamingViewChange={noop}
-        onRenameView={noop}
-        onDeleteView={noop}
         filters={[]}
         filtersChanged={false}
         onFiltersChange={noop}
         onResetFilters={noop}
-        onSaveView={noop}
         onSaveAsNewView={noop}
         filterMenu={null}
         onFilterMenuChange={noop}
-        displayMenuOpen={false}
-        onDisplayMenuOpenChange={noop}
-        group="repo"
-        onGroupChange={noop}
-        hideDrafts={false}
-        onHideDraftsChange={noop}
         orgPrs={PULL_REQUESTS}
         scopedPrs={PULL_REQUESTS}
         viewer={VIEWER}
-      />
+      >
+        <ViewTabs
+          views={VIEWS}
+          viewCounts={VIEW_COUNTS}
+          allOpenCount={PULL_REQUESTS.length}
+          activeViewId={null}
+          deletableViewId={null}
+          renamingViewId={null}
+          viewHref={() => "#"}
+          onRenamingViewChange={noop}
+          onRenameView={noop}
+          onDeleteView={noop}
+        />
+        <DraftsToggle hideDrafts={false} onHideDraftsChange={noop} />
+        <FilterButton />
+        <DisplayMenu open={false} onOpenChange={noop} group="repo" onGroupChange={noop} />
+      </ViewHeader>
       <div className="pb-4">
         <PrTable
           groups={GROUPS}
