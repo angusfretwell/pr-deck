@@ -47,12 +47,26 @@ export function ViewTabs({
   onDeleteView,
 }: ViewTabsProps) {
   const nav = useRef<HTMLElement>(null);
+  const scrolledViewId = useRef(activeViewId);
 
   const countsKey = [allOpenCount, ...views.map((view) => viewCounts[view.id])].join();
   useEffect(() => {
-    nav.current
-      ?.querySelector('[aria-current="page"]')
+    const strip = nav.current;
+    const viewport = strip?.closest("[data-slot=scroll-area-viewport]");
+    if (!strip || !viewport) return;
+    const switched = scrolledViewId.current !== activeViewId;
+    scrolledViewId.current = activeViewId;
+    const from = viewport.scrollLeft - (parseFloat(getComputedStyle(strip).translate) || 0);
+    strip
+      .querySelector('[aria-current="page"]')
       ?.scrollIntoView({ inline: "center", block: "nearest" });
+    const shift = viewport.scrollLeft - from;
+    if (!switched || !shift) return;
+    strip.style.transition = "none";
+    strip.style.translate = `${shift}px`;
+    strip.getBoundingClientRect();
+    strip.style.transition = "";
+    strip.style.translate = "";
   }, [activeViewId, views.length, countsKey]);
 
   return (
@@ -60,7 +74,11 @@ export function ViewTabs({
       scrollFade
       className="-my-2 -ms-2 min-w-0 *:data-[slot=scroll-area-scrollbar]:hidden md:-ms-4"
     >
-      <nav ref={nav} aria-label="Views" className="flex w-max gap-1.5 py-2 ps-2 md:ps-4">
+      <nav
+        ref={nav}
+        aria-label="Views"
+        className="flex w-max gap-1.5 py-2 ps-2 transition-[translate] duration-300 ease-snappy motion-reduce:transition-none md:ps-4"
+      >
         <ViewLink
           href={viewHref(null)}
           active={activeViewId === null}
