@@ -446,7 +446,7 @@ export function PreviewDrawer({ pr, open, viewer, onClose }: PreviewDrawerProps)
       <DrawerPopup
         showBar
         finalFocus={(closeType) => closeType === "keyboard"}
-        className="h-[calc(100dvh-max(--spacing(2),env(safe-area-inset-top))---spacing(8))]"
+        className="h-[calc(100dvh-max(--spacing(2),env(safe-area-inset-top))---spacing(8))] [--peek:0px] [--stack-step:0] data-nested-drawer-open:h-[calc(100dvh-max(--spacing(2),env(safe-area-inset-top))---spacing(8))]"
       >
         {pr && (
           <DrawerPanel className="flex flex-col gap-5">

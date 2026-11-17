@@ -4,14 +4,14 @@ import { useMediaQuery } from "usehooks-ts";
 import { Link } from "wouter";
 import { AccountAvatar } from "@/components/account-avatar";
 import {
-  Menu,
-  MenuGroup,
-  MenuGroupLabel,
-  MenuPopup,
-  MenuRadioGroup,
-  MenuRadioItem,
-  MenuTrigger,
-} from "@/components/ui/menu";
+  ResponsiveMenu,
+  ResponsiveMenuGroup,
+  ResponsiveMenuGroupLabel,
+  ResponsiveMenuPopup,
+  ResponsiveMenuRadioGroup,
+  ResponsiveMenuRadioItem,
+  ResponsiveMenuTrigger,
+} from "@/components/responsive-menu";
 import { Button } from "@/components/ui/button";
 import { SegmentedControl, SegmentedControlItem } from "@/components/ui/segmented-control";
 import type { Account } from "@/types";
@@ -161,17 +161,17 @@ function OwnerMenu({
     { label: "Organisations", accounts: owners.filter((owner) => owner.login !== viewerLogin) },
   ];
   return (
-    <Menu>
-      <MenuTrigger render={trigger}>{children}</MenuTrigger>
-      <MenuPopup align="start" className="w-72">
-        <MenuRadioGroup value={activeOwner} onValueChange={onSelect}>
+    <ResponsiveMenu>
+      <ResponsiveMenuTrigger render={trigger}>{children}</ResponsiveMenuTrigger>
+      <ResponsiveMenuPopup align="start" className="w-72">
+        <ResponsiveMenuRadioGroup value={activeOwner} onValueChange={onSelect}>
           {groups.map(
             ({ label, accounts }) =>
               accounts.length > 0 && (
-                <MenuGroup key={label}>
-                  <MenuGroupLabel>{label}</MenuGroupLabel>
+                <ResponsiveMenuGroup key={label}>
+                  <ResponsiveMenuGroupLabel>{label}</ResponsiveMenuGroupLabel>
                   {accounts.map((owner) => (
-                    <MenuRadioItem
+                    <ResponsiveMenuRadioItem
                       key={owner.login}
                       value={owner.login}
                       closeOnClick
@@ -183,13 +183,13 @@ function OwnerMenu({
                           {owner.login}
                         </span>
                       </span>
-                    </MenuRadioItem>
+                    </ResponsiveMenuRadioItem>
                   ))}
-                </MenuGroup>
+                </ResponsiveMenuGroup>
               ),
           )}
-        </MenuRadioGroup>
-      </MenuPopup>
-    </Menu>
+        </ResponsiveMenuRadioGroup>
+      </ResponsiveMenuPopup>
+    </ResponsiveMenu>
   );
 }

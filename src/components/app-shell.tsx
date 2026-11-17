@@ -5,18 +5,18 @@ import { useLocation } from "wouter";
 import { AccountAvatar } from "@/components/account-avatar";
 import { OwnerSwitcher } from "@/components/owner-switcher";
 import {
-  Menu,
-  MenuCheckboxItem,
-  MenuGroup,
-  MenuGroupLabel,
-  MenuItem,
-  MenuLinkItem,
-  MenuPopup,
-  MenuRadioGroup,
-  MenuRadioItem,
-  MenuSeparator,
-  MenuTrigger,
-} from "@/components/ui/menu";
+  ResponsiveMenu,
+  ResponsiveMenuCheckboxItem,
+  ResponsiveMenuGroup,
+  ResponsiveMenuGroupLabel,
+  ResponsiveMenuItem,
+  ResponsiveMenuLinkItem,
+  ResponsiveMenuPopup,
+  ResponsiveMenuRadioGroup,
+  ResponsiveMenuRadioItem,
+  ResponsiveMenuSeparator,
+  ResponsiveMenuTrigger,
+} from "@/components/responsive-menu";
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
@@ -121,17 +121,19 @@ export function AppShell({
             >
               <SearchIcon />
             </Button>
-            <Menu>
-              <MenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Account" />}>
+            <ResponsiveMenu>
+              <ResponsiveMenuTrigger
+                render={<Button variant="ghost" size="icon-sm" aria-label="Account" />}
+              >
                 <AccountAvatar account={session.viewer} className="size-5.5" />
-              </MenuTrigger>
-              <MenuPopup align="end" className="w-64">
-                <MenuGroup>
-                  <MenuGroupLabel>Organisations</MenuGroupLabel>
+              </ResponsiveMenuTrigger>
+              <ResponsiveMenuPopup align="end" className="w-64">
+                <ResponsiveMenuGroup>
+                  <ResponsiveMenuGroupLabel>Organisations</ResponsiveMenuGroupLabel>
                   {session.owners.map((owner) => {
                     const enabled = !hiddenOwners.includes(owner.login);
                     return (
-                      <MenuCheckboxItem
+                      <ResponsiveMenuCheckboxItem
                         className="grid-cols-[.75rem_minmax(0,1fr)]"
                         key={owner.login}
                         checked={enabled}
@@ -150,31 +152,34 @@ export function AppShell({
                             {owner.login}
                           </span>
                         </span>
-                      </MenuCheckboxItem>
+                      </ResponsiveMenuCheckboxItem>
                     );
                   })}
-                </MenuGroup>
-                <MenuSeparator />
-                <MenuGroup>
-                  <MenuGroupLabel>Theme</MenuGroupLabel>
-                  <MenuRadioGroup value={ternaryDarkMode} onValueChange={setTernaryDarkMode}>
-                    <MenuRadioItem value="system">System</MenuRadioItem>
-                    <MenuRadioItem value="light">Light</MenuRadioItem>
-                    <MenuRadioItem value="dark">Dark</MenuRadioItem>
-                  </MenuRadioGroup>
-                </MenuGroup>
-                <MenuSeparator />
-                <MenuLinkItem href={REPO_URL} target="_blank" rel="noopener">
+                </ResponsiveMenuGroup>
+                <ResponsiveMenuSeparator />
+                <ResponsiveMenuGroup>
+                  <ResponsiveMenuGroupLabel>Theme</ResponsiveMenuGroupLabel>
+                  <ResponsiveMenuRadioGroup
+                    value={ternaryDarkMode}
+                    onValueChange={setTernaryDarkMode}
+                  >
+                    <ResponsiveMenuRadioItem value="system">System</ResponsiveMenuRadioItem>
+                    <ResponsiveMenuRadioItem value="light">Light</ResponsiveMenuRadioItem>
+                    <ResponsiveMenuRadioItem value="dark">Dark</ResponsiveMenuRadioItem>
+                  </ResponsiveMenuRadioGroup>
+                </ResponsiveMenuGroup>
+                <ResponsiveMenuSeparator />
+                <ResponsiveMenuLinkItem href={REPO_URL} target="_blank" rel="noopener">
                   <MarkGithubIcon />
                   Source on GitHub
-                </MenuLinkItem>
-                <MenuSeparator />
-                <MenuItem onClick={onSignOut}>
+                </ResponsiveMenuLinkItem>
+                <ResponsiveMenuSeparator />
+                <ResponsiveMenuItem onClick={onSignOut}>
                   <SignOutIcon />
                   Clear token
-                </MenuItem>
-              </MenuPopup>
-            </Menu>
+                </ResponsiveMenuItem>
+              </ResponsiveMenuPopup>
+            </ResponsiveMenu>
           </>
         )}
       </header>

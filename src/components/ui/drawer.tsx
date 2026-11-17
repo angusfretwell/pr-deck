@@ -147,7 +147,7 @@ export function DrawerPopup({
 
   const popup = (
     <DrawerPortal {...portalProps}>
-      <DrawerBackdrop />
+      <DrawerBackdrop forceRender />
       <DrawerViewport position={position} variant={variant}>
         <DrawerPrimitive.Popup
           className={cn(

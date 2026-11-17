@@ -3,7 +3,14 @@ import { type ComponentType, useRef } from "react";
 import { DiffsHubIcon, T3CodeIcon } from "@/components/brand-icons";
 import { Button } from "@/components/ui/button";
 import { Group, GroupSeparator } from "@/components/ui/group";
-import { Menu, MenuLinkItem, MenuPopup, MenuTrigger } from "@/components/ui/menu";
+import {
+  ResponsiveMenu,
+  ResponsiveMenuGroup,
+  ResponsiveMenuGroupLabel,
+  ResponsiveMenuLinkItem,
+  ResponsiveMenuPopup,
+  ResponsiveMenuTrigger,
+} from "@/components/responsive-menu";
 import { useOpenIn } from "@/lib/storage";
 import type { OpenIn } from "@/types";
 
@@ -39,28 +46,31 @@ export function OpenInButton({ url, className }: { url: string; className?: stri
         Open
       </Button>
       <GroupSeparator className="bg-primary/72" />
-      <Menu>
-        <MenuTrigger render={<Button size="icon" aria-label="Open in…" />}>
+      <ResponsiveMenu>
+        <ResponsiveMenuTrigger render={<Button size="icon" aria-label="Open in…" />}>
           <ChevronDownIcon className="size-4" />
-        </MenuTrigger>
-        <MenuPopup anchor={groupRef} align="end" className="min-w-(--anchor-width)">
-          {(Object.keys(TARGETS) as OpenIn[]).map((target) => {
-            const { label, Icon, href } = TARGETS[target];
-            return (
-              <MenuLinkItem
-                key={target}
-                href={href(url)}
-                target="_blank"
-                rel="noopener"
-                onClick={() => setOpenIn(target)}
-              >
-                <Icon />
-                {label}
-              </MenuLinkItem>
-            );
-          })}
-        </MenuPopup>
-      </Menu>
+        </ResponsiveMenuTrigger>
+        <ResponsiveMenuPopup anchor={groupRef} align="end" className="min-w-(--anchor-width)">
+          <ResponsiveMenuGroup>
+            <ResponsiveMenuGroupLabel>Open in</ResponsiveMenuGroupLabel>
+            {(Object.keys(TARGETS) as OpenIn[]).map((target) => {
+              const { label, Icon, href } = TARGETS[target];
+              return (
+                <ResponsiveMenuLinkItem
+                  key={target}
+                  href={href(url)}
+                  target="_blank"
+                  rel="noopener"
+                  onClick={() => setOpenIn(target)}
+                >
+                  <Icon />
+                  {label}
+                </ResponsiveMenuLinkItem>
+              );
+            })}
+          </ResponsiveMenuGroup>
+        </ResponsiveMenuPopup>
+      </ResponsiveMenu>
     </Group>
   );
 }
