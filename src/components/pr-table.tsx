@@ -259,7 +259,7 @@ const PrRow = memo(function PrRow({
         event.metaKey || event.ctrlKey ? window.open(pr.url, "_blank", "noopener") : onSelect(pr.id)
       }
       className={cn(
-        "grid h-10 touch-manipulation grid-cols-(--columns) [content-visibility:auto] items-center gap-x-2.5 rounded-md px-2 sm:h-9",
+        "grid h-10 touch-manipulation grid-cols-(--columns) md:[content-visibility:auto] items-center gap-x-2.5 rounded-md px-2 sm:h-9",
         group === "none"
           ? "scroll-mt-(--pinned-height)"
           : "scroll-mt-[calc(var(--pinned-height,0px)+--spacing(12))] sm:scroll-mt-[calc(var(--pinned-height,0px)+--spacing(11))]",
