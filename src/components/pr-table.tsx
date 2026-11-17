@@ -97,21 +97,30 @@ export function PrTable({
           key={key}
           open={!collapsed}
           onOpenChange={(_, { event }) => onToggleGroup(key, "altKey" in event && event.altKey)}
-          className={cn(group !== "none" && "pb-1")}
+          className={cn(group !== "none" && "relative py-1")}
         >
           {group !== "none" && (
-            <div className="sticky top-[calc(var(--pinned-height,0px)+--spacing(2))] z-10 mt-1 w-0">
-              <div className="w-[100cqw] bg-background shadow-[0_-8px_0_var(--background)]">
-                <CollapsibleTrigger className="flex h-9 w-full items-center gap-2 rounded-md bg-muted px-2 text-start font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-8">
-                  <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground transition-transform duration-150 in-data-panel-open:rotate-90 motion-reduce:transition-none sm:size-3.5" />
-                  {group === "author" && rows[0] && (
-                    <UserAvatar login={key} avatarUrl={rows[0].authorAvatarUrl} />
-                  )}
-                  <span className="truncate">{key}</span>
-                  <span className="text-muted-foreground/72 tabular-nums">{rows.length}</span>
-                </CollapsibleTrigger>
+            <>
+              <div
+                aria-hidden
+                data-panel-open={!collapsed || undefined}
+                className={cn(GROUP_HEADER, "absolute inset-x-0 top-1")}
+              >
+                <GroupHeading group={group} name={key} rows={rows} />
               </div>
-            </div>
+              <div className="sticky top-[calc(var(--pinned-height,0px)+--spacing(2))] z-10 w-0">
+                <div className="w-[100cqw] bg-background shadow-[0_-8px_0_var(--background)]">
+                  <CollapsibleTrigger
+                    className={cn(
+                      GROUP_HEADER,
+                      "w-full outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    )}
+                  >
+                    <GroupHeading group={group} name={key} rows={rows} />
+                  </CollapsibleTrigger>
+                </div>
+              </div>
+            </>
           )}
           <CollapsiblePanel>
             <div className="flex flex-col gap-0.5 pt-1">
@@ -131,6 +140,22 @@ export function PrTable({
         </Collapsible>
       ))}
     </div>
+  );
+}
+
+const GROUP_HEADER =
+  "flex h-9 items-center gap-2 rounded-md bg-muted px-2 text-start font-medium sm:h-8";
+
+function GroupHeading({ group, name, rows }: { group: Group; name: string; rows: PullRequest[] }) {
+  return (
+    <>
+      <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground transition-transform duration-150 in-data-panel-open:rotate-90 motion-reduce:transition-none sm:size-3.5" />
+      {group === "author" && rows[0] && (
+        <UserAvatar login={name} avatarUrl={rows[0].authorAvatarUrl} />
+      )}
+      <span className="truncate">{name}</span>
+      <span className="text-muted-foreground/72 tabular-nums">{rows.length}</span>
+    </>
   );
 }
 
