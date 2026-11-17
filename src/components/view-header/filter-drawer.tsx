@@ -49,9 +49,9 @@ export function FilterDrawer({ handle, triggerId, onOpenChange, ...content }: Fi
       triggerId={triggerId}
       onOpenChange={(open, { trigger }) => onOpenChange(open, trigger)}
     >
-      {({ payload }) => {
-        const anchor = payload as MenuAnchor | undefined;
+      {({ payload: anchor }) => {
         if (anchor === undefined) return null;
+
         return (
           <DrawerPopup showBar>
             {anchor === "header" || anchor === "add" ? (
@@ -69,6 +69,7 @@ export function FilterDrawer({ handle, triggerId, onOpenChange, ...content }: Fi
 function PropertyList(props: FilterDrawerContentProps) {
   const { filters, scopedPrs, orgPrs, viewer, onClearAll } = props;
   const count = scopedPrs.filter((pr) => passes(pr, filters, viewer)).length;
+
   return (
     <>
       <DrawerHeader>

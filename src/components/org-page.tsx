@@ -17,14 +17,10 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  FilterButton,
-  ViewHeader,
-  type FilterMenuState,
-  type MenuAnchor,
-} from "@/components/view-header";
+import { FilterButton, ViewHeader, type FilterMenuState } from "@/components/view-header";
 import { DisplayMenu } from "@/components/view-header/display-menu";
 import { DraftsToggle } from "@/components/view-header/drafts-toggle";
+import type { MenuAnchor } from "@/components/view-header/filter-trigger-context";
 import { ViewTabs } from "@/components/view-header/view-tabs";
 import { ViewSwipe, type SwipeNeighbour } from "@/components/view-swipe";
 import { errorMessage } from "@/github/api";

@@ -99,6 +99,7 @@ export function facets(
   const others = filters.filter((filter) => filter.key !== property.key);
   const selected = filters.find((filter) => filter.key === property.key)?.values ?? [];
   const candidates = scopedPrs.filter((pr) => passes(pr, others, viewer));
+
   return property.options(orgPrs, viewer).map((option) => ({
     option,
     checked: selected.includes(option.value),

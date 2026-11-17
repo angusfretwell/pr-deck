@@ -14,8 +14,6 @@ import { FilterTrigger } from "./view-header/filter-trigger";
 import { FilterTriggerContext, type MenuAnchor } from "./view-header/filter-trigger-context";
 import { Hint } from "./view-header/hint";
 
-export type { MenuAnchor };
-
 export interface FilterMenuState {
   anchor: MenuAnchor;
   deferBar?: boolean;
@@ -58,11 +56,16 @@ export function ViewHeader({
   const [drawerHandle] = useState(() => DrawerCreateHandle<MenuAnchor>());
   const triggerIdPrefix = useId();
   const triggerId = (anchor: MenuAnchor) => `${triggerIdPrefix}${anchor}`;
+  const anchorsFor = (current: Filter[]): MenuAnchor[] => [
+    "header",
+    "add",
+    ...current.map((filter) => filter.key),
+  ];
 
   const changeFilterMenu = (open: boolean, trigger: Element | undefined) => {
     if (!open) return onFilterMenuChange(null);
-    const anchors: MenuAnchor[] = ["header", "add", ...filters.map((filter) => filter.key)];
-    const anchor = anchors.find((candidate) => triggerId(candidate) === trigger?.id);
+
+    const anchor = anchorsFor(filters).find((candidate) => triggerId(candidate) === trigger?.id);
     if (anchor) onFilterMenuChange(anchor);
   };
 
@@ -72,11 +75,9 @@ export function ViewHeader({
 
   const changeFilters = (next: Filter[]) => {
     onFiltersChange(next);
-    if (
-      filterMenu?.anchor &&
-      !["header", "add", ...next.map((filter) => filter.key)].includes(filterMenu.anchor)
-    )
-      onFilterMenuChange(null);
+
+    const anchorRemoved = filterMenu !== null && !anchorsFor(next).includes(filterMenu.anchor);
+    if (anchorRemoved) onFilterMenuChange(null);
   };
 
   const toggleFilterValue = (key: PropertyKey, value: string, negated = false) =>

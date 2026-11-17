@@ -12,6 +12,7 @@ interface FilterTriggerProps {
 export function FilterTrigger({ anchor, ...props }: FilterTriggerProps) {
   const context = use(FilterTriggerContext);
   if (!context) throw new Error("FilterTrigger must be rendered inside ViewHeader");
+
   const id = context.triggerId(anchor);
   return context.drawer ? (
     <DrawerTrigger {...props} handle={context.drawerHandle} payload={anchor} id={id} />
