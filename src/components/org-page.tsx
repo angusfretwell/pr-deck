@@ -1,8 +1,8 @@
 import { AlertIcon, GitPullRequestIcon, InfoIcon } from "@primer/octicons-react";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useHotkeys } from "@tanstack/react-hotkeys";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { useMediaQuery, useResizeObserver } from "usehooks-ts";
+import { useDeferredValue, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEventCallback, useInterval, useMediaQuery, useResizeObserver } from "usehooks-ts";
 import { Redirect, useLocation } from "wouter";
 import { Preview, PreviewDrawer } from "@/components/preview";
 import { PrTable } from "@/components/pr-table";
@@ -95,13 +95,16 @@ function OrgPage({
     box: "border-box",
   });
   const pullRequests = usePullRequests(owner);
+  const deferredQuery = useDeferredValue(query);
+  const [now, setNow] = useState(Date.now);
+  useInterval(() => setNow(Date.now()), 60_000);
 
   const hideDrafts = desktop && hideDraftsPreference;
   const allPrs = pullRequests.data?.pullRequests ?? [];
   const orgPrs = hideDrafts ? allPrs.filter((pr) => !pr.isDraft) : allPrs;
   const list = derivePrList({
     pullRequests: orgPrs,
-    query,
+    query: deferredQuery,
     filters,
     viewer,
     group,
@@ -110,6 +113,7 @@ function OrgPage({
     desktop,
   });
   const act = (action: SelectionAction) => setSelection(applySelectionAction(list, action));
+  const select = useEventCallback((id: string) => act({ type: "select", id }));
 
   useEffect(() => setLastPath(location), [location, setLastPath]);
 
@@ -214,8 +218,9 @@ function OrgPage({
                 group={group}
                 compact={!!list.previewed}
                 selectedId={list.highlightedId}
-                onSelect={(id) => act({ type: "select", id })}
-                query={query}
+                onSelect={select}
+                now={now}
+                query={deferredQuery}
                 onShowAll={showAll}
                 onClearSearch={() => onQueryChange("")}
                 onToggleGroup={(key, all) => setCollapsedGroups(toggleGroup(list, key, all))}
