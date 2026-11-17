@@ -16,15 +16,17 @@ import type { Badge, BadgeIconName, Tone } from "@/lib/pr";
 import { cn } from "@/lib/utils";
 
 const ICON_TONE: Record<Tone, string> = {
-  ok: "text-success",
-  bad: "text-destructive",
-  warn: "text-warning",
+  ok: "text-success-foreground",
+  bad: "text-destructive-foreground",
+  severe: "text-severe-foreground",
+  warn: "text-warning-foreground",
   mute: "text-muted-foreground",
 };
 
 const PILL_VARIANT: Record<Tone, BadgeProps["variant"]> = {
   ok: "success",
   bad: "error",
+  severe: "severe",
   warn: "warning",
   mute: "secondary",
 };

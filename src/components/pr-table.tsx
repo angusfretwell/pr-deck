@@ -2,6 +2,7 @@ import {
   ChevronRightIcon,
   FilterRemoveIcon,
   GitPullRequestDraftIcon,
+  GitPullRequestIcon,
   SearchIcon,
 } from "@primer/octicons-react";
 import { useEffect, useRef, type CSSProperties } from "react";
@@ -91,15 +92,17 @@ export function PrTable({
           group === "none"
             ? "scroll-mt-(--pinned-height)"
             : "scroll-mt-[calc(var(--pinned-height,0px)+--spacing(12))] sm:scroll-mt-[calc(var(--pinned-height,0px)+--spacing(11))]",
-          selected ? "bg-info/8 dark:bg-info/16" : "hover:bg-accent active:bg-accent",
+          selected ? "bg-info-muted" : "hover:bg-accent active:bg-accent",
         )}
       >
         <span className="flex min-w-0 items-center gap-1.5 font-medium">
-          {pr.isDraft && (
+          {pr.isDraft ? (
             <GitPullRequestDraftIcon
               aria-label="Draft"
               className="size-3.5 shrink-0 text-muted-foreground"
             />
+          ) : (
+            <GitPullRequestIcon aria-hidden className="size-3.5 shrink-0 text-success-foreground" />
           )}
           <a
             href={pr.url}

@@ -1,6 +1,6 @@
 import type { CheckState, CiState, PullRequest, ReviewState } from "../types";
 
-export type Tone = "ok" | "bad" | "warn" | "mute";
+export type Tone = "ok" | "bad" | "severe" | "warn" | "mute";
 export type BadgeIconName =
   | "pass"
   | "fail"
@@ -30,8 +30,8 @@ export const CI_BADGE: Record<CiState, Badge> = {
 };
 
 export const CHECK_BADGE: Record<CheckState, Badge> = {
-  pass: PASS,
-  fail: FAIL,
+  pass: { ...PASS, icon: "check" },
+  fail: { ...FAIL, icon: "x" },
   pending: PENDING,
   skipped: { tone: "mute", icon: "ring", label: "Skipped" },
 };
@@ -43,7 +43,7 @@ export const REVIEW_BADGE: Record<ReviewState, Badge> = {
   approved: { tone: "ok", icon: "check", label: "Approved" },
 };
 
-export const CONFLICT_BADGE: Badge = { tone: "bad", icon: "alert", label: "Conflicts" };
+export const CONFLICT_BADGE: Badge = { tone: "severe", icon: "alert", label: "Conflicts" };
 
 export type ViewerReviewState = ReviewState | "requested";
 
@@ -66,7 +66,12 @@ export function statusBadge(pr: PullRequest): Badge {
     pr.mergeability === "conflict" && "Conflicts",
     pr.review === "changes" && "Changes requested",
   ].filter((label) => label !== false);
-  if (blockers.length) return { tone: "bad", icon: "fail", label: blockers.join(", ") };
+  if (blockers.length)
+    return {
+      tone: blockers.length === 1 && pr.mergeability === "conflict" ? "severe" : "bad",
+      icon: "fail",
+      label: blockers.join(", "),
+    };
   if (pr.ci === "pending") return { ...PENDING, label: "Checks running" };
   if (pr.review === "approved" && pr.ci === "pass" && pr.mergeability === "clean")
     return { tone: "ok", icon: "pass", label: "Ready to merge" };
