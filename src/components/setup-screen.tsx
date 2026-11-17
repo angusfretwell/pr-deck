@@ -16,7 +16,7 @@ const NEW_TOKEN_URL =
 
 const PROMISES = [
   { icon: EyeIcon, text: "Read-only, never writes to GitHub" },
-  { icon: KeyIcon, text: "Your token is stored in your browser, and only sent to GitHub." },
+  { icon: KeyIcon, text: "Token is stored in your browser, and only sent to GitHub" },
 ] as const;
 
 interface SetupScreenProps {
