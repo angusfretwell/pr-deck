@@ -5,7 +5,7 @@ import {
   GitPullRequestIcon,
   SearchIcon,
 } from "@primer/octicons-react";
-import { useEffect, useRef, type CSSProperties } from "react";
+import { memo, useEffect, useRef, type CSSProperties } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { BadgeIcon, BadgePill } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
@@ -23,11 +23,18 @@ export interface PrTableProps {
   compact: boolean;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  now: number;
   query: string;
   onShowAll: () => void;
   onClearSearch: () => void;
   onToggleGroup: (key: string, all: boolean) => void;
 }
+
+const shownColumns = (group: Group, summary: boolean) => ({
+  repo: !summary && group !== "repo",
+  author: !summary && group !== "author",
+  face: summary && group !== "author",
+});
 
 export function PrTable({
   groups,
@@ -35,6 +42,7 @@ export function PrTable({
   compact,
   selectedId,
   onSelect,
+  now,
   query,
   onShowAll,
   onClearSearch,
@@ -64,99 +72,15 @@ export function PrTable({
     );
   }
 
-  const showRepo = !summary && group !== "repo";
-  const showAuthor = !summary && group !== "author";
-  const showFace = summary && group !== "author";
+  const shown = shownColumns(group, summary);
   const columns = [
     "minmax(0, 1fr)",
     "auto",
-    ...(showRepo ? ["150px"] : []),
-    ...(showAuthor ? ["150px"] : []),
-    ...(showFace ? ["18px"] : []),
+    ...(shown.repo ? ["150px"] : []),
+    ...(shown.author ? ["150px"] : []),
+    ...(shown.face ? ["18px"] : []),
     summary ? "40px" : "52px",
   ].join(" ");
-
-  const row = (pr: PullRequest) => {
-    const selected = pr.id === selectedId;
-    return (
-      <div
-        key={pr.id}
-        data-selected={selected || undefined}
-        onClick={(event) =>
-          event.metaKey || event.ctrlKey
-            ? window.open(pr.url, "_blank", "noopener")
-            : onSelect(pr.id)
-        }
-        className={cn(
-          "grid h-10 touch-manipulation grid-cols-(--columns) items-center gap-x-2.5 rounded-md px-2 sm:h-9",
-          group === "none"
-            ? "scroll-mt-(--pinned-height)"
-            : "scroll-mt-[calc(var(--pinned-height,0px)+--spacing(12))] sm:scroll-mt-[calc(var(--pinned-height,0px)+--spacing(11))]",
-          selected ? "bg-info-muted" : "hover:bg-accent active:bg-accent",
-        )}
-      >
-        <span className="flex min-w-0 items-center gap-1.5 font-medium">
-          {pr.isDraft ? (
-            <GitPullRequestDraftIcon
-              aria-label="Draft"
-              className="size-3.5 shrink-0 text-muted-foreground"
-            />
-          ) : (
-            <GitPullRequestIcon aria-hidden className="size-3.5 shrink-0 text-success-foreground" />
-          )}
-          <a
-            href={pr.url}
-            aria-current={selected || undefined}
-            onClick={(event) => {
-              if (event.metaKey || event.ctrlKey || event.shiftKey) event.stopPropagation();
-              else event.preventDefault();
-            }}
-            className="truncate rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <bdi>{pr.title}</bdi>
-          </a>
-          {!showRepo && (
-            <span className="ms-0.5 shrink-0 font-normal text-muted-foreground/72">
-              #{pr.number}
-            </span>
-          )}
-        </span>
-        {summary ? (
-          <BadgeIcon badge={statusBadge(pr)} className="size-3.5" />
-        ) : (
-          <span className="flex min-w-0 items-center justify-end gap-1 overflow-hidden">
-            {issueBadges(pr).map((badge) => (
-              <BadgePill key={badge.label} badge={badge} />
-            ))}
-          </span>
-        )}
-        {showRepo && (
-          <span
-            title={`${pr.repo} #${pr.number}`}
-            className="flex min-w-0 gap-1 text-muted-foreground"
-          >
-            <span className="truncate">{pr.repo}</span>
-            <span className="shrink-0 text-muted-foreground/72">#{pr.number}</span>
-          </span>
-        )}
-        {showAuthor && (
-          <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
-            <UserAvatar login={pr.author} avatarUrl={pr.authorAvatarUrl} />
-            <span className="truncate">{pr.author}</span>
-          </span>
-        )}
-        {showFace && <UserAvatar login={pr.author} avatarUrl={pr.authorAvatarUrl} />}
-        <span
-          className={cn(
-            "text-end tabular-nums",
-            isStale(pr.updatedAt) ? "text-warning-foreground" : "text-muted-foreground",
-          )}
-        >
-          {age(pr.updatedAt)}
-        </span>
-      </div>
-    );
-  };
 
   return (
     <div
@@ -186,10 +110,108 @@ export function PrTable({
             </div>
           )}
           <CollapsiblePanel>
-            <div className="flex flex-col gap-0.5 pt-1">{rows.map(row)}</div>
+            <div className="flex flex-col gap-0.5 pt-1">
+              {rows.map((pr) => (
+                <PrRow
+                  key={pr.id}
+                  pr={pr}
+                  selected={pr.id === selectedId}
+                  group={group}
+                  summary={summary}
+                  now={now}
+                  onSelect={onSelect}
+                />
+              ))}
+            </div>
           </CollapsiblePanel>
         </Collapsible>
       ))}
     </div>
   );
 }
+
+interface PrRowProps {
+  pr: PullRequest;
+  selected: boolean;
+  group: Group;
+  summary: boolean;
+  now: number;
+  onSelect: (id: string) => void;
+}
+
+const PrRow = memo(function PrRow({ pr, selected, group, summary, now, onSelect }: PrRowProps) {
+  const shown = shownColumns(group, summary);
+  return (
+    <div
+      data-selected={selected || undefined}
+      onClick={(event) =>
+        event.metaKey || event.ctrlKey ? window.open(pr.url, "_blank", "noopener") : onSelect(pr.id)
+      }
+      className={cn(
+        "grid h-10 touch-manipulation grid-cols-(--columns) [content-visibility:auto] items-center gap-x-2.5 rounded-md px-2 sm:h-9",
+        group === "none"
+          ? "scroll-mt-(--pinned-height)"
+          : "scroll-mt-[calc(var(--pinned-height,0px)+--spacing(12))] sm:scroll-mt-[calc(var(--pinned-height,0px)+--spacing(11))]",
+        selected ? "bg-info-muted" : "hover:bg-accent active:bg-accent",
+      )}
+    >
+      <span className="flex min-w-0 items-center gap-1.5 font-medium">
+        {pr.isDraft ? (
+          <GitPullRequestDraftIcon
+            aria-label="Draft"
+            className="size-3.5 shrink-0 text-muted-foreground"
+          />
+        ) : (
+          <GitPullRequestIcon aria-hidden className="size-3.5 shrink-0 text-success-foreground" />
+        )}
+        <a
+          href={pr.url}
+          aria-current={selected || undefined}
+          onClick={(event) => {
+            if (event.metaKey || event.ctrlKey || event.shiftKey) event.stopPropagation();
+            else event.preventDefault();
+          }}
+          className="truncate rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <bdi>{pr.title}</bdi>
+        </a>
+        {!shown.repo && (
+          <span className="ms-0.5 shrink-0 font-normal text-muted-foreground/72">#{pr.number}</span>
+        )}
+      </span>
+      {summary ? (
+        <BadgeIcon badge={statusBadge(pr)} className="size-3.5" />
+      ) : (
+        <span className="flex min-w-0 items-center justify-end gap-1 overflow-hidden">
+          {issueBadges(pr).map((badge) => (
+            <BadgePill key={badge.label} badge={badge} />
+          ))}
+        </span>
+      )}
+      {shown.repo && (
+        <span
+          title={`${pr.repo} #${pr.number}`}
+          className="flex min-w-0 gap-1 text-muted-foreground"
+        >
+          <span className="truncate">{pr.repo}</span>
+          <span className="shrink-0 text-muted-foreground/72">#{pr.number}</span>
+        </span>
+      )}
+      {shown.author && (
+        <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
+          <UserAvatar login={pr.author} avatarUrl={pr.authorAvatarUrl} />
+          <span className="truncate">{pr.author}</span>
+        </span>
+      )}
+      {shown.face && <UserAvatar login={pr.author} avatarUrl={pr.authorAvatarUrl} />}
+      <span
+        className={cn(
+          "text-end tabular-nums",
+          isStale(pr.updatedAt, now) ? "text-warning-foreground" : "text-muted-foreground",
+        )}
+      >
+        {age(pr.updatedAt, now)}
+      </span>
+    </div>
+  );
+});

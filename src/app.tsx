@@ -1,6 +1,6 @@
 import { CloudOfflineIcon } from "@primer/octicons-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Redirect, Route, Switch, useLocation } from "wouter";
 import { AppShell } from "@/components/app-shell";
 import { OrgRoute } from "@/components/org-page";
@@ -117,7 +117,10 @@ function Dashboard({ session, onSignOut }: { session: Session; onSignOut: () => 
     searchRef.current?.focus();
   };
   const [hiddenOwners, setHiddenOwners] = useHiddenOwners();
-  const enabledOwners = session.owners.filter((owner) => !hiddenOwners.includes(owner.login));
+  const enabledOwners = useMemo(
+    () => session.owners.filter((owner) => !hiddenOwners.includes(owner.login)),
+    [session.owners, hiddenOwners],
+  );
   const owners = enabledOwners.map((owner) => owner.login);
 
   return (

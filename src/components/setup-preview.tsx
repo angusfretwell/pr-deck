@@ -197,6 +197,7 @@ export function SetupPreview({ className }: { className?: string }) {
           compact={false}
           selectedId={null}
           onSelect={noop}
+          now={now}
           onShowAll={noop}
           onToggleGroup={noop}
         />
