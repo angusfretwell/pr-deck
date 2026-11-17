@@ -31,9 +31,12 @@ export function OpenInButton({ url, className }: { url: string; className?: stri
 
   return (
     <Group ref={groupRef} aria-label="Open pull request" className={className}>
-      <Button render={<a href={href(url)} target="_blank" rel="noopener" />}>
+      <Button
+        aria-label={`Open in ${label}`}
+        render={<a href={href(url)} target="_blank" rel="noopener" />}
+      >
         <Icon />
-        Open in {label}
+        Open
       </Button>
       <GroupSeparator className="bg-primary/72" />
       <Menu>
@@ -52,7 +55,7 @@ export function OpenInButton({ url, className }: { url: string; className?: stri
                 onClick={() => setOpenIn(target)}
               >
                 <Icon />
-                Open in {label}
+                {label}
               </MenuLinkItem>
             );
           })}
