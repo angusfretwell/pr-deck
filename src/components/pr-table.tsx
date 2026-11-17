@@ -83,7 +83,7 @@ export function PrTable({
     ...(shown.repo ? ["150px"] : []),
     ...(shown.author ? ["150px"] : []),
     ...(shown.face ? ["18px"] : []),
-    summary ? "40px" : "52px",
+    summary ? "32px" : "52px",
   ].join(" ");
 
   return (
@@ -288,7 +288,9 @@ const PrRow = memo(function PrRow({
           <bdi>{pr.title}</bdi>
         </a>
         {!shown.repo && (
-          <span className="ms-0.5 shrink-0 font-normal text-muted-foreground/72">#{pr.number}</span>
+          <span className="ms-0.5 shrink-0 font-normal text-muted-foreground/72 max-sm:text-sm">
+            #{pr.number}
+          </span>
         )}
         {stack && <StackBadge stack={stack} />}
       </span>
@@ -319,7 +321,7 @@ const PrRow = memo(function PrRow({
       {shown.face && <UserAvatar login={pr.author} avatarUrl={pr.authorAvatarUrl} />}
       <span
         className={cn(
-          "text-end tabular-nums",
+          "text-end tabular-nums max-sm:text-sm",
           isStale(pr.updatedAt, now) ? "text-warning-foreground" : "text-muted-foreground",
         )}
       >
