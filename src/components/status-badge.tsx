@@ -5,13 +5,13 @@ import {
   CircleIcon,
   CommentIcon,
   DotFillIcon,
+  CodeReviewIcon,
   SkipIcon,
   XCircleFillIcon,
-  XIcon,
+  XCircleIcon,
   type Icon,
 } from "@primer/octicons-react";
 import { Badge as BadgeUi, type BadgeProps } from "@/components/ui/badge";
-import type { ComponentProps } from "react";
 import type { Badge, BadgeIconName, Tone } from "@/lib/pr";
 import { cn } from "@/lib/utils";
 
@@ -34,11 +34,12 @@ const PILL_VARIANT: Record<Tone, BadgeProps["variant"]> = {
 const ICON: Record<BadgeIconName, Icon> = {
   pass: CheckCircleFillIcon,
   fail: XCircleFillIcon,
+  failOutline: XCircleIcon,
   pending: DotFillIcon,
   ring: SkipIcon,
   open: CircleIcon,
   check: CheckIcon,
-  x: XIcon,
+  review: CodeReviewIcon,
   chat: CommentIcon,
   alert: AlertIcon,
 };
@@ -54,7 +55,7 @@ export function BadgePill({ badge }: { badge: Badge }) {
 }
 
 export function BadgeIcon({ badge, className }: { badge: Badge; className?: string }) {
-  const Glyph = badge.icon === "pending" ? PingDot : ICON[badge.icon];
+  const Glyph = ICON[badge.icon];
   return (
     <span
       role="img"
@@ -62,16 +63,6 @@ export function BadgeIcon({ badge, className }: { badge: Badge; className?: stri
       className="inline-flex size-5 items-center justify-center"
     >
       <Glyph aria-hidden className={cn("size-4", ICON_TONE[badge.tone], className)} />
-    </span>
-  );
-}
-
-function PingDot({ className, ...props }: ComponentProps<"span">) {
-  return (
-    <span className={cn("flex items-center justify-center", className)} {...props}>
-      <span className="relative size-2.5 rounded-full bg-current">
-        <span className="absolute inset-0 animate-ping rounded-full bg-current opacity-72" />
-      </span>
     </span>
   );
 }

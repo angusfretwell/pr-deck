@@ -4,11 +4,12 @@ export type Tone = "ok" | "bad" | "severe" | "warn" | "mute";
 export type BadgeIconName =
   | "pass"
   | "fail"
+  | "failOutline"
   | "pending"
   | "ring"
   | "open"
   | "check"
-  | "x"
+  | "review"
   | "chat"
   | "alert";
 
@@ -30,8 +31,8 @@ export const CI_BADGE: Record<CiState, Badge> = {
 };
 
 export const CHECK_BADGE: Record<CheckState, Badge> = {
-  pass: { ...PASS, icon: "check" },
-  fail: { ...FAIL, icon: "x" },
+  pass: PASS,
+  fail: FAIL,
   pending: PENDING,
   skipped: { tone: "mute", icon: "ring", label: "Skipped" },
 };
@@ -39,7 +40,7 @@ export const CHECK_BADGE: Record<CheckState, Badge> = {
 export const REVIEW_BADGE: Record<ReviewState, Badge> = {
   none: { tone: "mute", icon: "ring", label: "No reviews" },
   comment: { tone: "mute", icon: "chat", label: "Commented" },
-  changes: { tone: "bad", icon: "x", label: "Changes requested" },
+  changes: { tone: "bad", icon: "review", label: "Changes requested" },
   approved: { tone: "ok", icon: "check", label: "Approved" },
 };
 
@@ -54,7 +55,8 @@ export function viewerReview(pr: PullRequest, viewer: string): ViewerReviewState
 
 export function issueBadges(pr: PullRequest): Badge[] {
   const badges: Badge[] = [];
-  if (pr.ci === "fail" || pr.ci === "pending") badges.push({ ...CI_BADGE[pr.ci], label: "Checks" });
+  if (pr.ci === "fail") badges.push({ ...FAIL, icon: "failOutline", label: "Checks" });
+  if (pr.ci === "pending") badges.push({ ...PENDING, label: "Checks" });
   if (pr.mergeability === "conflict") badges.push(CONFLICT_BADGE);
   if (pr.review === "changes" || pr.review === "approved") badges.push(REVIEW_BADGE[pr.review]);
   return badges;
