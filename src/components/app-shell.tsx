@@ -1,4 +1,4 @@
-import { SearchIcon, SignOutIcon } from "@primer/octicons-react";
+import { SearchIcon, SignOutIcon, XIcon } from "@primer/octicons-react";
 import { useIsFetching } from "@tanstack/react-query";
 import { useState, type RefObject } from "react";
 import { useLocation } from "wouter";
@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
 import { useColorMode } from "@/lib/storage";
+import { cn } from "@/lib/utils";
 import type { Account, Session } from "@/types";
 
 interface AppShellProps {
@@ -51,22 +52,30 @@ export function AppShell({
 }: AppShellProps) {
   const [, navigate] = useLocation();
   const [searchTapped, setSearchTapped] = useState(false);
+  const searching = searchVisible || searchTapped;
   const fetching = useIsFetching() > 0;
   const { ternaryDarkMode, setTernaryDarkMode } = useColorMode();
   const personal = session.owners.filter((owner) => owner.login === session.viewer.login);
   const organisations = session.owners.filter((owner) => owner.login !== session.viewer.login);
+  const dismissSearch = () => {
+    onQueryChange("");
+    setSearchTapped(false);
+    onSearchBlur();
+  };
 
   return (
     <div className="h-12.5 shrink-0">
       <header className="flex h-12.5 items-center gap-3 border-b bg-background px-2 max-md:fixed md:px-4 max-md:inset-x-0 max-md:top-0 max-md:z-20">
-        <OwnerSwitcher
-          owners={enabledOwners}
-          viewerLogin={session.viewer.login}
-          activeOwner={activeOwner}
-          onSelect={(owner) => navigate(`/${owner}`)}
-        />
-        {searchVisible || searchTapped ? (
-          <InputGroup className="w-70 min-w-36 shrink">
+        <div className={cn("contents", searching && "max-md:hidden")}>
+          <OwnerSwitcher
+            owners={enabledOwners}
+            viewerLogin={session.viewer.login}
+            activeOwner={activeOwner}
+            onSelect={(owner) => navigate(`/${owner}`)}
+          />
+        </div>
+        {searching ? (
+          <InputGroup className="min-w-36 shrink md:w-70">
             <InputGroupInput
               ref={searchRef}
               type="search"
@@ -83,6 +92,17 @@ export function AppShell({
             />
             <InputGroupAddon>
               <SearchIcon aria-hidden />
+            </InputGroupAddon>
+            <InputGroupAddon align="inline-end">
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                aria-label="Close search"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={dismissSearch}
+              >
+                <XIcon aria-hidden />
+              </Button>
             </InputGroupAddon>
           </InputGroup>
         ) : (
