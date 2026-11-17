@@ -64,7 +64,7 @@ export function ResponsiveMenuPopup({ children, ...props }: ComponentProps<typeo
   const { drawer } = useContext(ResponsiveMenuContext);
   if (!drawer) return <MenuPopup {...props}>{children}</MenuPopup>;
   return (
-    <DrawerPopup showBar>
+    <DrawerPopup showBar backdropProps={{ forceRender: true }}>
       <DrawerPanel>
         <DrawerMenu>{children}</DrawerMenu>
       </DrawerPanel>

@@ -117,6 +117,10 @@ describe("toggleValue", () => {
     expect(toggleValue([is("ci", "pass", "fail")], "ci", "pass")).toEqual([is("ci", "fail")]);
   });
 
+  it("adds a negated filter", () => {
+    expect(toggleValue([], "ci", "pass", true)).toEqual([isNot("ci", "pass")]);
+  });
+
   it("drops the filter when the last value is removed", () => {
     expect(toggleValue([is("ci", "pass"), is("repo", "web")], "ci", "pass")).toEqual([
       is("repo", "web"),

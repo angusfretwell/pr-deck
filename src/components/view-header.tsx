@@ -1,34 +1,25 @@
 import { FilterIcon } from "@primer/octicons-react";
-import { createContext, use, useId, useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
+import { useMediaQuery } from "usehooks-ts";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsiblePanel } from "@/components/ui/collapsible";
-import {
-  PopoverCreateHandle,
-  type PopoverPrimitive,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { DrawerCreateHandle } from "@/components/ui/drawer";
+import { PopoverCreateHandle } from "@/components/ui/popover";
 import { toggleValue } from "@/lib/filters";
 import type { Filter, PropertyKey, PullRequest } from "@/types";
 import { FilterBar } from "./view-header/filter-bar";
+import { FilterDrawer } from "./view-header/filter-drawer";
 import { FilterMenu } from "./view-header/filter-menu";
+import { FilterTrigger } from "./view-header/filter-trigger";
+import { FilterTriggerContext, type MenuAnchor } from "./view-header/filter-trigger-context";
 import { Hint } from "./view-header/hint";
 
-export type MenuAnchor = "header" | "add" | PropertyKey;
+export type { MenuAnchor };
 
 export interface FilterMenuState {
   anchor: MenuAnchor;
   deferBar?: boolean;
 }
-
-export interface FilterTriggerProps {
-  handle: PopoverPrimitive.Handle<MenuAnchor>;
-  payload: MenuAnchor;
-  id: string;
-}
-
-const FilterTriggerContext = createContext<((anchor: MenuAnchor) => FilterTriggerProps) | null>(
-  null,
-);
 
 export interface ViewHeaderProps {
   children: ReactNode;
@@ -62,18 +53,16 @@ export function ViewHeader({
   scopedPrs,
   viewer,
 }: ViewHeaderProps) {
-  const [filterMenuHandle] = useState(() => PopoverCreateHandle<MenuAnchor>());
+  const drawer = !useMediaQuery("(min-width: 768px)");
+  const [popoverHandle] = useState(() => PopoverCreateHandle<MenuAnchor>());
+  const [drawerHandle] = useState(() => DrawerCreateHandle<MenuAnchor>());
   const triggerIdPrefix = useId();
-  const filterTrigger = (anchor: MenuAnchor): FilterTriggerProps => ({
-    handle: filterMenuHandle,
-    payload: anchor,
-    id: `${triggerIdPrefix}${anchor}`,
-  });
+  const triggerId = (anchor: MenuAnchor) => `${triggerIdPrefix}${anchor}`;
 
   const changeFilterMenu = (open: boolean, trigger: Element | undefined) => {
     if (!open) return onFilterMenuChange(null);
     const anchors: MenuAnchor[] = ["header", "add", ...filters.map((filter) => filter.key)];
-    const anchor = anchors.find((candidate) => filterTrigger(candidate).id === trigger?.id);
+    const anchor = anchors.find((candidate) => triggerId(candidate) === trigger?.id);
     if (anchor) onFilterMenuChange(anchor);
   };
 
@@ -81,12 +70,17 @@ export function ViewHeader({
     ? !filterMenu?.deferBar
     : filterMenu !== null && filterMenu.anchor !== "header";
 
-  const toggleFilterValue = (key: PropertyKey, value: string) => {
-    const next = toggleValue(filters, key, value);
+  const changeFilters = (next: Filter[]) => {
     onFiltersChange(next);
-    if (filterMenu?.anchor === key && !next.some((filter) => filter.key === key))
+    if (
+      filterMenu?.anchor &&
+      !["header", "add", ...next.map((filter) => filter.key)].includes(filterMenu.anchor)
+    )
       onFilterMenuChange(null);
   };
+
+  const toggleFilterValue = (key: PropertyKey, value: string, negated = false) =>
+    changeFilters(toggleValue(filters, key, value, negated));
 
   const removeFilter = (index: number) => {
     onFiltersChange(filters.filter((_, i) => i !== index));
@@ -96,6 +90,11 @@ export function ViewHeader({
   const negateFilter = (index: number) =>
     onFiltersChange(
       filters.map((filter, i) => (i === index ? { ...filter, negated: !filter.negated } : filter)),
+    );
+
+  const setFilterNegated = (key: PropertyKey, negated: boolean) =>
+    onFiltersChange(
+      filters.map((filter) => (filter.key === key ? { ...filter, negated } : filter)),
     );
 
   const actions =
@@ -125,43 +124,56 @@ export function ViewHeader({
 
   return (
     <div className="border-b">
-      <FilterTriggerContext value={filterTrigger}>
+      <FilterTriggerContext value={{ drawer, popoverHandle, drawerHandle, triggerId }}>
         <div className="flex items-center gap-1.5 px-2 py-2.5 md:px-4">{children}</div>
+        <Collapsible open={barVisible}>
+          <CollapsiblePanel className="transition-[height,opacity] ease-snappy data-ending-style:opacity-0 data-starting-style:opacity-0 motion-reduce:transition-opacity">
+            <FilterBar
+              filters={filters}
+              orgPrs={orgPrs}
+              viewer={viewer}
+              actions={actions}
+              onNegate={negateFilter}
+              onRemove={removeFilter}
+            />
+          </CollapsiblePanel>
+        </Collapsible>
       </FilterTriggerContext>
-      <Collapsible open={barVisible}>
-        <CollapsiblePanel className="transition-[height,opacity] ease-snappy data-ending-style:opacity-0 data-starting-style:opacity-0 motion-reduce:transition-opacity">
-          <FilterBar
-            filters={filters}
-            orgPrs={orgPrs}
-            viewer={viewer}
-            actions={actions}
-            filterTrigger={filterTrigger}
-            onNegate={negateFilter}
-            onRemove={removeFilter}
-          />
-        </CollapsiblePanel>
-      </Collapsible>
-      <FilterMenu
-        handle={filterMenuHandle}
-        triggerId={filterMenu && filterTrigger(filterMenu.anchor).id}
-        onOpenChange={changeFilterMenu}
-        orgPrs={orgPrs}
-        scopedPrs={scopedPrs}
-        filters={filters}
-        viewer={viewer}
-        onToggle={toggleFilterValue}
-      />
+      {drawer ? (
+        <FilterDrawer
+          handle={drawerHandle}
+          triggerId={filterMenu && triggerId(filterMenu.anchor)}
+          onOpenChange={changeFilterMenu}
+          orgPrs={orgPrs}
+          scopedPrs={scopedPrs}
+          filters={filters}
+          viewer={viewer}
+          onToggle={toggleFilterValue}
+          onNegatedChange={setFilterNegated}
+          onClear={(key) => changeFilters(filters.filter((filter) => filter.key !== key))}
+          onClearAll={() => changeFilters([])}
+        />
+      ) : (
+        <FilterMenu
+          handle={popoverHandle}
+          triggerId={filterMenu && triggerId(filterMenu.anchor)}
+          onOpenChange={changeFilterMenu}
+          orgPrs={orgPrs}
+          scopedPrs={scopedPrs}
+          filters={filters}
+          viewer={viewer}
+          onToggle={toggleFilterValue}
+        />
+      )}
     </div>
   );
 }
 
 export function FilterButton() {
-  const filterTrigger = use(FilterTriggerContext);
-  if (!filterTrigger) throw new Error("FilterButton must be rendered inside ViewHeader");
   return (
     <Hint label="Filter">
-      <PopoverTrigger
-        {...filterTrigger("header")}
+      <FilterTrigger
+        anchor="header"
         render={
           <Button
             variant="outline"
@@ -172,7 +184,7 @@ export function FilterButton() {
         }
       >
         <FilterIcon />
-      </PopoverTrigger>
+      </FilterTrigger>
     </Hint>
   );
 }

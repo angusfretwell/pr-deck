@@ -2,18 +2,16 @@ import { PlusIcon, XIcon } from "@primer/octicons-react";
 import type { ReactNode } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Group, GroupSeparator, GroupText } from "@/components/ui/group";
-import { PopoverTrigger } from "@/components/ui/popover";
-import { PROPERTY } from "@/lib/filters";
+import { filterSummary, PROPERTY } from "@/lib/filters";
 import { cn } from "@/lib/utils";
 import type { Filter, PullRequest } from "@/types";
-import type { FilterTriggerProps, MenuAnchor } from "../view-header";
+import { FilterTrigger } from "./filter-trigger";
 
 interface FilterBarProps {
   filters: Filter[];
   orgPrs: PullRequest[];
   viewer: string;
   actions: ReactNode;
-  filterTrigger: (anchor: MenuAnchor) => FilterTriggerProps;
   onNegate: (index: number) => void;
   onRemove: (index: number) => void;
 }
@@ -28,19 +26,9 @@ export function FilterBar({
   orgPrs,
   viewer,
   actions,
-  filterTrigger,
   onNegate,
   onRemove,
 }: FilterBarProps) {
-  const summary = (filter: Filter) => {
-    const property = PROPERTY[filter.key];
-    const options = property.options(orgPrs, viewer);
-    const labels = filter.values.map(
-      (value) => options.find((option) => option.value === value)?.label ?? value,
-    );
-    return labels.length > 2 ? `${labels.length} ${property.noun}` : labels.join(", ");
-  };
-
   return (
     <div className="mx-2 mb-2.5 flex flex-wrap items-center gap-1.5 rounded-lg bg-muted px-2 py-1.5 md:mx-4">
       {filters.map((filter, index) => (
@@ -67,12 +55,12 @@ export function FilterBar({
             {operator(filter)}
           </Button>
           <GroupSeparator />
-          <PopoverTrigger
-            {...filterTrigger(filter.key)}
+          <FilterTrigger
+            anchor={filter.key}
             render={<Button variant="outline" size="sm" className="min-w-0 shrink" />}
           >
-            <span className="truncate">{summary(filter)}</span>
-          </PopoverTrigger>
+            <span className="truncate">{filterSummary(filter, orgPrs, viewer)}</span>
+          </FilterTrigger>
           <GroupSeparator />
           <Button
             variant="outline"
@@ -85,8 +73,8 @@ export function FilterBar({
           </Button>
         </Group>
       ))}
-      <PopoverTrigger
-        {...filterTrigger("add")}
+      <FilterTrigger
+        anchor="add"
         render={
           <Button
             variant="ghost"
@@ -97,7 +85,7 @@ export function FilterBar({
         }
       >
         <PlusIcon />
-      </PopoverTrigger>
+      </FilterTrigger>
       <span className="ms-auto flex items-center gap-1.5">{actions}</span>
     </div>
   );

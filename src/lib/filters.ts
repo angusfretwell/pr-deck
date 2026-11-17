@@ -83,6 +83,38 @@ export const passes = (pr: PullRequest, filters: Filter[], viewer: string) =>
     (filter) => filter.values.includes(PROPERTY[filter.key].valueOf(pr, viewer)) !== filter.negated,
   );
 
+export interface Facet {
+  option: Option;
+  checked: boolean;
+  count: number;
+}
+
+export function facets(
+  property: Property,
+  filters: Filter[],
+  scopedPrs: PullRequest[],
+  orgPrs: PullRequest[],
+  viewer: string,
+): Facet[] {
+  const others = filters.filter((filter) => filter.key !== property.key);
+  const selected = filters.find((filter) => filter.key === property.key)?.values ?? [];
+  const candidates = scopedPrs.filter((pr) => passes(pr, others, viewer));
+  return property.options(orgPrs, viewer).map((option) => ({
+    option,
+    checked: selected.includes(option.value),
+    count: candidates.filter((pr) => property.valueOf(pr, viewer) === option.value).length,
+  }));
+}
+
+export function filterSummary(filter: Filter, orgPrs: PullRequest[], viewer: string) {
+  const property = PROPERTY[filter.key];
+  const options = property.options(orgPrs, viewer);
+  const labels = filter.values.map(
+    (value) => options.find((option) => option.value === value)?.label ?? value,
+  );
+  return labels.length > 2 ? `${labels.length} ${property.noun}` : labels.join(", ");
+}
+
 export function matchesText(pr: PullRequest, query: string) {
   const needle = query.trim().toLowerCase();
   return (
@@ -90,9 +122,14 @@ export function matchesText(pr: PullRequest, query: string) {
   );
 }
 
-export function toggleValue(filters: Filter[], key: PropertyKey, value: string): Filter[] {
+export function toggleValue(
+  filters: Filter[],
+  key: PropertyKey,
+  value: string,
+  negated = false,
+): Filter[] {
   const existing = filters.find((filter) => filter.key === key);
-  if (!existing) return [...filters, { key, values: [value], negated: false }];
+  if (!existing) return [...filters, { key, values: [value], negated }];
   const values = existing.values.includes(value)
     ? existing.values.filter((v) => v !== value)
     : [...existing.values, value];

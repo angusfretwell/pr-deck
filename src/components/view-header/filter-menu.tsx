@@ -11,15 +11,15 @@ import { Command } from "@/components/ui/command";
 import { Popover, PopoverPopup, type PopoverPrimitive } from "@/components/ui/popover";
 import { UserAvatar } from "@/components/user-avatar";
 import {
+  facets,
   type Option,
-  passes,
   PROPERTIES,
   PROPERTY,
   type Property,
   VIEWER_VALUE,
 } from "@/lib/filters";
 import type { Filter, PropertyKey, PullRequest } from "@/types";
-import type { MenuAnchor } from "../view-header";
+import type { MenuAnchor } from "./filter-trigger-context";
 
 type Item =
   | { kind: "property"; property: Property }
@@ -113,22 +113,10 @@ function FilterMenuList({
   const needle = query.trim().toLowerCase();
   const matches = (label: string) => label.toLowerCase().includes(needle);
 
-  const valueItems = (property: Property, prefixed: boolean): Item[] => {
-    const others = filters.filter((filter) => filter.key !== property.key);
-    const selected = filters.find((filter) => filter.key === property.key)?.values ?? [];
-    const candidates = scopedPrs.filter((pr) => passes(pr, others, viewer));
-    return property
-      .options(orgPrs, viewer)
-      .filter((option) => matches(option.label))
-      .map((option) => ({
-        kind: "value",
-        property,
-        option,
-        prefixed,
-        checked: selected.includes(option.value),
-        count: candidates.filter((pr) => property.valueOf(pr, viewer) === option.value).length,
-      }));
-  };
+  const valueItems = (property: Property, prefixed: boolean): Item[] =>
+    facets(property, filters, scopedPrs, orgPrs, viewer)
+      .filter(({ option }) => matches(option.label))
+      .map((facet) => ({ kind: "value", property, prefixed, ...facet }));
 
   const items: Item[] = propertyKey
     ? valueItems(PROPERTY[propertyKey], false)
