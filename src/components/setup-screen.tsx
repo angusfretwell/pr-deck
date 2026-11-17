@@ -1,4 +1,4 @@
-import { EyeIcon, KeyIcon } from "@primer/octicons-react";
+import { EyeIcon, KeyIcon, MarkGithubIcon } from "@primer/octicons-react";
 import { useState, type FormEvent } from "react";
 import { SetupPreview } from "@/components/setup-preview";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { errorMessage } from "@/github/api";
 import { fetchSession } from "@/github/hooks";
+import { REPO_URL } from "@/lib/repo";
 import { cn } from "@/lib/utils";
 import type { Session } from "@/types";
 
@@ -45,8 +46,8 @@ export function SetupScreen({ initialError, onSignIn }: SetupScreenProps) {
 
   return (
     <main className="grid flex-1 md:min-h-0 md:overflow-y-auto lg:grid-cols-[minmax(360px,420px)_1fr]">
-      <section className="flex flex-col justify-center px-6 pt-12 pb-[calc(--spacing(12)+env(safe-area-inset-bottom))] sm:px-12 lg:px-10">
-        <div className="mx-auto flex w-full max-w-sm flex-col gap-8">
+      <section className="flex flex-col px-6 pt-12 pb-[calc(--spacing(12)+env(safe-area-inset-bottom))] sm:px-12 lg:px-10">
+        <div className="mx-auto my-auto flex w-full max-w-sm flex-col gap-8">
           <div className="flex items-center gap-2 font-semibold text-sm">
             <Logo />
             PR Deck
@@ -105,6 +106,17 @@ export function SetupScreen({ initialError, onSignIn }: SetupScreenProps) {
             </ul>
           </div>
         </div>
+        <footer className="mx-auto w-full max-w-sm pt-8 text-muted-foreground text-xs">
+          <a
+            className="inline-flex items-center gap-1.5 transition-colors duration-150 ease-out hover:text-foreground"
+            href={REPO_URL}
+            target="_blank"
+            rel="noopener"
+          >
+            <MarkGithubIcon className="size-3.5" />
+            Source on GitHub
+          </a>
+        </footer>
       </section>
       <section className="relative hidden overflow-hidden border-s bg-sidebar lg:block">
         <div className="absolute top-[16%] -end-48 bottom-0 start-12 min-[1800px]:end-12 animate-rise overflow-hidden rounded-ss-xl border-t border-s shadow-lg/5 mask-b-from-45% mask-b-to-85% motion-reduce:animate-none">

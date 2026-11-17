@@ -1,4 +1,4 @@
-import { SearchIcon, SignOutIcon, XIcon } from "@primer/octicons-react";
+import { MarkGithubIcon, SearchIcon, SignOutIcon, XIcon } from "@primer/octicons-react";
 import { useIsFetching } from "@tanstack/react-query";
 import { useState, type RefObject } from "react";
 import { useLocation } from "wouter";
@@ -10,6 +10,7 @@ import {
   MenuGroup,
   MenuGroupLabel,
   MenuItem,
+  MenuLinkItem,
   MenuPopup,
   MenuRadioGroup,
   MenuRadioItem,
@@ -19,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
+import { REPO_URL } from "@/lib/repo";
 import { useColorMode } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import type { Account, Session } from "@/types";
@@ -185,6 +187,11 @@ export function AppShell({
                     <MenuRadioItem value="dark">Dark</MenuRadioItem>
                   </MenuRadioGroup>
                 </MenuGroup>
+                <MenuSeparator />
+                <MenuLinkItem href={REPO_URL} target="_blank" rel="noopener">
+                  <MarkGithubIcon />
+                  Source on GitHub
+                </MenuLinkItem>
                 <MenuSeparator />
                 <MenuItem onClick={onSignOut}>
                   <SignOutIcon />
