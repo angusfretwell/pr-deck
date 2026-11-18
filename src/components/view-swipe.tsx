@@ -62,8 +62,8 @@ export function ViewSwipe({ previous, next, topInset, className, children }: Vie
     scrollBy(0, scrollShift);
   };
 
-  const onDragStart = () => {
-    dragged.current = true;
+  const onDirectionLock = (axis: "x" | "y") => {
+    if (axis !== "x") return;
     track.current.style.willChange = "transform";
 
     const top = Math.max(0, topInset() - track.current.getBoundingClientRect().top);
@@ -118,7 +118,8 @@ export function ViewSwipe({ previous, next, topInset, className, children }: Vie
       }}
       dragMomentum={false}
       onPointerDownCapture={() => (dragged.current = false)}
-      onDragStart={onDragStart}
+      onDragStart={() => (dragged.current = true)}
+      onDirectionLock={onDirectionLock}
       onDragEnd={onDragEnd}
       onClickCapture={(event) => {
         if (dragged.current) event.stopPropagation();
