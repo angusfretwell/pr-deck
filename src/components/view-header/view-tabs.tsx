@@ -1,4 +1,5 @@
 import { XIcon } from "@primer/octicons-react";
+import { animate, motion, type AnimationPlaybackControls } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import {
@@ -14,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useDesktop } from "@/lib/use-desktop";
 import { cn } from "@/lib/utils";
 import { ALL_OPEN_NAME } from "@/lib/views";
 import type { View } from "@/types";
@@ -47,6 +49,10 @@ export function ViewTabs({
   onDeleteView,
 }: ViewTabsProps) {
   const nav = useRef<HTMLElement>(null);
+  const desktop = useDesktop();
+  const glide = useRef<AnimationPlaybackControls>(null);
+  const panned = useRef(false);
+  const viewport = () => nav.current!.closest("[data-slot=scroll-area-viewport]")!;
   const scrolledViewId = useRef(activeViewId);
 
   const countsKey = [allOpenCount, ...views.map((view) => viewCounts[view.id])].join();
@@ -72,12 +78,34 @@ export function ViewTabs({
   return (
     <ScrollArea
       scrollFade
-      className="-my-2 -ms-2 min-w-0 *:data-[slot=scroll-area-scrollbar]:hidden md:-ms-4"
+      className="-my-2 -ms-2 min-w-0 *:data-[slot=scroll-area-scrollbar]:hidden max-md:*:data-[slot=scroll-area-viewport]:overflow-hidden! md:-ms-4"
     >
-      <nav
+      <motion.nav
         ref={nav}
         aria-label="Views"
-        className="flex w-max gap-1.5 py-2 ps-2 transition-[translate] duration-300 ease-snappy motion-reduce:transition-none md:ps-4"
+        className="flex w-max gap-1.5 py-2 ps-2 transition-[translate] duration-300 ease-snappy motion-reduce:transition-none max-md:touch-pan-y md:ps-4"
+        onPointerDownCapture={() => {
+          panned.current = false;
+          glide.current?.stop();
+        }}
+        onPanStart={() => (panned.current = !desktop)}
+        onPan={(_, { delta }) => {
+          if (panned.current) viewport().scrollLeft -= delta.x;
+        }}
+        onPanEnd={(_, { velocity }) => {
+          if (!panned.current) return;
+          const strip = viewport();
+          glide.current = animate(strip.scrollLeft, strip.scrollLeft, {
+            type: "inertia",
+            velocity: -velocity.x,
+            min: 0,
+            max: strip.scrollWidth - strip.clientWidth,
+            onUpdate: (left) => (strip.scrollLeft = left),
+          });
+        }}
+        onClickCapture={(event) => {
+          if (panned.current) event.stopPropagation();
+        }}
       >
         <ViewLink
           href={viewHref(null)}
@@ -115,7 +143,7 @@ export function ViewTabs({
             </div>
           );
         })}
-      </nav>
+      </motion.nav>
     </ScrollArea>
   );
 }
