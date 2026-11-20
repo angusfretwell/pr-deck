@@ -91,6 +91,7 @@ const sentenceCase = (name: string) => (name === "CI" ? name : name.toLowerCase(
 
 const matches = (text: string, needle: string) => {
   const haystack = text.toLowerCase();
+
   return needle.split(/\s+/).every((word) => haystack.includes(word));
 };
 
@@ -151,21 +152,17 @@ function CommandPaletteList({
             label: views.active ? "Reset filters" : "Clear filters",
             run: () => onViewsChange(views.resetFilters()),
           },
-        ]
-      : []),
-    ...(views.filtersChanged && views.active
-      ? [
-          {
-            id: "view:save",
-            keywords: "save view",
-            icon: <CheckIcon />,
-            label: `Save changes to ${views.active.name}`,
-            run: () => onViewsChange(views.save()),
-          },
-        ]
-      : []),
-    ...(views.filtersChanged
-      ? [
+          ...(views.active
+            ? [
+                {
+                  id: "view:save",
+                  keywords: "save view",
+                  icon: <CheckIcon />,
+                  label: `Save changes to ${views.active.name}`,
+                  run: () => onViewsChange(views.save()),
+                },
+              ]
+            : []),
           {
             id: "view:new",
             keywords: "save as new view",
