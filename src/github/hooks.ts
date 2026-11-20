@@ -4,7 +4,7 @@ import type { Mergeability, PullRequestDetail, PullRequestList, Session } from "
 import * as realApi from "./api";
 import { isRetryable } from "./api";
 import * as mockApi from "./mock";
-import { withMergeability } from "./mapping";
+import { withMergeability, withRows } from "./mapping";
 import { mergeabilityPollInterval } from "./polling";
 
 const { fetchMergeability, fetchPullRequestDetail, fetchPullRequests, fetchSession } = import.meta
@@ -41,9 +41,20 @@ export function useSession(): UseQueryResult<Session> {
 export function usePullRequests(owner: string): UseQueryResult<PullRequestList> {
   const [token] = useToken();
   const viewer = useSession().data?.viewer.login;
+  const queryClient = useQueryClient();
+  const queryKey = ["pull-requests", owner];
   const list = useQuery({
-    queryKey: ["pull-requests", owner],
-    queryFn: token && viewer ? () => fetchPullRequests(token, owner, viewer) : skipToken,
+    queryKey,
+    queryFn:
+      token && viewer
+        ? ({ signal }) =>
+            fetchPullRequests(token, owner, viewer, (rows) => {
+              if (signal.aborted) return;
+              queryClient.setQueryData<PullRequestList>(queryKey, (current) =>
+                withRows(current, rows),
+              );
+            })
+        : skipToken,
     ...live,
   });
   usePendingMergeability(owner, list.data);
@@ -54,7 +65,9 @@ function usePendingMergeability(owner: string, list: PullRequestList | undefined
   const [token] = useToken();
   const queryClient = useQueryClient();
   const ids =
-    list?.pullRequests.filter((pr) => pr.mergeability === "unknown").map((pr) => pr.id) ?? [];
+    list?.pullRequests
+      .filter((pr) => pr.mergeability === "unknown" && !pr.statusPending)
+      .map((pr) => pr.id) ?? [];
   useQuery<Record<string, Mergeability>>({
     queryKey: ["mergeability", owner, ids],
     queryFn:

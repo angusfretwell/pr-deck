@@ -1,5 +1,5 @@
 import type { Filter, PullRequest, View } from "../types";
-import { passes, sameFilters, VIEWER_VALUE } from "./filters";
+import { awaitsStatus, passes, sameFilters, VIEWER_VALUE } from "./filters";
 
 export const ALL_OPEN_NAME = "Open";
 
@@ -55,7 +55,9 @@ export const countByView = (
   viewer: string,
 ): Record<string, number> =>
   Object.fromEntries(
-    views.map((view) => [view.id, prs.filter((pr) => passes(pr, view.filters, viewer)).length]),
+    views
+      .filter((view) => !awaitsStatus(view.filters, prs))
+      .map((view) => [view.id, prs.filter((pr) => passes(pr, view.filters, viewer)).length]),
   );
 
 export interface ViewsSession {

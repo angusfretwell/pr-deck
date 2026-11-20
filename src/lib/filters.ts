@@ -12,6 +12,7 @@ export interface Property {
   noun: string;
   options: (prs: PullRequest[], viewer: string) => Option[];
   valueOf: (pr: PullRequest, viewer: string) => string;
+  fromStatus?: true;
 }
 
 export const VIEWER_VALUE = "@me";
@@ -35,6 +36,7 @@ export const PROPERTIES: Property[] = [
   },
   {
     key: "ci",
+    fromStatus: true,
     name: "CI",
     noun: "states",
     options: () => fromBadges(CI_BADGE),
@@ -42,6 +44,7 @@ export const PROPERTIES: Property[] = [
   },
   {
     key: "conflicts",
+    fromStatus: true,
     name: "Merge conflicts",
     noun: "states",
     options: () => [
@@ -53,6 +56,7 @@ export const PROPERTIES: Property[] = [
   },
   {
     key: "review",
+    fromStatus: true,
     name: "Review",
     noun: "states",
     options: () => fromBadges(REVIEW_BADGE),
@@ -60,6 +64,7 @@ export const PROPERTIES: Property[] = [
   },
   {
     key: "myReview",
+    fromStatus: true,
     name: "My review",
     noun: "states",
     options: () => [{ value: "requested", label: "Review requested" }, ...fromBadges(REVIEW_BADGE)],
@@ -82,6 +87,9 @@ export const passes = (pr: PullRequest, filters: Filter[], viewer: string) =>
   filters.every(
     (filter) => filter.values.includes(PROPERTY[filter.key].valueOf(pr, viewer)) !== filter.negated,
   );
+
+export const awaitsStatus = (filters: Filter[], prs: PullRequest[]) =>
+  filters.some((filter) => PROPERTY[filter.key].fromStatus) && prs.some((pr) => pr.statusPending);
 
 export interface Facet {
   option: Option;

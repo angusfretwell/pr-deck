@@ -1,5 +1,5 @@
 import type { Filter, Group, PullRequest } from "../types";
-import { matchesText, passes } from "./filters";
+import { awaitsStatus, matchesText, passes } from "./filters";
 import { clusterByStack, type Cluster, type StackIndex } from "./stacks";
 
 export interface Selection {
@@ -30,6 +30,7 @@ export interface PrListGroup {
 
 export interface PrList {
   scoped: PullRequest[];
+  statusPending: boolean;
   groups: PrListGroup[];
   order: string[];
   selected: PullRequest | undefined;
@@ -80,6 +81,7 @@ export function derivePrList({
   const selected = visible.find((pr) => pr.id === selection.selectedId);
   return {
     scoped,
+    statusPending: awaitsStatus(filters, scoped),
     groups,
     order: groups.flatMap((entry) => (entry.collapsed ? [] : entry.rows.map((pr) => pr.id))),
     selected,

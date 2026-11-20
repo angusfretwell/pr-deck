@@ -21,7 +21,15 @@ export interface Reviewer {
   verdict: ReviewVerdict;
 }
 
-export interface PullRequest {
+export interface PullRequestStatus {
+  ci: CiState;
+  mergeability: Mergeability;
+  review: ReviewState;
+  reviewers: Reviewer[];
+  reviewRequestedFromViewer: boolean;
+}
+
+export interface PullRequest extends PullRequestStatus {
   id: string;
   owner: string;
   repo: string;
@@ -35,11 +43,7 @@ export interface PullRequest {
   baseBranch: string;
   isCrossRepository: boolean;
   updatedAt: string;
-  ci: CiState;
-  mergeability: Mergeability;
-  review: ReviewState;
-  reviewers: Reviewer[];
-  reviewRequestedFromViewer: boolean;
+  statusPending?: true;
 }
 
 export interface PullRequestList {

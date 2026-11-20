@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import type { Filter, PullRequest } from "../types";
-import { matchesText, passes, PROPERTY, sameFilters, toggleValue } from "./filters";
+import { awaitsStatus, matchesText, passes, PROPERTY, sameFilters, toggleValue } from "./filters";
 
 const pr = (overrides: Partial<PullRequest> = {}): PullRequest => ({
   id: "1",
@@ -161,5 +161,20 @@ describe("matchesText", () => {
 
   it("rejects non-matches", () => {
     expect(matchesText(target, "nope")).toBe(false);
+  });
+});
+
+describe("awaitsStatus", () => {
+  const pending = pr({ statusPending: true });
+
+  it("waits while a status filter has pending pull requests to judge", () => {
+    expect(awaitsStatus([is("ci", "pass")], [pr(), pending])).toBe(true);
+    expect(awaitsStatus([is("myReview", "requested")], [pending])).toBe(true);
+  });
+
+  it("does not wait on row filters or once every status has loaded", () => {
+    expect(awaitsStatus([is("author", "me"), is("repo", "web")], [pending])).toBe(false);
+    expect(awaitsStatus([is("ci", "pass")], [pr()])).toBe(false);
+    expect(awaitsStatus([], [pending])).toBe(false);
   });
 });

@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Empty, EmptyContent, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { age, isStale, issueBadges, statusBadge } from "@/lib/pr";
 import type { PrListGroup } from "@/lib/pr-list";
@@ -294,7 +295,11 @@ const PrRow = memo(function PrRow({
         )}
         {stack && <StackBadge stack={stack} />}
       </span>
-      {summary ? (
+      {pr.statusPending ? (
+        <span className="inline-flex h-5 items-center justify-end">
+          <Skeleton className={summary ? "mx-0.75 size-3.5 rounded-full" : "h-3 w-12"} />
+        </span>
+      ) : summary ? (
         <BadgeIcon badge={statusBadge(pr)} className="size-3.5" />
       ) : (
         <span className="flex min-w-0 items-center justify-end gap-1 overflow-hidden">

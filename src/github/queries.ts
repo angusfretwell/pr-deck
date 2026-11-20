@@ -1,4 +1,4 @@
-export const PAGE_SIZE = 50;
+export const PAGE_SIZE = 100;
 
 export const searchQuery = (owner: string) =>
   `is:pr is:open archived:false user:${owner} sort:updated-desc`;
@@ -43,8 +43,6 @@ export const PULL_REQUESTS_QUERY = /* GraphQL */ `
           headRefName
           baseRefName
           isCrossRepository
-          mergeable
-          reviewDecision
           repository {
             name
             owner {
@@ -55,43 +53,59 @@ export const PULL_REQUESTS_QUERY = /* GraphQL */ `
             login
             avatarUrl
           }
-          commits(last: 1) {
-            nodes {
-              commit {
-                statusCheckRollup {
-                  state
-                }
+        }
+      }
+    }
+  }
+`;
+
+export const PULL_REQUEST_STATUS_QUERY = /* GraphQL */ `
+  query PullRequestStatus($ids: [ID!]!) {
+    nodes(ids: $ids) {
+      __typename
+      ... on PullRequest {
+        id
+        mergeable
+        reviewDecision
+        author {
+          login
+        }
+        commits(last: 1) {
+          nodes {
+            commit {
+              statusCheckRollup {
+                state
               }
             }
           }
-          latestReviews(first: 100) {
-            nodes {
-              state
-              author {
+        }
+        latestReviews(first: 100) {
+          nodes {
+            state
+            author {
+              login
+              avatarUrl
+            }
+          }
+        }
+        latestOpinionatedReviews(first: 100) {
+          nodes {
+            state
+            author {
+              login
+              avatarUrl
+            }
+          }
+        }
+        reviewRequests(first: 100) {
+          nodes {
+            requestedReviewer {
+              __typename
+              ... on User {
                 login
-                avatarUrl
               }
-            }
-          }
-          latestOpinionatedReviews(first: 100) {
-            nodes {
-              state
-              author {
-                login
-                avatarUrl
-              }
-            }
-          }
-          reviewRequests(first: 100) {
-            nodes {
-              requestedReviewer {
-                __typename
-                ... on User {
-                  login
-                }
-                ... on Team {
-                  slug
-                }
+              ... on Team {
+                slug
               }
             }
           }

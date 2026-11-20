@@ -5,6 +5,7 @@ import type {
   PullRequestDetailQuery,
   PullRequestReviewDecision,
   PullRequestReviewState,
+  PullRequestStatusQuery,
   PullRequestsQuery,
   SessionQuery,
   StatusState,
@@ -18,6 +19,7 @@ import type {
   PullRequest,
   PullRequestDetail,
   PullRequestList,
+  PullRequestStatus,
   Reviewer,
   ReviewState,
   ReviewVerdict,
@@ -36,10 +38,11 @@ type PullRequestNode<T> = Extract<NonNullable<T>, { __typename: "PullRequest" }>
 
 export type RawSession = SessionQuery;
 type RawAccount = NodeOf<SessionQuery["viewer"]["organizations"]>;
-export type RawPullRequest = PullRequestNode<NodeOf<PullRequestsQuery["search"]>>;
-export type RawReview = NodeOf<RawPullRequest["latestReviews"]>;
-export type RawReviewRequest = NodeOf<RawPullRequest["reviewRequests"]>;
-type RawActor = NonNullable<RawPullRequest["author"]>;
+export type RawPullRequestRow = PullRequestNode<NodeOf<PullRequestsQuery["search"]>>;
+export type RawPullRequestStatus = PullRequestNode<PullRequestStatusQuery["nodes"][number]>;
+export type RawReview = NodeOf<RawPullRequestStatus["latestReviews"]>;
+export type RawReviewRequest = NodeOf<RawPullRequestStatus["reviewRequests"]>;
+type RawActor = NonNullable<RawPullRequestRow["author"]>;
 export type RawPullRequestDetail = PullRequestNode<PullRequestDetailQuery["node"]>;
 type RawRollup = NonNullable<
   NodeOf<RawPullRequestDetail["commits"]>["commit"]["statusCheckRollup"]
@@ -122,15 +125,15 @@ export function toSession({ viewer }: RawSession): Session {
   return { viewer: account, owners: [account, ...orgs] };
 }
 
-export function toCi(node: Pick<RawPullRequest, "commits">): CiState {
+export function toCi(node: Pick<RawPullRequestStatus, "commits">): CiState {
   const rollup = nodesOf(node.commits)[0]?.commit.statusCheckRollup;
   return rollup ? CI_STATES[rollup.state] : "none";
 }
 
 export function toReviewers(
-  node: Pick<RawPullRequest, "author" | "latestReviews" | "latestOpinionatedReviews">,
+  node: Pick<RawPullRequestStatus, "author" | "latestReviews" | "latestOpinionatedReviews">,
 ): Reviewer[] {
-  const authorLogin = (node.author ?? GHOST).login;
+  const authorLogin = node.author?.login ?? GHOST.login;
   const reviewers = new Map<string, Reviewer>();
   for (const review of [
     ...nodesOf(node.latestReviews),
@@ -160,7 +163,7 @@ export function toReviewState(
 }
 
 export function isReviewRequestedFrom(
-  node: Pick<RawPullRequest, "reviewRequests">,
+  node: Pick<RawPullRequestStatus, "reviewRequests">,
   { viewer, viewerTeams }: ReviewContext,
 ): boolean {
   return nodesOf(node.reviewRequests).some(({ requestedReviewer }) => {
@@ -171,9 +174,16 @@ export function isReviewRequestedFrom(
   });
 }
 
-export function toPullRequest(node: RawPullRequest, context: ReviewContext): PullRequest {
+export const PENDING_STATUS: PullRequestStatus = {
+  ci: "none",
+  mergeability: "unknown",
+  review: "none",
+  reviewers: [],
+  reviewRequestedFromViewer: false,
+};
+
+export function toPullRequestRow(node: RawPullRequestRow): PullRequest {
   const author = node.author ?? GHOST;
-  const reviewers = toReviewers(node);
   return {
     id: node.id,
     owner: node.repository.owner.login,
@@ -188,12 +198,55 @@ export function toPullRequest(node: RawPullRequest, context: ReviewContext): Pul
     baseBranch: node.baseRefName,
     isCrossRepository: node.isCrossRepository,
     updatedAt: node.updatedAt,
+    ...PENDING_STATUS,
+    statusPending: true,
+  };
+}
+
+export function toPullRequestStatus(
+  node: RawPullRequestStatus,
+  context: ReviewContext,
+): PullRequestStatus {
+  const reviewers = toReviewers(node);
+  const author = node.author?.login ?? GHOST.login;
+  return {
     ci: toCi(node),
     mergeability: toMergeability(node.mergeable),
     review: toReviewState(node.reviewDecision, reviewers),
     reviewers,
-    reviewRequestedFromViewer:
-      author.login !== context.viewer && isReviewRequestedFrom(node, context),
+    reviewRequestedFromViewer: author !== context.viewer && isReviewRequestedFrom(node, context),
+  };
+}
+
+export function withStatus(pr: PullRequest, status: PullRequestStatus): PullRequest {
+  const { statusPending: _, ...row } = pr;
+  return { ...row, ...status };
+}
+
+const statusOf = ({
+  ci,
+  mergeability,
+  review,
+  reviewers,
+  reviewRequestedFromViewer,
+}: PullRequestStatus): PullRequestStatus => ({
+  ci,
+  mergeability,
+  review,
+  reviewers,
+  reviewRequestedFromViewer,
+});
+
+export function withRows(previous: PullRequestList | undefined, rows: PullRequestList) {
+  const known = new Map(
+    previous?.pullRequests.filter((pr) => !pr.statusPending).map((pr) => [pr.id, pr]),
+  );
+  return {
+    ...rows,
+    pullRequests: rows.pullRequests.map((row) => {
+      const previousPr = known.get(row.id);
+      return previousPr ? withStatus(row, statusOf(previousPr)) : row;
+    }),
   };
 }
 

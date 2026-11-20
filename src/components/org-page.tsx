@@ -30,7 +30,7 @@ import {
   derivePrList,
   NO_SELECTION,
   toggleGroup,
-  type PrListGroup,
+  type PrList,
   type SelectionAction,
 } from "@/lib/pr-list";
 import { deriveStacks } from "@/lib/stacks";
@@ -133,20 +133,23 @@ function OrgPage({
     onQueryChange("");
   };
 
-  const prTable = (groups: PrListGroup[], selectedId: string | null) => (
-    <PrTable
-      groups={groups}
-      group={group}
-      compact={!!list.previewed}
-      selectedId={selectedId}
-      onSelect={select}
-      now={now}
-      query={deferredQuery}
-      onShowAll={showAll}
-      onClearSearch={() => onQueryChange("")}
-      onToggleGroup={(key, all) => setCollapsedGroups(toggleGroup(list, key, all))}
-    />
-  );
+  const prTable = ({ groups, statusPending }: PrList, selectedId: string | null) =>
+    statusPending ? (
+      <LoadingRows />
+    ) : (
+      <PrTable
+        groups={groups}
+        group={group}
+        compact={!!list.previewed}
+        selectedId={selectedId}
+        onSelect={select}
+        now={now}
+        query={deferredQuery}
+        onShowAll={showAll}
+        onClearSearch={() => onQueryChange("")}
+        onToggleGroup={(key, all) => setCollapsedGroups(toggleGroup(list, key, all))}
+      />
+    );
 
   const viewIds = [null, ...views.list.map((view) => view.id)];
   const neighbour = (offset: 1 | -1): SwipeNeighbour | null => {
@@ -156,12 +159,12 @@ function OrgPage({
     if (id === undefined) return null;
 
     const neighbourFilters = views.list.find((view) => view.id === id)?.filters ?? [];
-    const { groups } = derivePrList({
+    const neighbourList = derivePrList({
       ...listInput,
       filters: neighbourFilters,
       selection: NO_SELECTION,
     });
-    return { href: views.hrefFor(id), content: prTable(groups, null) };
+    return { href: views.hrefFor(id), content: prTable(neighbourList, null) };
   };
 
   const idle = !filterMenu && !displayMenuOpen;
@@ -265,7 +268,7 @@ function OrgPage({
             {allPrs.length === 0 ? (
               <NoPullRequests owner={owner} result={pullRequests} />
             ) : (
-              prTable(list.groups, list.highlightedId)
+              prTable(list, list.highlightedId)
             )}
             <TruncationNote list={pullRequests.data} />
           </ViewSwipe>

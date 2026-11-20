@@ -2,11 +2,14 @@ import { describe, expect, it } from "vite-plus/test";
 import type { CheckConclusionState, CheckStatusState, StatusState } from "./graphql.generated";
 import {
   toCheck,
-  toPullRequest,
   toPullRequestDetail,
+  toPullRequestRow,
+  toPullRequestStatus,
   toSession,
   withMergeability,
-  type RawPullRequest,
+  withRows,
+  type RawPullRequestRow,
+  type RawPullRequestStatus,
   type RawReview,
   type RawReviewRequest,
 } from "./mapping";
@@ -18,6 +21,8 @@ const review = (login: string, state: RawReview["state"]): RawReview => ({
   state,
   author: actor(login),
 });
+
+type RawPullRequest = RawPullRequestRow & RawPullRequestStatus;
 
 const rawPullRequest = (overrides: Partial<RawPullRequest> = {}): RawPullRequest => ({
   __typename: "PullRequest",
@@ -41,8 +46,11 @@ const rawPullRequest = (overrides: Partial<RawPullRequest> = {}): RawPullRequest
   ...overrides,
 });
 
-const map = (overrides: Partial<RawPullRequest>) =>
-  toPullRequest(rawPullRequest(overrides), context);
+const map = (overrides: Partial<RawPullRequest>) => {
+  const raw = rawPullRequest(overrides);
+  const { statusPending: _, ...row } = toPullRequestRow(raw);
+  return { ...row, ...toPullRequestStatus(raw, context) };
+};
 
 const withRollup = (state: StatusState | null) => ({
   commits: { nodes: [{ commit: { statusCheckRollup: state ? { state } : null } }] },
@@ -402,5 +410,38 @@ describe("withMergeability", () => {
     const updated = withMergeability(list, { PR_1: "conflict" });
     expect(updated.pullRequests.map((pr) => pr.mergeability)).toEqual(["conflict", "unknown"]);
     expect(updated.totalCount).toBe(2);
+  });
+});
+
+describe("toPullRequestRow", () => {
+  it("marks the status as pending", () => {
+    const row = toPullRequestRow(rawPullRequest());
+    expect(row.statusPending).toBe(true);
+    expect(row.mergeability).toBe("unknown");
+  });
+});
+
+describe("withRows", () => {
+  const row = (id: string, title = "Add things") => toPullRequestRow(rawPullRequest({ id, title }));
+
+  it("keeps the known status of pull requests still in the list", () => {
+    const previous = {
+      pullRequests: [map({ id: "PR_1", mergeable: "CONFLICTING" }), map({ id: "PR_2" })],
+      totalCount: 2,
+    };
+    const next = withRows(previous, {
+      pullRequests: [row("PR_1", "Renamed"), row("PR_3")],
+      totalCount: 2,
+    });
+    expect(next.pullRequests).toMatchObject([
+      { id: "PR_1", title: "Renamed", mergeability: "conflict" },
+      { id: "PR_3", statusPending: true },
+    ]);
+    expect(next.pullRequests[0]).not.toHaveProperty("statusPending");
+  });
+
+  it("leaves every row pending on a first load", () => {
+    const next = withRows(undefined, { pullRequests: [row("PR_1")], totalCount: 1 });
+    expect(next.pullRequests[0]?.statusPending).toBe(true);
   });
 });

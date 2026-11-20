@@ -366,7 +366,12 @@ function PreviewBody({
       )}
       <Section title="Reviewers">
         <Lines>
-          {pr.reviewers.length === 0 && (
+          {pr.statusPending && (
+            <Line>
+              <Skeleton className="h-3.5 w-40" />
+            </Line>
+          )}
+          {!pr.statusPending && pr.reviewers.length === 0 && (
             <Line>
               <span className="text-muted-foreground">Nobody has reviewed this yet.</span>
             </Line>

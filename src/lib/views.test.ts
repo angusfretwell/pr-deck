@@ -98,6 +98,12 @@ describe("countByView", () => {
       ),
     ).toBe(1);
   });
+  it("leaves out views that filter on status until it loads", () => {
+    const prs = [pr({ author: "me", statusPending: true })];
+    expect(count("Mine", ...prs)).toBe(1);
+    expect(count("Needs my review", ...prs)).toBeUndefined();
+    expect(count("Ready to merge", ...prs)).toBeUndefined();
+  });
 });
 
 describe("routing", () => {

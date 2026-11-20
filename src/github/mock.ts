@@ -8,6 +8,7 @@ import type {
   ReviewState,
   Session,
 } from "@/types";
+import { PENDING_STATUS } from "./mapping";
 
 const avatar = (seed: string) => `https://api.dicebear.com/9.x/shapes/svg?seed=${seed}`;
 const account = (login: string, name: string): Account => ({
@@ -117,8 +118,25 @@ const detail = (): PullRequestDetail => ({
 const delay = <T>(value: T) => new Promise<T>((resolve) => setTimeout(() => resolve(value), 300));
 
 export const fetchSession = (_token: string) => delay(session());
-export const fetchPullRequests = (_token: string, owner: string, _viewer: string) =>
-  delay<PullRequestList>({ pullRequests: pullRequests(owner), totalCount: 48 });
+export async function fetchPullRequests(
+  _token: string,
+  owner: string,
+  _viewer: string,
+  onRows: (list: PullRequestList) => void = () => {},
+): Promise<PullRequestList> {
+  const list = { pullRequests: pullRequests(owner), totalCount: 48 };
+  onRows(
+    await delay({
+      ...list,
+      pullRequests: list.pullRequests.map((pr) => ({
+        ...pr,
+        ...PENDING_STATUS,
+        statusPending: true as const,
+      })),
+    }),
+  );
+  return delay(list);
+}
 export const fetchMergeability = (_token: string, ids: string[]) =>
   delay<Record<string, Mergeability>>(
     Object.fromEntries(

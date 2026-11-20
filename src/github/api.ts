@@ -1,10 +1,19 @@
 import { graphql, GraphqlResponseError } from "@octokit/graphql";
-import type { Mergeability, PullRequestDetail, PullRequestList, Session } from "@/types";
+import type {
+  Mergeability,
+  PullRequest,
+  PullRequestDetail,
+  PullRequestList,
+  PullRequestStatus,
+  Session,
+} from "@/types";
 import type {
   MergeabilityQuery,
   MergeabilityQueryVariables,
   PullRequestDetailQuery,
   PullRequestDetailQueryVariables,
+  PullRequestStatusQuery,
+  PullRequestStatusQueryVariables,
   PullRequestsQuery,
   PullRequestsQueryVariables,
   SessionQuery,
@@ -13,16 +22,19 @@ import type {
 } from "./graphql.generated";
 import {
   nodesOf,
-  toPullRequest,
   toPullRequestDetail,
+  toPullRequestRow,
+  toPullRequestStatus,
   toMergeability,
   toSession,
-  type RawPullRequest,
+  withStatus,
+  type ReviewContext,
 } from "./mapping";
 import {
   MERGEABILITY_QUERY,
   PAGE_SIZE,
   PULL_REQUEST_DETAIL_QUERY,
+  PULL_REQUEST_STATUS_QUERY,
   PULL_REQUESTS_QUERY,
   SESSION_QUERY,
   VIEWER_TEAMS_QUERY,
@@ -61,8 +73,21 @@ async function fetchViewerTeams(client: Client, owner: string, viewer: string): 
   }
 }
 
-async function fetchAllPullRequests(client: Client, owner: string) {
-  const nodes = new Map<string, RawPullRequest>();
+const STATUS_BATCH_SIZE = 10;
+const MAX_STATUS_REQUESTS = 20;
+
+function chunk<T>(items: T[], size: number): T[][] {
+  return Array.from({ length: Math.ceil(items.length / size) }, (_, index) =>
+    items.slice(index * size, (index + 1) * size),
+  );
+}
+
+async function fetchRows(
+  client: Client,
+  owner: string,
+  onRows: (list: PullRequestList) => void,
+): Promise<PullRequestList> {
+  const rows = new Map<string, PullRequest>();
   let totalCount = 0;
   let after: string | null = null;
   do {
@@ -75,26 +100,57 @@ async function fetchAllPullRequests(client: Client, owner: string) {
     assertOwnerFound(response, owner);
     totalCount = response.search.issueCount;
     for (const node of nodesOf(response.search)) {
-      if (node.__typename === "PullRequest") nodes.set(node.id, node);
+      if (node.__typename === "PullRequest") rows.set(node.id, toPullRequestRow(node));
     }
+    onRows({ pullRequests: [...rows.values()], totalCount });
     after = response.search.pageInfo.hasNextPage ? response.search.pageInfo.endCursor : null;
   } while (after);
-  return { nodes: [...nodes.values()], totalCount };
+  return { pullRequests: [...rows.values()], totalCount };
+}
+
+async function fetchStatuses(
+  client: Client,
+  ids: string[],
+  context: ReviewContext,
+): Promise<Map<string, PullRequestStatus>> {
+  const size = Math.max(STATUS_BATCH_SIZE, Math.ceil(ids.length / MAX_STATUS_REQUESTS));
+  const responses = await Promise.all(
+    chunk(ids, size).map((batch) =>
+      client<PullRequestStatusQuery>(PULL_REQUEST_STATUS_QUERY, {
+        ids: batch,
+      } satisfies PullRequestStatusQueryVariables),
+    ),
+  );
+  const statuses = new Map<string, PullRequestStatus>();
+  for (const node of responses.flatMap((response) => nodesOf(response))) {
+    if (node.__typename === "PullRequest")
+      statuses.set(node.id, toPullRequestStatus(node, context));
+  }
+  return statuses;
 }
 
 export async function fetchPullRequests(
   token: string,
   owner: string,
   viewer: string,
+  onRows: (list: PullRequestList) => void = () => {},
 ): Promise<PullRequestList> {
   const client = createClient(token);
-  const [viewerTeams, { nodes, totalCount }] = await Promise.all([
+  const [viewerTeams, rows] = await Promise.all([
     fetchViewerTeams(client, owner, viewer),
-    fetchAllPullRequests(client, owner),
+    fetchRows(client, owner, onRows),
   ]);
+  const statuses = await fetchStatuses(
+    client,
+    rows.pullRequests.map((pr) => pr.id),
+    { viewer, viewerTeams },
+  );
   return {
-    pullRequests: nodes.map((node) => toPullRequest(node, { viewer, viewerTeams })),
-    totalCount,
+    ...rows,
+    pullRequests: rows.pullRequests.flatMap((pr) => {
+      const status = statuses.get(pr.id);
+      return status ? [withStatus(pr, status)] : [];
+    }),
   };
 }
 
@@ -105,12 +161,8 @@ export async function fetchMergeability(
   ids: string[],
 ): Promise<Record<string, Mergeability>> {
   const client = createClient(token);
-  const batches: string[][] = [];
-  for (let start = 0; start < ids.length; start += MAX_NODE_IDS) {
-    batches.push(ids.slice(start, start + MAX_NODE_IDS));
-  }
   const responses = await Promise.all(
-    batches.map((batch) =>
+    chunk(ids, MAX_NODE_IDS).map((batch) =>
       client<MergeabilityQuery>(MERGEABILITY_QUERY, {
         ids: batch,
       } satisfies MergeabilityQueryVariables),
