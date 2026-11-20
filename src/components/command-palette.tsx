@@ -12,7 +12,6 @@ import {
   SearchIcon,
 } from "@primer/octicons-react";
 import { Fragment, useState, type ReactNode } from "react";
-import type { TernaryDarkMode } from "usehooks-ts";
 import { useLocation } from "wouter";
 import { AccountAvatar } from "@/components/account-avatar";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -21,7 +20,6 @@ import {
   CommandCollection,
   CommandDialog,
   CommandDialogPopup,
-  CommandEmpty,
   CommandFooter,
   CommandGroup,
   CommandGroupLabel,
@@ -35,20 +33,14 @@ import {
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { facets, PROPERTIES, toggleValue } from "@/lib/filters";
 import { GROUPS } from "@/lib/pr-list";
-import { useColorMode } from "@/lib/storage";
+import { THEMES, useColorMode } from "@/lib/storage";
 import { ALL_OPEN_NAME, type Views, type ViewsChange } from "@/lib/views";
 import type { Account, Group, PullRequest } from "@/types";
-
-const THEMES: { value: TernaryDarkMode; label: string }[] = [
-  { value: "system", label: "System" },
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-];
 
 interface PaletteCommand {
   id: string;
   label: ReactNode;
-  text: string;
+  keywords: string;
   icon: ReactNode;
   end?: ReactNode;
   keepOpen?: boolean;
@@ -68,7 +60,7 @@ export interface CommandPaletteProps {
   views: Views;
   onViewsChange: (change: ViewsChange) => void;
   viewCounts: Record<string, number>;
-  allOpenCount: number;
+  allOpenCount: number | undefined;
   orgPrs: PullRequest[];
   scopedPrs: PullRequest[];
   viewer: string;
@@ -132,7 +124,7 @@ function CommandPaletteList({
     ...views.list.map((view) => ({ id: view.id, name: view.name, count: viewCounts[view.id] })),
   ].map((view) => ({
     id: `view:${view.id}`,
-    text: `go to view ${view.name}`,
+    keywords: `go to view ${view.name}`,
     icon: <BookmarkIcon />,
     label: view.name,
     end: activeViewId === view.id ? <Check /> : <Count>{view.count}</Count>,
@@ -144,17 +136,17 @@ function CommandPaletteList({
       ? []
       : PROPERTIES.map((property) => ({
           id: `prefill:${property.key}`,
-          text: `filter by ${property.name}`,
+          keywords: `filter by ${property.name}`,
           icon: <FilterIcon />,
           label: `Filter by ${sentenceCase(property.name)}…`,
           keepOpen: true,
           run: () => setQuery(`${property.name} `),
         }))),
-    ...(filters.length
+    ...(views.filtersChanged
       ? [
           {
             id: "filters:reset",
-            text: "clear filters remove reset",
+            keywords: "clear filters remove reset",
             icon: <FilterRemoveIcon />,
             label: views.active ? "Reset filters" : "Clear filters",
             run: () => onViewsChange(views.resetFilters()),
@@ -165,7 +157,7 @@ function CommandPaletteList({
       ? [
           {
             id: "view:save",
-            text: "save view",
+            keywords: "save view",
             icon: <CheckIcon />,
             label: `Save changes to ${views.active.name}`,
             run: () => onViewsChange(views.save()),
@@ -176,7 +168,7 @@ function CommandPaletteList({
       ? [
           {
             id: "view:new",
-            text: "save as new view",
+            keywords: "save as new view",
             icon: <PlusIcon />,
             label: "Save as new view",
             run: () => onViewsChange(views.saveAsNew()),
@@ -189,7 +181,7 @@ function CommandPaletteList({
     ? PROPERTIES.flatMap((property) =>
         facets(property, filters, scopedPrs, orgPrs, viewer).map((facet) => ({
           id: `value:${property.key}:${facet.option.value}`,
-          text: `filter ${property.name} ${facet.option.label}`,
+          keywords: `filter ${property.name} ${facet.option.label}`,
           icon: <Checkbox checked={facet.checked} tabIndex={-1} aria-hidden />,
           label: (
             <span className="flex min-w-0 gap-1.5">
@@ -206,7 +198,7 @@ function CommandPaletteList({
   const displayItems: PaletteCommand[] = [
     ...GROUPS.map(({ value, label }) => ({
       id: `group:${value}`,
-      text: `group by ${label}`,
+      keywords: `group by ${label}`,
       icon: <RowsIcon />,
       label: value === "none" ? "Don't group" : `Group by ${label.toLowerCase()}`,
       end: group === value ? <Check /> : undefined,
@@ -216,7 +208,7 @@ function CommandPaletteList({
       ? [
           {
             id: "drafts",
-            text: "drafts hide show toggle",
+            keywords: "drafts hide show toggle",
             icon: <GitPullRequestDraftIcon />,
             label: hideDrafts ? "Show drafts" : "Hide drafts",
             end: <CommandShortcut>D</CommandShortcut>,
@@ -226,7 +218,7 @@ function CommandPaletteList({
       : []),
     ...THEMES.map(({ value, label }) => ({
       id: `theme:${value}`,
-      text: `theme appearance ${label} mode`,
+      keywords: `theme appearance ${label} mode`,
       icon: <PaintbrushIcon />,
       label: `${label} theme`,
       end: ternaryDarkMode === value ? <Check /> : undefined,
@@ -236,7 +228,7 @@ function CommandPaletteList({
 
   const accountItems: PaletteCommand[] = owners.map((account) => ({
     id: `owner:${account.login}`,
-    text: `switch account organisation ${account.login} ${account.name}`,
+    keywords: `switch account organisation ${account.login} ${account.name}`,
     icon: <AccountAvatar account={account} className="size-4 rounded-sm" />,
     label: `Switch to ${account.login}`,
     end: account.login === owner ? <Check /> : undefined,
@@ -252,7 +244,7 @@ function CommandPaletteList({
     .map((section) => ({
       ...section,
       items: needle
-        ? section.items.filter((item) => matches(`${section.value} ${item.text}`, needle))
+        ? section.items.filter((item) => matches(`${section.value} ${item.keywords}`, needle))
         : section.items,
     }))
     .filter((section) => section.items.length > 0);
@@ -263,7 +255,7 @@ function CommandPaletteList({
       items: [
         {
           id: "search",
-          text: query,
+          keywords: query,
           icon: <SearchIcon />,
           label: (
             <span className="truncate">
@@ -290,7 +282,6 @@ function CommandPaletteList({
     >
       <CommandInput placeholder="Type a command or search…" spellCheck={false} />
       <CommandPanel>
-        <CommandEmpty>No commands match.</CommandEmpty>
         <CommandList>
           {(section: Section) => (
             <Fragment key={section.value}>

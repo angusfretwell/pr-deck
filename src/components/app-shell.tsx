@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
 import { REPO_URL } from "@/lib/repo";
-import { useColorMode } from "@/lib/storage";
+import { THEMES, useColorMode } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import type { Account, Session } from "@/types";
 
@@ -163,9 +163,11 @@ export function AppShell({
                     value={ternaryDarkMode}
                     onValueChange={setTernaryDarkMode}
                   >
-                    <ResponsiveMenuRadioItem value="system">System</ResponsiveMenuRadioItem>
-                    <ResponsiveMenuRadioItem value="light">Light</ResponsiveMenuRadioItem>
-                    <ResponsiveMenuRadioItem value="dark">Dark</ResponsiveMenuRadioItem>
+                    {THEMES.map(({ value, label }) => (
+                      <ResponsiveMenuRadioItem key={value} value={value}>
+                        {label}
+                      </ResponsiveMenuRadioItem>
+                    ))}
                   </ResponsiveMenuRadioGroup>
                 </ResponsiveMenuGroup>
                 <ResponsiveMenuSeparator />

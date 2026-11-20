@@ -181,8 +181,12 @@ function OrgPage({
   const togglePreview = () => act({ type: "togglePreview" });
   useHotkeys(
     [
-      { hotkey: "Mod+K", callback: () => setPaletteOpen((open) => !open) },
-      { hotkey: "Mod+F", callback: onOpenSearch },
+      {
+        hotkey: "Mod+K",
+        callback: () => setPaletteOpen((open) => !open),
+        options: { enabled: !filterMenu && !displayMenuOpen },
+      },
+      { hotkey: "Mod+F", callback: onOpenSearch, options: { enabled: !paletteOpen } },
       {
         hotkey: "Escape",
         callback: ({ target }) => {
@@ -310,7 +314,7 @@ function OrgPage({
         views={views}
         onViewsChange={commit}
         viewCounts={viewCounts}
-        allOpenCount={orgPrs.length}
+        allOpenCount={pullRequests.data && orgPrs.length}
         orgPrs={orgPrs}
         scopedPrs={list.scoped}
         viewer={viewer}
