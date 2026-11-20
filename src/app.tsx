@@ -145,6 +145,7 @@ function Dashboard({ session, onSignOut }: { session: Session; onSignOut: () => 
               <OrgRoute
                 key={org}
                 owner={org}
+                owners={enabledOwners}
                 viewSlug={viewSlug ?? null}
                 viewer={session.viewer.login}
                 query={query}

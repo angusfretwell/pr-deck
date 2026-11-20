@@ -7,6 +7,12 @@ export interface Selection {
   previewOpen: boolean;
 }
 
+export const GROUPS: { value: Group; label: string }[] = [
+  { value: "repo", label: "Repository" },
+  { value: "author", label: "Author" },
+  { value: "none", label: "No grouping" },
+];
+
 export const NO_SELECTION: Selection = { selectedId: null, previewOpen: false };
 
 export interface PrListInput {

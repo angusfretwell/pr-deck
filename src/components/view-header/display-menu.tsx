@@ -9,14 +9,9 @@ import {
   ResponsiveMenuTrigger,
 } from "@/components/responsive-menu";
 import { Button } from "@/components/ui/button";
+import { GROUPS } from "@/lib/pr-list";
 import type { Group } from "@/types";
 import { Hint } from "./hint";
-
-const GROUPS: { value: Group; label: string }[] = [
-  { value: "repo", label: "Repository" },
-  { value: "author", label: "Author" },
-  { value: "none", label: "No grouping" },
-];
 
 interface DisplayMenuProps {
   open: boolean;

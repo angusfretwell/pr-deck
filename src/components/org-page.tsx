@@ -4,6 +4,7 @@ import { useHotkeys } from "@tanstack/react-hotkeys";
 import { useDeferredValue, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useEventCallback, useInterval, useResizeObserver } from "usehooks-ts";
 import { Redirect, useLocation } from "wouter";
+import { CommandPalette } from "@/components/command-palette";
 import { Preview, PreviewDrawer } from "@/components/preview";
 import { PrTable } from "@/components/pr-table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -39,7 +40,7 @@ import { useDesktop } from "@/lib/use-desktop";
 import { useViews } from "@/lib/use-views";
 import { cn } from "@/lib/utils";
 import { countByView, type Views, type ViewsChange } from "@/lib/views";
-import type { PullRequestList } from "@/types";
+import type { Account, PullRequestList } from "@/types";
 
 interface SearchProps {
   viewer: string;
@@ -50,26 +51,29 @@ interface SearchProps {
 
 interface OrgRouteProps extends SearchProps {
   owner: string;
+  owners: Account[];
   viewSlug: string | null;
 }
 
-export function OrgRoute({ owner, viewSlug, ...searchProps }: OrgRouteProps) {
+export function OrgRoute({ owner, viewSlug, ...pageProps }: OrgRouteProps) {
   const state = useViews(owner, viewSlug);
   if (!state) return null;
   const { views, commit } = state;
   if (views.redirectTo) return <Redirect to={views.redirectTo} replace />;
 
-  return <OrgPage owner={owner} views={views} commit={commit} {...searchProps} />;
+  return <OrgPage owner={owner} views={views} commit={commit} {...pageProps} />;
 }
 
 interface OrgPageProps extends SearchProps {
   owner: string;
+  owners: Account[];
   views: Views;
   commit: (change: ViewsChange) => void;
 }
 
 function OrgPage({
   owner,
+  owners,
   views,
   commit,
   viewer,
@@ -87,6 +91,7 @@ function OrgPage({
   const changeFilterMenu = (anchor: MenuAnchor | null) =>
     setFilterMenu(anchor && { anchor, deferBar: anchor === "header" && !filtersChanged });
   const [displayMenuOpen, setDisplayMenuOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [selection, setSelection] = useState(NO_SELECTION);
   const viewId = views.active?.id ?? null;
   const [shownViewId, setShownViewId] = useState(viewId);
@@ -128,6 +133,8 @@ function OrgPage({
 
   useEffect(() => setLastPath(location), [location, setLastPath]);
 
+  const viewCounts = pullRequests.data ? countByView(views.list, orgPrs, viewer) : {};
+
   const showAll = () => {
     commit(views.showAll());
     onQueryChange("");
@@ -167,13 +174,14 @@ function OrgPage({
     return { href: views.hrefFor(id), content: prTable(neighbourList, null) };
   };
 
-  const idle = !filterMenu && !displayMenuOpen;
+  const idle = !filterMenu && !displayMenuOpen && !paletteOpen;
   const hasRows = list.order.length > 0;
   const navigable = list.order.includes(selection.selectedId ?? "");
   const move = (delta: 1 | -1) => () => act({ type: "move", delta });
   const togglePreview = () => act({ type: "togglePreview" });
   useHotkeys(
     [
+      { hotkey: "Mod+K", callback: () => setPaletteOpen((open) => !open) },
       { hotkey: "Mod+F", callback: onOpenSearch },
       {
         hotkey: "Escape",
@@ -182,7 +190,7 @@ function OrgPage({
             target.blur();
           else act({ type: "escape" });
         },
-        options: { preventDefault: false },
+        options: { preventDefault: false, enabled: !paletteOpen },
       },
       { hotkey: "/", callback: onOpenSearch, options: { enabled: idle } },
       { hotkey: "F", callback: () => changeFilterMenu("header"), options: { enabled: idle } },
@@ -231,7 +239,7 @@ function OrgPage({
           >
             <ViewTabs
               views={views.list}
-              viewCounts={pullRequests.data ? countByView(views.list, orgPrs, viewer) : {}}
+              viewCounts={viewCounts}
               allOpenCount={pullRequests.data && orgPrs.length}
               activeViewId={views.active?.id ?? null}
               deletableViewId={views.deletableViewId}
@@ -294,6 +302,27 @@ function OrgPage({
       ) : (
         <LoadingRows />
       )}
+      <CommandPalette
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        owner={owner}
+        owners={owners}
+        views={views}
+        onViewsChange={commit}
+        viewCounts={viewCounts}
+        allOpenCount={orgPrs.length}
+        orgPrs={orgPrs}
+        scopedPrs={list.scoped}
+        viewer={viewer}
+        group={group}
+        onGroupChange={setGroup}
+        hideDrafts={hideDrafts}
+        onHideDraftsChange={desktop ? setHideDrafts : undefined}
+        onSearch={(text) => {
+          onQueryChange(text);
+          onOpenSearch();
+        }}
+      />
     </div>
   );
 }
