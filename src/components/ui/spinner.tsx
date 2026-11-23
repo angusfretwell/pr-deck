@@ -7,19 +7,18 @@ export function Spinner({ className, ...props }: React.ComponentProps<"svg">): R
       aria-label="Loading"
       className={cn("animate-spin", className)}
       fill="none"
-      height="16"
+      height="24"
       role="status"
-      viewBox="0 0 16 16"
-      width="16"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+      width="24"
+      xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
-      <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2" />
-      <path
-        d="M14.5 8A6.5 6.5 0 0 0 8 1.5"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
+      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
     </svg>
   );
 }
