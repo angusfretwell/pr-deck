@@ -1,4 +1,5 @@
 import { FoldIcon, SlidersIcon, UnfoldIcon } from "@primer/octicons-react";
+
 import {
   ResponsiveMenu,
   ResponsiveMenuGroup,
@@ -13,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { GROUPS } from "@/lib/pr-list";
 import type { Group } from "@/types";
+
 import { Hint } from "./hint";
 
 interface DisplayMenuProps {
@@ -40,7 +42,7 @@ export function DisplayMenu({
             <Button
               variant="outline"
               size="icon-sm"
-              className="rounded-full before:rounded-full data-popup-open:bg-accent"
+              className="data-popup-open:bg-accent rounded-full before:rounded-full"
               aria-label="Display"
             />
           }

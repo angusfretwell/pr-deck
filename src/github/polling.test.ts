@@ -1,34 +1,37 @@
-import { QueryClient, QueryObserver, environmentManager } from "@tanstack/react-query";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
+import {
+  QueryClient,
+  QueryObserver,
+  environmentManager,
+} from "@tanstack/react-query";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vite-plus/test";
+
 import { isRetryable } from "./api";
 import { mergeabilityPollInterval } from "./polling";
 
-const httpError = (status: number) => Object.assign(new Error("HTTP error"), { status });
+const httpError = (status: number) =>
+  Object.assign(new Error("HTTP error"), { status });
 
 describe("mergeabilityPollInterval", () => {
   const interval = (dataUpdateCount: number, errorUpdateCount: number) =>
     mergeabilityPollInterval({ dataUpdateCount, errorUpdateCount });
 
   it("doubles after each successful poll and stops after the fourth", () => {
-    expect([0, 1, 2, 3, 4, 5].map((successes) => interval(successes, 0))).toEqual([
-      10_000,
-      20_000,
-      40_000,
-      80_000,
-      false,
-      false,
-    ]);
+    expect(
+      [0, 1, 2, 3, 4, 5].map((successes) => interval(successes, 0))
+    ).toEqual([10_000, 20_000, 40_000, 80_000, false, false]);
   });
 
   it("counts failed polls as attempts", () => {
-    expect([0, 1, 2, 3, 4, 5].map((failures) => interval(0, failures))).toEqual([
-      10_000,
-      20_000,
-      40_000,
-      80_000,
-      false,
-      false,
-    ]);
+    expect([0, 1, 2, 3, 4, 5].map((failures) => interval(0, failures))).toEqual(
+      [10_000, 20_000, 40_000, 80_000, false, false]
+    );
     expect(interval(2, 1)).toBe(80_000);
     expect(interval(2, 2)).toBe(false);
   });
@@ -44,31 +47,47 @@ describe("mergeability polling through a query observer", () => {
     vi.useRealTimers();
   });
 
-  function startPolling(failure: (fetchNumber: number) => Error | null, ids = ["a"]) {
+  function startPolling(
+    failure: (fetchNumber: number) => Error | null,
+    ids = ["a"]
+  ) {
     const client = new QueryClient();
     const startedAt = Date.now();
     const seconds: number[] = [];
+
     const options = (queryIds: string[]) => ({
       queryKey: ["mergeability", "acme", queryIds],
       queryFn: async () => {
         seconds.push((Date.now() - startedAt) / 1000);
         const error = failure(seconds.length);
-        if (error) throw error;
+
+        if (error) {
+          throw error;
+        }
+
         return {};
       },
       initialData: {},
       staleTime: Infinity,
-      refetchInterval: ({ state }: { state: Parameters<typeof mergeabilityPollInterval>[0] }) =>
-        mergeabilityPollInterval(state),
-      retry: (failureCount: number, error: Error) => isRetryable(error) && failureCount < 1,
+      refetchInterval: ({
+        state,
+      }: {
+        state: Parameters<typeof mergeabilityPollInterval>[0];
+      }) => mergeabilityPollInterval(state),
+      retry: (failureCount: number, error: Error) =>
+        isRetryable(error) && failureCount < 1,
       retryDelay: 1000,
     });
+
     const observer = new QueryObserver(client, options(ids));
     const unsubscribe = observer.subscribe(() => {});
+
     return {
       seconds,
-      advance: (ms: number) => vi.advanceTimersByTimeAsync(ms),
-      setIds: (next: string[]) => observer.setOptions(options(next)),
+      advance: async (ms: number) => await vi.advanceTimersByTimeAsync(ms),
+      setIds: (next: string[]) => {
+        observer.setOptions(options(next));
+      },
       stop: () => {
         unsubscribe();
         client.clear();
@@ -98,7 +117,10 @@ describe("mergeability polling through a query observer", () => {
   });
 
   it("keeps backing off when polls start failing after two successes", async () => {
-    const poll = startPolling((fetchNumber) => (fetchNumber > 2 ? httpError(429) : null));
+    const poll = startPolling((fetchNumber) =>
+      fetchNumber > 2 ? httpError(429) : null
+    );
+
     await poll.advance(600_000);
     expect(poll.seconds).toEqual([10, 30, 70, 150]);
     poll.stop();

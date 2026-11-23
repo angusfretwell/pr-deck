@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vite-plus/test";
-import type { CheckConclusionState, CheckStatusState, StatusState } from "./graphql.generated";
+
+import type {
+  CheckConclusionState,
+  CheckStatusState,
+  StatusState,
+} from "./graphql.generated";
 import {
   toCheck,
   toPullRequestDetail,
@@ -8,15 +13,21 @@ import {
   toSession,
   withMergeability,
   withRows,
-  type RawPullRequestRow,
-  type RawPullRequestStatus,
-  type RawReview,
-  type RawReviewRequest,
+} from "./mapping";
+import type {
+  RawPullRequestRow,
+  RawPullRequestStatus,
+  RawReview,
+  RawReviewRequest,
 } from "./mapping";
 
 const context = { viewer: "me", viewerTeams: ["core"] };
 
-const actor = (login: string) => ({ login, avatarUrl: `https://avatars/${login}` });
+const actor = (login: string) => ({
+  login,
+  avatarUrl: `https://avatars/${login}`,
+});
+
 const review = (login: string, state: RawReview["state"]): RawReview => ({
   state,
   author: actor(login),
@@ -24,7 +35,9 @@ const review = (login: string, state: RawReview["state"]): RawReview => ({
 
 type RawPullRequest = RawPullRequestRow & RawPullRequestStatus;
 
-const rawPullRequest = (overrides: Partial<RawPullRequest> = {}): RawPullRequest => ({
+const rawPullRequest = (
+  overrides: Partial<RawPullRequest> = {}
+): RawPullRequest => ({
   __typename: "PullRequest",
   id: "PR_1",
   number: 7,
@@ -49,11 +62,14 @@ const rawPullRequest = (overrides: Partial<RawPullRequest> = {}): RawPullRequest
 const map = (overrides: Partial<RawPullRequest>) => {
   const raw = rawPullRequest(overrides);
   const { statusPending: _, ...row } = toPullRequestRow(raw);
+
   return { ...row, ...toPullRequestStatus(raw, context) };
 };
 
 const withRollup = (state: StatusState | null) => ({
-  commits: { nodes: [{ commit: { statusCheckRollup: state ? { state } : null } }] },
+  commits: {
+    nodes: [{ commit: { statusCheckRollup: state ? { state } : null } }],
+  },
 });
 
 describe("toPullRequest", () => {
@@ -124,20 +140,36 @@ describe("reviewers", () => {
         nodes: [review("carol", "APPROVED"), review("alice", "APPROVED")],
       },
     });
+
     expect(pullRequest.reviewers).toEqual([
       { login: "bob", avatarUrl: "https://avatars/bob", verdict: "comment" },
-      { login: "carol", avatarUrl: "https://avatars/carol", verdict: "approved" },
+      {
+        login: "carol",
+        avatarUrl: "https://avatars/carol",
+        verdict: "approved",
+      },
     ]);
   });
 
   it("keeps an earlier approval or change request when a later review is a plain comment", () => {
     const pullRequest = map({
-      latestReviews: { nodes: [review("bob", "COMMENTED"), review("carol", "COMMENTED")] },
+      latestReviews: {
+        nodes: [review("bob", "COMMENTED"), review("carol", "COMMENTED")],
+      },
       latestOpinionatedReviews: {
-        nodes: [review("bob", "APPROVED"), review("carol", "CHANGES_REQUESTED")],
+        nodes: [
+          review("bob", "APPROVED"),
+          review("carol", "CHANGES_REQUESTED"),
+        ],
       },
     });
-    expect(pullRequest.reviewers.map((reviewer) => [reviewer.login, reviewer.verdict])).toEqual([
+
+    expect(
+      pullRequest.reviewers.map((reviewer) => [
+        reviewer.login,
+        reviewer.verdict,
+      ])
+    ).toEqual([
       ["bob", "approved"],
       ["carol", "changes"],
     ]);
@@ -145,22 +177,34 @@ describe("reviewers", () => {
 
   it("ignores dismissed and pending reviews", () => {
     const pullRequest = map({
-      latestReviews: { nodes: [review("bob", "DISMISSED"), review("carol", "PENDING")] },
+      latestReviews: {
+        nodes: [review("bob", "DISMISSED"), review("carol", "PENDING")],
+      },
     });
+
     expect(pullRequest.reviewers).toEqual([]);
   });
 });
 
 describe("overall review", () => {
-  const approvedBy = { latestOpinionatedReviews: { nodes: [review("bob", "APPROVED")] } };
-  const commentedBy = { latestReviews: { nodes: [review("bob", "COMMENTED")] } };
+  const approvedBy = {
+    latestOpinionatedReviews: { nodes: [review("bob", "APPROVED")] },
+  };
+
+  const commentedBy = {
+    latestReviews: { nodes: [review("bob", "COMMENTED")] },
+  };
 
   it("uses reviewDecision when GitHub gives one", () => {
     expect(map({ reviewDecision: "APPROVED" }).review).toBe("approved");
     expect(map({ reviewDecision: "CHANGES_REQUESTED" }).review).toBe("changes");
     expect(map({ reviewDecision: "REVIEW_REQUIRED" }).review).toBe("none");
-    expect(map({ reviewDecision: "REVIEW_REQUIRED", ...commentedBy }).review).toBe("comment");
-    expect(map({ reviewDecision: "REVIEW_REQUIRED", ...approvedBy }).review).toBe("comment");
+    expect(
+      map({ reviewDecision: "REVIEW_REQUIRED", ...commentedBy }).review
+    ).toBe("comment");
+    expect(
+      map({ reviewDecision: "REVIEW_REQUIRED", ...approvedBy }).review
+    ).toBe("comment");
   });
 
   it("derives from reviewers when reviewDecision is null", () => {
@@ -170,41 +214,58 @@ describe("overall review", () => {
     expect(
       map({
         latestOpinionatedReviews: {
-          nodes: [review("bob", "APPROVED"), review("carol", "CHANGES_REQUESTED")],
+          nodes: [
+            review("bob", "APPROVED"),
+            review("carol", "CHANGES_REQUESTED"),
+          ],
         },
-      }).review,
+      }).review
     ).toBe("changes");
   });
 });
 
 describe("reviewRequestedFromViewer", () => {
-  const requests = (...requestedReviewers: RawReviewRequest["requestedReviewer"][]) => ({
+  const requests = (
+    ...requestedReviewers: RawReviewRequest["requestedReviewer"][]
+  ) => ({
     reviewRequests: {
-      nodes: requestedReviewers.map((requestedReviewer) => ({ requestedReviewer })),
+      nodes: requestedReviewers.map((requestedReviewer) => ({
+        requestedReviewer,
+      })),
     },
   });
 
   it("is true for a direct request", () => {
-    expect(map(requests({ __typename: "User", login: "me" })).reviewRequestedFromViewer).toBe(true);
+    expect(
+      map(requests({ __typename: "User", login: "me" }))
+        .reviewRequestedFromViewer
+    ).toBe(true);
   });
 
   it("is true for a request to one of the viewer's teams", () => {
-    expect(map(requests({ __typename: "Team", slug: "core" })).reviewRequestedFromViewer).toBe(
-      true,
-    );
+    expect(
+      map(requests({ __typename: "Team", slug: "core" }))
+        .reviewRequestedFromViewer
+    ).toBe(true);
   });
 
   it("is false for a request to another team or user", () => {
     expect(
-      map(requests({ __typename: "Team", slug: "design" }, { __typename: "User", login: "bob" }))
-        .reviewRequestedFromViewer,
+      map(
+        requests(
+          { __typename: "Team", slug: "design" },
+          { __typename: "User", login: "bob" }
+        )
+      ).reviewRequestedFromViewer
     ).toBe(false);
   });
 
   it("is false on the viewer's own pull request", () => {
     expect(
-      map({ author: actor("me"), ...requests({ __typename: "Team", slug: "core" }) })
-        .reviewRequestedFromViewer,
+      map({
+        author: actor("me"),
+        ...requests({ __typename: "Team", slug: "core" }),
+      }).reviewRequestedFromViewer
     ).toBe(false);
   });
 
@@ -230,6 +291,7 @@ describe("toSession", () => {
         },
       },
     });
+
     expect(session.viewer).toEqual({ login: "me", name: "me", avatarUrl: "a" });
     expect(session.owners.map((owner) => [owner.login, owner.name])).toEqual([
       ["me", "me"],
@@ -244,7 +306,7 @@ describe("toCheck", () => {
     status: CheckStatusState,
     conclusion: CheckConclusionState | null,
     startedAt: string | null = null,
-    completedAt: string | null = null,
+    completedAt: string | null = null
   ) =>
     toCheck({
       __typename: "CheckRun",
@@ -267,20 +329,31 @@ describe("toCheck", () => {
     ["SKIPPED", "skipped"],
     ["NEUTRAL", "skipped"],
     ["STALE", "skipped"],
-  ] as const)("maps a completed check run concluding %s to %s", (conclusion, state) => {
-    expect(checkRun("COMPLETED", conclusion).state).toBe(state);
-  });
-
-  it.each(["QUEUED", "IN_PROGRESS", "PENDING", "WAITING", "REQUESTED"] as const)(
-    "maps a %s check run to pending",
-    (status) => {
-      expect(checkRun(status, null).state).toBe("pending");
-    },
+  ] as const)(
+    "maps a completed check run concluding %s to %s",
+    (conclusion, state) => {
+      expect(checkRun("COMPLETED", conclusion).state).toBe(state);
+    }
   );
+
+  it.each([
+    "QUEUED",
+    "IN_PROGRESS",
+    "PENDING",
+    "WAITING",
+    "REQUESTED",
+  ] as const)("maps a %s check run to pending", (status) => {
+    expect(checkRun(status, null).state).toBe("pending");
+  });
 
   it("measures a finished run and leaves a running one unknown", () => {
     expect(
-      checkRun("COMPLETED", "SUCCESS", "2026-11-01T00:00:00Z", "2026-11-01T00:01:30Z"),
+      checkRun(
+        "COMPLETED",
+        "SUCCESS",
+        "2026-11-01T00:00:00Z",
+        "2026-11-01T00:01:30Z"
+      )
     ).toEqual({
       name: "build",
       state: "pass",
@@ -288,12 +361,19 @@ describe("toCheck", () => {
       url: "https://ci/build",
       required: true,
     });
-    expect(checkRun("IN_PROGRESS", null, "2026-11-01T00:00:00Z").seconds).toBeNull();
+    expect(
+      checkRun("IN_PROGRESS", null, "2026-11-01T00:00:00Z").seconds
+    ).toBeNull();
   });
 
   it("clamps skipped runs that GitHub reports as starting after they completed", () => {
     expect(
-      checkRun("COMPLETED", "SKIPPED", "2026-11-01T00:00:10Z", "2026-11-01T00:00:00Z").seconds,
+      checkRun(
+        "COMPLETED",
+        "SKIPPED",
+        "2026-11-01T00:00:10Z",
+        "2026-11-01T00:00:00Z"
+      ).seconds
     ).toBe(0);
   });
 
@@ -311,7 +391,7 @@ describe("toCheck", () => {
         state,
         targetUrl: null,
         isRequired: false,
-      }),
+      })
     ).toEqual({
       name: "vercel",
       state: expected,
@@ -363,11 +443,18 @@ describe("toPullRequestDetail", () => {
       },
       files: { nodes: [{ path: "src/a.ts", additions: 4, deletions: 1 }] },
     });
+
     expect(detail).toEqual({
       ...stats,
       bodyHtml: "<p>Hello</p>",
       checks: [
-        { name: "test", state: "fail", seconds: 5, url: "https://ci/test", required: true },
+        {
+          name: "test",
+          state: "fail",
+          seconds: 5,
+          url: "https://ci/test",
+          required: true,
+        },
         {
           name: "deploy",
           state: "pass",
@@ -388,7 +475,7 @@ describe("toPullRequestDetail", () => {
         bodyHTML: "",
         commits: { nodes: [] },
         files: null,
-      }),
+      })
     ).toEqual({
       ...stats,
       bodyHtml: "",
@@ -407,8 +494,12 @@ describe("withMergeability", () => {
       ],
       totalCount: 2,
     };
+
     const updated = withMergeability(list, { PR_1: "conflict" });
-    expect(updated.pullRequests.map((pr) => pr.mergeability)).toEqual(["conflict", "unknown"]);
+    expect(updated.pullRequests.map((pr) => pr.mergeability)).toEqual([
+      "conflict",
+      "unknown",
+    ]);
     expect(updated.totalCount).toBe(2);
   });
 });
@@ -422,17 +513,23 @@ describe("toPullRequestRow", () => {
 });
 
 describe("withRows", () => {
-  const row = (id: string, title = "Add things") => toPullRequestRow(rawPullRequest({ id, title }));
+  const row = (id: string, title = "Add things") =>
+    toPullRequestRow(rawPullRequest({ id, title }));
 
   it("keeps the known status of pull requests still in the list", () => {
     const previous = {
-      pullRequests: [map({ id: "PR_1", mergeable: "CONFLICTING" }), map({ id: "PR_2" })],
+      pullRequests: [
+        map({ id: "PR_1", mergeable: "CONFLICTING" }),
+        map({ id: "PR_2" }),
+      ],
       totalCount: 2,
     };
+
     const next = withRows(previous, {
       pullRequests: [row("PR_1", "Renamed"), row("PR_3")],
       totalCount: 2,
     });
+
     expect(next.pullRequests).toMatchObject([
       { id: "PR_1", title: "Renamed", mergeability: "conflict" },
       { id: "PR_3", statusPending: true },
@@ -441,7 +538,11 @@ describe("withRows", () => {
   });
 
   it("leaves every row pending on a first load", () => {
-    const next = withRows(undefined, { pullRequests: [row("PR_1")], totalCount: 1 });
+    const next = withRows(undefined, {
+      pullRequests: [row("PR_1")],
+      totalCount: 1,
+    });
+
     expect(next.pullRequests[0]?.statusPending).toBe(true);
   });
 });

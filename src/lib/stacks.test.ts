@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import type { PullRequest } from "../types";
 import { clusterByStack, deriveStacks } from "./stacks";
 
@@ -6,7 +7,7 @@ const pr = (
   id: string,
   branch: string,
   baseBranch = "main",
-  overrides: Partial<PullRequest> = {},
+  overrides: Partial<PullRequest> = {}
 ): PullRequest => ({
   id,
   owner: "acme",
@@ -36,7 +37,13 @@ const layerIds = (prs: PullRequest[], id: string) =>
 
 describe("deriveStacks", () => {
   it("chains pull requests from the one targeting the trunk upwards", () => {
-    const prs = [pr("3", "c", "b"), pr("1", "a"), pr("2", "b", "a"), pr("4", "solo")];
+    const prs = [
+      pr("3", "c", "b"),
+      pr("1", "a"),
+      pr("2", "b", "a"),
+      pr("4", "solo"),
+    ];
+
     expect(layerIds(prs, "1")).toEqual(["1", "2", "3"]);
     expect(layerIds(prs, "3")).toEqual(["1", "2", "3"]);
     expect(layerIds(prs, "4")).toBeUndefined();
@@ -48,12 +55,20 @@ describe("deriveStacks", () => {
   });
 
   it("never stacks on a fork's branch", () => {
-    const prs = [pr("1", "main", "main", { isCrossRepository: true }), pr("2", "feature")];
+    const prs = [
+      pr("1", "main", "main", { isCrossRepository: true }),
+      pr("2", "feature"),
+    ];
+
     expect(deriveStacks(prs).size).toBe(0);
   });
 
   it("lets a fork's pull request sit on top of a stack", () => {
-    const prs = [pr("1", "a"), pr("2", "patch", "a", { isCrossRepository: true })];
+    const prs = [
+      pr("1", "a"),
+      pr("2", "patch", "a", { isCrossRepository: true }),
+    ];
+
     expect(layerIds(prs, "2")).toEqual(["1", "2"]);
   });
 
@@ -65,23 +80,31 @@ describe("deriveStacks", () => {
 });
 
 describe("clusterByStack", () => {
-  const prs = [pr("3", "c", "b"), pr("9", "solo"), pr("1", "a"), pr("2", "b", "a")];
+  const prs = [
+    pr("3", "c", "b"),
+    pr("9", "solo"),
+    pr("1", "a"),
+    pr("2", "b", "a"),
+  ];
+
   const stacks = deriveStacks(prs);
+
   const ids = (rows: PullRequest[]) =>
-    clusterByStack(rows, stacks).map((cluster) => cluster.rows.map((row) => row.id));
+    clusterByStack(rows, stacks).map((cluster) =>
+      cluster.rows.map((row) => row.id)
+    );
 
   it("gathers a stack in merge order where its first row appears", () => {
     expect(ids(prs)).toEqual([["1", "2", "3"], ["9"]]);
   });
 
   it("clusters only the layers that are shown", () => {
-    expect(ids([prs[1]!, prs[0]!, prs[2]!])).toEqual([["9"], ["1", "3"]]);
+    expect(ids([prs[1], prs[0], prs[2]])).toEqual([["9"], ["1", "3"]]);
   });
 
   it("marks which clusters are stacks", () => {
-    expect(clusterByStack(prs, stacks).map((cluster) => cluster.stack?.id ?? null)).toEqual([
-      "1",
-      null,
-    ]);
+    expect(
+      clusterByStack(prs, stacks).map((cluster) => cluster.stack?.id ?? null)
+    ).toEqual(["1", null]);
   });
 });

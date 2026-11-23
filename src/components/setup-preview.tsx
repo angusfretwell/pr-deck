@@ -1,4 +1,5 @@
 import { useRef } from "react";
+
 import { AppShell } from "@/components/app-shell";
 import { PrTable } from "@/components/pr-table";
 import { FilterButton, ViewHeader } from "@/components/view-header";
@@ -13,7 +14,9 @@ import type { Account, PullRequest, Session } from "@/types";
 const VIEWER = "sam-k";
 const OWNER = "northwind";
 
-const identicon = (login: string) => `https://github.com/identicons/${login}.png`;
+const identicon = (login: string) =>
+  `https://github.com/identicons/${login}.png`;
+
 const account = (login: string, name: string): Account => ({
   login,
   name,
@@ -43,8 +46,24 @@ type Seed = [
 ];
 
 const SEEDS: Seed[] = [
-  ["api", 2841, "Add retry budget to webhook dispatcher", "priya-n", 2, "pass", "approved"],
-  ["api", 2836, "Cache org membership lookups for five minutes", VIEWER, 6, "pending", "none"],
+  [
+    "api",
+    2841,
+    "Add retry budget to webhook dispatcher",
+    "priya-n",
+    2,
+    "pass",
+    "approved",
+  ],
+  [
+    "api",
+    2836,
+    "Cache org membership lookups for five minutes",
+    VIEWER,
+    6,
+    "pending",
+    "none",
+  ],
   [
     "api",
     2829,
@@ -65,7 +84,15 @@ const SEEDS: Seed[] = [
     "comment",
     { mergeability: "conflict" },
   ],
-  ["infra", 412, "Drop Node 18 from the CI matrix", "mkato", 20, "pass", "approved"],
+  [
+    "infra",
+    412,
+    "Drop Node 18 from the CI matrix",
+    "mkato",
+    20,
+    "pass",
+    "approved",
+  ],
   [
     "infra",
     409,
@@ -96,11 +123,28 @@ const SEEDS: Seed[] = [
     "comment",
     { reviewRequestedFromViewer: true },
   ],
-  ["web", 1187, "Virtualize the audit log table", VIEWER, 44, "pass", "approved"],
-  ["web", 1180, "Keyboard shortcuts for the command menu", "devonte", 70, "pass", "none"],
+  [
+    "web",
+    1187,
+    "Virtualize the audit log table",
+    VIEWER,
+    44,
+    "pass",
+    "approved",
+  ],
+  [
+    "web",
+    1180,
+    "Keyboard shortcuts for the command menu",
+    "devonte",
+    70,
+    "pass",
+    "none",
+  ],
 ];
 
 const now = Date.now();
+
 const PULL_REQUESTS: PullRequest[] = SEEDS.map(
   ([repo, number, title, author, hoursAgo, ci, review, extra]) => ({
     id: `${repo}-${number}`,
@@ -122,7 +166,7 @@ const PULL_REQUESTS: PullRequest[] = SEEDS.map(
     reviewers: [],
     reviewRequestedFromViewer: false,
     ...extra,
-  }),
+  })
 );
 
 const VIEW_COUNTS = countByView(VIEWS, PULL_REQUESTS, VIEWER);
@@ -144,13 +188,14 @@ const noop = () => {};
 
 export function SetupPreview({ className }: { className?: string }) {
   const searchRef = useRef<HTMLInputElement>(null);
+
   return (
     <div
       inert
       aria-hidden
       className={cn(
-        "pointer-events-none isolate flex select-none flex-col bg-background",
-        className,
+        "bg-background pointer-events-none isolate flex flex-col select-none",
+        className
       )}
     >
       <AppShell

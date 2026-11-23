@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import type { Filter, PullRequest } from "../types";
-import { awaitsStatus, matchesText, passes, PROPERTY, sameFilters, toggleValue } from "./filters";
+import {
+  awaitsStatus,
+  matchesText,
+  passes,
+  PROPERTY,
+  sameFilters,
+  toggleValue,
+} from "./filters";
 
 const pr = (overrides: Partial<PullRequest> = {}): PullRequest => ({
   id: "1",
@@ -24,8 +32,17 @@ const pr = (overrides: Partial<PullRequest> = {}): PullRequest => ({
   ...overrides,
 });
 
-const is = (key: Filter["key"], ...values: string[]): Filter => ({ key, values, negated: false });
-const isNot = (key: Filter["key"], ...values: string[]): Filter => ({ key, values, negated: true });
+const is = (key: Filter["key"], ...values: string[]): Filter => ({
+  key,
+  values,
+  negated: false,
+});
+
+const isNot = (key: Filter["key"], ...values: string[]): Filter => ({
+  key,
+  values,
+  negated: true,
+});
 
 describe("passes", () => {
   it("passes everything with no filters", () => {
@@ -45,14 +62,24 @@ describe("passes", () => {
   });
 
   it("negates", () => {
-    expect(passes(pr({ repo: "web" }), [isNot("repo", "web")], "me")).toBe(false);
-    expect(passes(pr({ repo: "api" }), [isNot("repo", "web")], "me")).toBe(true);
+    expect(passes(pr({ repo: "web" }), [isNot("repo", "web")], "me")).toBe(
+      false
+    );
+    expect(passes(pr({ repo: "api" }), [isNot("repo", "web")], "me")).toBe(
+      true
+    );
   });
 
   it("resolves @me for the author", () => {
-    expect(passes(pr({ author: "me" }), [is("author", "@me")], "me")).toBe(true);
-    expect(passes(pr({ author: "bob" }), [is("author", "@me")], "me")).toBe(false);
-    expect(passes(pr({ author: "bob" }), [is("author", "bob")], "me")).toBe(true);
+    expect(passes(pr({ author: "me" }), [is("author", "@me")], "me")).toBe(
+      true
+    );
+    expect(passes(pr({ author: "bob" }), [is("author", "@me")], "me")).toBe(
+      false
+    );
+    expect(passes(pr({ author: "bob" }), [is("author", "bob")], "me")).toBe(
+      true
+    );
   });
 
   it("distinguishes requested, reviewed and none for myReview", () => {
@@ -73,8 +100,16 @@ describe("passes", () => {
   });
 
   it("matches unknown mergeability", () => {
-    expect(passes(pr({ mergeability: "unknown" }), [is("conflicts", "unknown")], "me")).toBe(true);
-    expect(passes(pr({ mergeability: "unknown" }), [is("conflicts", "clean")], "me")).toBe(false);
+    expect(
+      passes(
+        pr({ mergeability: "unknown" }),
+        [is("conflicts", "unknown")],
+        "me"
+      )
+    ).toBe(true);
+    expect(
+      passes(pr({ mergeability: "unknown" }), [is("conflicts", "clean")], "me")
+    ).toBe(false);
   });
 });
 
@@ -99,8 +134,17 @@ describe("property options", () => {
   });
 
   it("lists Me then other authors", () => {
-    const prs = [pr({ author: "me" }), pr({ author: "zed" }), pr({ author: "bob" })];
-    expect(PROPERTY.author.options(prs, "me").map((o) => o.value)).toEqual(["@me", "bob", "zed"]);
+    const prs = [
+      pr({ author: "me" }),
+      pr({ author: "zed" }),
+      pr({ author: "bob" }),
+    ];
+
+    expect(PROPERTY.author.options(prs, "me").map((o) => o.value)).toEqual([
+      "@me",
+      "bob",
+      "zed",
+    ]);
   });
 });
 
@@ -110,11 +154,15 @@ describe("toggleValue", () => {
   });
 
   it("adds a second value", () => {
-    expect(toggleValue([is("ci", "pass")], "ci", "fail")).toEqual([is("ci", "pass", "fail")]);
+    expect(toggleValue([is("ci", "pass")], "ci", "fail")).toEqual([
+      is("ci", "pass", "fail"),
+    ]);
   });
 
   it("removes a value", () => {
-    expect(toggleValue([is("ci", "pass", "fail")], "ci", "pass")).toEqual([is("ci", "fail")]);
+    expect(toggleValue([is("ci", "pass", "fail")], "ci", "pass")).toEqual([
+      is("ci", "fail"),
+    ]);
   });
 
   it("adds a negated filter", () => {
@@ -122,9 +170,9 @@ describe("toggleValue", () => {
   });
 
   it("drops the filter when the last value is removed", () => {
-    expect(toggleValue([is("ci", "pass"), is("repo", "web")], "ci", "pass")).toEqual([
-      is("repo", "web"),
-    ]);
+    expect(
+      toggleValue([is("ci", "pass"), is("repo", "web")], "ci", "pass")
+    ).toEqual([is("repo", "web")]);
   });
 });
 
@@ -146,7 +194,12 @@ describe("sameFilters", () => {
 });
 
 describe("matchesText", () => {
-  const target = pr({ title: "Fix login", repo: "web", number: 42, author: "alice" });
+  const target = pr({
+    title: "Fix login",
+    repo: "web",
+    number: 42,
+    author: "alice",
+  });
 
   it("matches title, repo, number and author", () => {
     expect(matchesText(target, "login")).toBe(true);
@@ -173,7 +226,9 @@ describe("awaitsStatus", () => {
   });
 
   it("does not wait on row filters or once every status has loaded", () => {
-    expect(awaitsStatus([is("author", "me"), is("repo", "web")], [pending])).toBe(false);
+    expect(
+      awaitsStatus([is("author", "me"), is("repo", "web")], [pending])
+    ).toBe(false);
     expect(awaitsStatus([is("ci", "pass")], [pr()])).toBe(false);
     expect(awaitsStatus([], [pending])).toBe(false);
   });

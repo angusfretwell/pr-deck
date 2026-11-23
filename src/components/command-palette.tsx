@@ -14,8 +14,10 @@ import {
   SyncIcon,
   UnfoldIcon,
 } from "@primer/octicons-react";
-import { Fragment, useState, type ReactNode } from "react";
+import { Fragment, useState } from "react";
+import type { ReactNode } from "react";
 import { useLocation } from "wouter";
+
 import { AccountAvatar } from "@/components/account-avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -38,7 +40,8 @@ import { facets, PROPERTIES, toggleValue } from "@/lib/filters";
 import { GROUPS } from "@/lib/pr-list";
 import { resetQueryCache } from "@/lib/query-cache";
 import { THEMES, useColorMode } from "@/lib/storage";
-import { ALL_OPEN_NAME, type Views, type ViewsChange } from "@/lib/views";
+import { ALL_OPEN_NAME } from "@/lib/views";
+import type { Views, ViewsChange } from "@/lib/views";
 import type { Account, Group, PullRequest } from "@/types";
 
 interface PaletteCommand {
@@ -77,23 +80,33 @@ export interface CommandPaletteProps {
   onSearch: (query: string) => void;
 }
 
-export function CommandPalette({ open, onOpenChange, ...props }: CommandPaletteProps) {
+export function CommandPalette({
+  open,
+  onOpenChange,
+  ...props
+}: CommandPaletteProps) {
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
       <CommandDialogPopup finalFocus={false}>
-        <CommandPaletteList onClose={() => onOpenChange(false)} {...props} />
+        <CommandPaletteList
+          onClose={() => {
+            onOpenChange(false);
+          }}
+          {...props}
+        />
       </CommandDialogPopup>
     </CommandDialog>
   );
 }
 
-const Check = () => <CheckIcon className="size-3.5 text-muted-foreground" />;
+const Check = () => <CheckIcon className="text-muted-foreground size-3.5" />;
 
 const Count = ({ children }: { children: ReactNode }) => (
   <span className="text-muted-foreground text-xs tabular-nums">{children}</span>
 );
 
-const sentenceCase = (name: string) => (name === "CI" ? name : name.toLowerCase());
+const sentenceCase = (name: string) =>
+  name === "CI" ? name : name.toLowerCase();
 
 const matches = (text: string, needle: string) => {
   const haystack = text.toLowerCase();
@@ -119,25 +132,36 @@ function CommandPaletteList({
   hideDrafts,
   onHideDraftsChange,
   onSearch,
-}: Omit<CommandPaletteProps, "open" | "onOpenChange"> & { onClose: () => void }) {
+}: Omit<CommandPaletteProps, "open" | "onOpenChange"> & {
+  onClose: () => void;
+}) {
   const [query, setQuery] = useState("");
   const [, navigate] = useLocation();
   const { ternaryDarkMode, setTernaryDarkMode } = useColorMode();
   const needle = query.trim().toLowerCase();
   const { filters } = views;
   const activeViewId = views.active?.id ?? null;
-  const setFilters = (next: typeof filters) => onViewsChange(views.setFilters(next));
+
+  const setFilters = (next: typeof filters) => {
+    onViewsChange(views.setFilters(next));
+  };
 
   const viewItems: PaletteCommand[] = [
     { id: null, name: ALL_OPEN_NAME, count: allOpenCount },
-    ...views.list.map((view) => ({ id: view.id, name: view.name, count: viewCounts[view.id] })),
+    ...views.list.map((view) => ({
+      id: view.id,
+      name: view.name,
+      count: viewCounts[view.id],
+    })),
   ].map((view) => ({
     id: `view:${view.id}`,
     keywords: `go to view ${view.name}`,
     icon: <BookmarkIcon />,
     label: view.name,
     end: activeViewId === view.id ? <Check /> : <Count>{view.count}</Count>,
-    run: () => navigate(views.hrefFor(view.id)),
+    run: () => {
+      navigate(views.hrefFor(view.id));
+    },
   }));
 
   const filterActions: PaletteCommand[] = [
@@ -149,7 +173,9 @@ function CommandPaletteList({
           icon: <FilterIcon />,
           label: `Filter by ${sentenceCase(property.name)}…`,
           keepOpen: true,
-          run: () => setQuery(`${property.name} `),
+          run: () => {
+            setQuery(`${property.name} `);
+          },
         }))),
     ...(views.filtersChanged
       ? [
@@ -158,7 +184,9 @@ function CommandPaletteList({
             keywords: "clear filters remove reset",
             icon: <FilterRemoveIcon />,
             label: views.active ? "Reset filters" : "Clear filters",
-            run: () => onViewsChange(views.resetFilters()),
+            run: () => {
+              onViewsChange(views.resetFilters());
+            },
           },
           ...(views.active
             ? [
@@ -167,7 +195,9 @@ function CommandPaletteList({
                   keywords: "save view",
                   icon: <CheckIcon />,
                   label: `Save changes to ${views.active.name}`,
-                  run: () => onViewsChange(views.save()),
+                  run: () => {
+                    onViewsChange(views.save());
+                  },
                 },
               ]
             : []),
@@ -176,7 +206,9 @@ function CommandPaletteList({
             keywords: "save as new view",
             icon: <PlusIcon />,
             label: "Save as new view",
-            run: () => onViewsChange(views.saveAsNew()),
+            run: () => {
+              onViewsChange(views.saveAsNew());
+            },
           },
         ]
       : []),
@@ -190,13 +222,17 @@ function CommandPaletteList({
           icon: <Checkbox checked={facet.checked} tabIndex={-1} aria-hidden />,
           label: (
             <span className="flex min-w-0 gap-1.5">
-              <span className="shrink-0 text-muted-foreground">{property.name}</span>
+              <span className="text-muted-foreground shrink-0">
+                {property.name}
+              </span>
               <span className="truncate">{facet.option.label}</span>
             </span>
           ),
           end: <Count>{facet.count}</Count>,
-          run: () => setFilters(toggleValue(filters, property.key, facet.option.value)),
-        })),
+          run: () => {
+            setFilters(toggleValue(filters, property.key, facet.option.value));
+          },
+        }))
       )
     : [];
 
@@ -205,9 +241,12 @@ function CommandPaletteList({
       id: `group:${value}`,
       keywords: `group by ${label}`,
       icon: <RowsIcon />,
-      label: value === "none" ? "Don't group" : `Group by ${label.toLowerCase()}`,
+      label:
+        value === "none" ? "Don't group" : `Group by ${label.toLowerCase()}`,
       end: group === value ? <Check /> : undefined,
-      run: () => onGroupChange(value),
+      run: () => {
+        onGroupChange(value);
+      },
     })),
     ...(onToggleAllGroups
       ? [
@@ -215,7 +254,9 @@ function CommandPaletteList({
             id: "groups:toggle-all",
             keywords: "expand collapse fold unfold all groups",
             icon: allGroupsCollapsed ? <UnfoldIcon /> : <FoldIcon />,
-            label: allGroupsCollapsed ? "Expand all groups" : "Collapse all groups",
+            label: allGroupsCollapsed
+              ? "Expand all groups"
+              : "Collapse all groups",
             run: onToggleAllGroups,
           },
         ]
@@ -228,7 +269,9 @@ function CommandPaletteList({
             icon: <GitPullRequestDraftIcon />,
             label: hideDrafts ? "Show drafts" : "Hide drafts",
             end: <CommandShortcut>D</CommandShortcut>,
-            run: () => onHideDraftsChange(!hideDrafts),
+            run: () => {
+              onHideDraftsChange(!hideDrafts);
+            },
           },
         ]
       : []),
@@ -238,7 +281,9 @@ function CommandPaletteList({
       icon: <PaintbrushIcon />,
       label: `${label} theme`,
       end: ternaryDarkMode === value ? <Check /> : undefined,
-      run: () => setTernaryDarkMode(value),
+      run: () => {
+        setTernaryDarkMode(value);
+      },
     })),
   ];
 
@@ -248,7 +293,9 @@ function CommandPaletteList({
     icon: <AccountAvatar account={account} className="size-4 rounded-sm" />,
     label: `Switch to ${account.login}`,
     end: account.login === owner ? <Check /> : undefined,
-    run: () => navigate(`/${account.login}`),
+    run: () => {
+      navigate(`/${account.login}`);
+    },
   }));
 
   const sections: Section[] = [
@@ -272,12 +319,14 @@ function CommandPaletteList({
     .map((section) => ({
       ...section,
       items: needle
-        ? section.items.filter((item) => matches(`${section.value} ${item.keywords}`, needle))
+        ? section.items.filter((item) =>
+            matches(`${section.value} ${item.keywords}`, needle)
+          )
         : section.items,
     }))
     .filter((section) => section.items.length > 0);
 
-  if (needle)
+  if (needle) {
     sections.push({
       value: "Search",
       items: [
@@ -287,18 +336,25 @@ function CommandPaletteList({
           icon: <SearchIcon />,
           label: (
             <span className="truncate">
-              Search pull requests for <span className="font-medium">“{query.trim()}”</span>
+              Search pull requests for{" "}
+              <span className="font-medium">“{query.trim()}”</span>
             </span>
           ),
           end: <CommandShortcut>/</CommandShortcut>,
-          run: () => onSearch(query.trim()),
+          run: () => {
+            onSearch(query.trim());
+          },
         },
       ],
     });
+  }
 
   const run = (item: PaletteCommand) => {
     item.run();
-    if (!item.keepOpen) onClose();
+
+    if (!item.keepOpen) {
+      onClose();
+    }
   };
 
   return (
@@ -306,9 +362,14 @@ function CommandPaletteList({
       items={sections}
       mode="none"
       value={query}
-      onValueChange={(value, { reason }) => reason !== "item-press" && setQuery(value)}
+      onValueChange={(value, { reason }) =>
+        reason !== "item-press" && setQuery(value)
+      }
     >
-      <CommandInput placeholder="Type a command or search…" spellCheck={false} />
+      <CommandInput
+        placeholder="Type a command or search…"
+        spellCheck={false}
+      />
       <CommandPanel>
         <CommandList>
           {(section: Section) => (
@@ -320,11 +381,15 @@ function CommandPaletteList({
                     <CommandItem
                       key={item.id}
                       value={item}
-                      className="gap-2.5 *:[svg]:size-4 *:[svg]:shrink-0 *:[svg]:text-muted-foreground"
-                      onClick={() => run(item)}
+                      className="*:[svg]:text-muted-foreground gap-2.5 *:[svg]:size-4 *:[svg]:shrink-0"
+                      onClick={() => {
+                        run(item);
+                      }}
                     >
                       {item.icon}
-                      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                      <span className="min-w-0 flex-1 truncate">
+                        {item.label}
+                      </span>
                       {item.end}
                     </CommandItem>
                   )}

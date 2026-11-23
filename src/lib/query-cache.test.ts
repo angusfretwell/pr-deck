@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it } from "vite-plus/test";
+
 import { shouldPersistQuery } from "./query-cache";
 
 const queryFor = (client: QueryClient, queryKey: unknown[]) =>
@@ -11,15 +12,21 @@ describe("shouldPersistQuery", () => {
     client.setQueryData(["session"], {});
     client.setQueryData(["pull-requests", "acme"], {});
     expect(shouldPersistQuery(queryFor(client, ["session"]))).toBe(true);
-    expect(shouldPersistQuery(queryFor(client, ["pull-requests", "acme"]))).toBe(true);
+    expect(
+      shouldPersistQuery(queryFor(client, ["pull-requests", "acme"]))
+    ).toBe(true);
   });
 
   it("skips pull request details and mergeability polls", () => {
     const client = new QueryClient();
     client.setQueryData(["pull-request-detail", "PR_1"], {});
     client.setQueryData(["mergeability", "acme", ["PR_1"]], {});
-    expect(shouldPersistQuery(queryFor(client, ["pull-request-detail", "PR_1"]))).toBe(false);
-    expect(shouldPersistQuery(queryFor(client, ["mergeability", "acme", ["PR_1"]]))).toBe(false);
+    expect(
+      shouldPersistQuery(queryFor(client, ["pull-request-detail", "PR_1"]))
+    ).toBe(false);
+    expect(
+      shouldPersistQuery(queryFor(client, ["mergeability", "acme", ["PR_1"]]))
+    ).toBe(false);
   });
 
   it("skips pending and errored queries", async () => {
@@ -30,9 +37,11 @@ describe("shouldPersistQuery", () => {
     await client
       .fetchQuery({
         queryKey: ["pull-requests", "acme"],
-        queryFn: () => Promise.reject(new Error()),
+        queryFn: async () => { throw new Error(); },
       })
       .catch(() => {});
-    expect(shouldPersistQuery(queryFor(client, ["pull-requests", "acme"]))).toBe(false);
+    expect(
+      shouldPersistQuery(queryFor(client, ["pull-requests", "acme"]))
+    ).toBe(false);
   });
 });

@@ -2,17 +2,21 @@
 
 import { Avatar as AvatarPrimitive } from "@base-ui/react/avatar";
 import type React from "react";
+
 import { cn } from "@/lib/utils";
 
 const AVATAR_GROUP_CUT =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2 2'%3E%3Ccircle cx='1' cy='1' r='1'/%3E%3C/svg%3E\")";
 
-export function Avatar({ className, ...props }: AvatarPrimitive.Root.Props): React.ReactElement {
+export function Avatar({
+  className,
+  ...props
+}: AvatarPrimitive.Root.Props): React.ReactElement {
   return (
     <AvatarPrimitive.Root
       className={cn(
-        "relative isolate inline-flex size-(--avatar-size,--spacing(8)) shrink-0 select-none items-center justify-center overflow-hidden rounded-full align-middle font-medium text-[calc(var(--avatar-size,--spacing(8))*0.375)]/none",
-        className,
+        "relative isolate inline-flex size-(--avatar-size,--spacing(8)) shrink-0 items-center justify-center overflow-hidden rounded-full align-middle text-[calc(var(--avatar-size,--spacing(8))*0.375)]/none font-medium select-none",
+        className
       )}
       data-slot="avatar"
       {...props}
@@ -28,7 +32,7 @@ export function AvatarImage({
     <AvatarPrimitive.Image
       className={cn(
         "absolute inset-0 z-10 size-full rounded-[inherit] object-cover data-error:invisible data-loading:invisible",
-        className,
+        className
       )}
       data-slot="avatar-image"
       {...props}
@@ -43,8 +47,8 @@ export function AvatarFallback({
   return (
     <AvatarPrimitive.Fallback
       className={cn(
-        "absolute inset-0 flex size-full items-center justify-center rounded-[inherit] bg-border",
-        className,
+        "bg-border absolute inset-0 flex size-full items-center justify-center rounded-[inherit]",
+        className
       )}
       data-slot="avatar-fallback"
       {...props}
@@ -79,9 +83,9 @@ export function AvatarGroup({
         "[--avatar-group-nudge:var(--avatar-nudge,calc((var(--avatar-group-overlap)+var(--avatar-group-gap))*0.3))]",
         "*:not-first:-ms-(--avatar-group-overlap)",
         topmost === "first"
-          ? "*:not-first:mask-(--avatar-group-mask) *:not-first:mask-subtract *:not-first:mask-position-(--avatar-group-mask-position) *:not-first:mask-no-repeat *:not-first:mask-size-(--avatar-group-mask-size) [--avatar-group-cut-x:var(--avatar-group-cut-start)] *:not-first:*:data-[slot=avatar-fallback]:ps-[calc(var(--avatar-group-nudge)*2)] supports-[mask-composite:subtract]:*:not-first:rounded-none rtl:[--avatar-group-cut-x:var(--avatar-group-cut-end)]"
-          : "*:not-last:mask-(--avatar-group-mask) *:not-last:mask-subtract *:not-last:mask-position-(--avatar-group-mask-position) *:not-last:mask-no-repeat *:not-last:mask-size-(--avatar-group-mask-size) [--avatar-group-cut-x:var(--avatar-group-cut-end)] *:not-last:*:data-[slot=avatar-fallback]:pe-[calc(var(--avatar-group-nudge)*2)] supports-[mask-composite:subtract]:*:not-last:rounded-none rtl:[--avatar-group-cut-x:var(--avatar-group-cut-start)]",
-        className,
+          ? "[--avatar-group-cut-x:var(--avatar-group-cut-start)] *:not-first:mask-(--avatar-group-mask) *:not-first:mask-subtract *:not-first:mask-size-(--avatar-group-mask-size) *:not-first:mask-position-(--avatar-group-mask-position) *:not-first:mask-no-repeat *:not-first:*:data-[slot=avatar-fallback]:ps-[calc(var(--avatar-group-nudge)*2)] supports-[mask-composite:subtract]:*:not-first:rounded-none rtl:[--avatar-group-cut-x:var(--avatar-group-cut-end)]"
+          : "[--avatar-group-cut-x:var(--avatar-group-cut-end)] *:not-last:mask-(--avatar-group-mask) *:not-last:mask-subtract *:not-last:mask-size-(--avatar-group-mask-size) *:not-last:mask-position-(--avatar-group-mask-position) *:not-last:mask-no-repeat *:not-last:*:data-[slot=avatar-fallback]:pe-[calc(var(--avatar-group-nudge)*2)] supports-[mask-composite:subtract]:*:not-last:rounded-none rtl:[--avatar-group-cut-x:var(--avatar-group-cut-start)]",
+        className
       )}
       data-slot="avatar-group"
       data-topmost={topmost}

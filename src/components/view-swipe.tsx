@@ -4,12 +4,13 @@ import {
   useMotionValue,
   useReducedMotion,
   useTransform,
-  type MotionValue,
-  type PanInfo,
 } from "motion/react";
-import { useRef, type ReactNode, type RefObject } from "react";
+import type { MotionValue, PanInfo } from "motion/react";
+import { useRef } from "react";
+import type { ReactNode, RefObject } from "react";
 import { flushSync } from "react-dom";
 import { useLocation } from "wouter";
+
 import { cn } from "@/lib/utils";
 
 export interface SwipeNeighbour {
@@ -33,13 +34,21 @@ const PAGE = { type: "spring", duration: 0.35, bounce: 0 } as const;
 const SNAP_BACK = { type: "spring", duration: 0.3, bounce: 0 } as const;
 const FADE_IN_FRACTION = 1 / 3;
 
-export function ViewSwipe({ previous, next, topInset, className, children }: ViewSwipeProps) {
+export function ViewSwipe({
+  previous,
+  next,
+  topInset,
+  className,
+  children,
+}: ViewSwipeProps) {
   const [, navigate] = useLocation();
   const reducedMotion = useReducedMotion();
   const x = useMotionValue(0);
+
   const neighbourOpacity = useTransform(x, (value) =>
-    Math.min(Math.abs(value) / (innerWidth * FADE_IN_FRACTION), 1),
+    Math.min(Math.abs(value) / (innerWidth * FADE_IN_FRACTION), 1)
   );
+
   const track = useRef<HTMLDivElement>(null!);
   const previousPane = useRef<HTMLDivElement>(null);
   const nextPane = useRef<HTMLDivElement>(null);
@@ -49,56 +58,89 @@ export function ViewSwipe({ previous, next, topInset, className, children }: Vie
 
   const settle = () => {
     track.current.style.removeProperty("will-change");
-    for (const pane of panes()) pane?.style.removeProperty("height");
+
+    for (const pane of panes()) {
+      pane?.style.removeProperty("height");
+    }
   };
 
   const land = (href: string, pane: HTMLElement) => {
     const scrollShift =
-      track.current.getBoundingClientRect().top - pane.getBoundingClientRect().top;
+      track.current.getBoundingClientRect().top -
+      pane.getBoundingClientRect().top;
+
     x.jump(0);
     track.current.style.transform = "none";
-    flushSync(() => navigate(href));
+    flushSync(() => {
+      navigate(href);
+    });
     settle();
     scrollBy(0, scrollShift);
   };
 
   const onDirectionLock = (axis: "x" | "y") => {
-    if (axis !== "x") return;
+    if (axis !== "x") {
+      return;
+    }
+
     track.current.style.willChange = "transform";
 
-    const top = Math.max(0, topInset() - track.current.getBoundingClientRect().top);
+    const top = Math.max(
+      0,
+      topInset() - track.current.getBoundingClientRect().top
+    );
+
     for (const pane of panes()) {
       pane?.style.setProperty("top", `${top}px`);
-      pane?.style.setProperty("height", `${Math.max(screen.height, innerHeight)}px`);
+      pane?.style.setProperty(
+        "height",
+        `${Math.max(screen.height, innerHeight)}px`
+      );
     }
   };
 
   const onDragEnd = (
     event: PointerEvent | MouseEvent | TouchEvent,
-    { offset, velocity }: PanInfo,
+    { offset, velocity }: PanInfo
   ) => {
     const position = x.get();
-    const horizontal = event.type !== "pointercancel" && Math.abs(offset.x) > Math.abs(offset.y);
-    const flicked = Math.abs(velocity.x) > FLICK_VELOCITY && Math.abs(position) > FLICK_DISTANCE;
+
+    const horizontal =
+      event.type !== "pointercancel" && Math.abs(offset.x) > Math.abs(offset.y);
+
+    const flicked =
+      Math.abs(velocity.x) > FLICK_VELOCITY &&
+      Math.abs(position) > FLICK_DISTANCE;
+
     const pastThreshold = Math.abs(position) > innerWidth * COMMIT_FRACTION;
-    const direction = flicked ? Math.sign(velocity.x) : pastThreshold ? Math.sign(position) : 0;
+
+    const direction = flicked
+      ? Math.sign(velocity.x)
+      : pastThreshold
+        ? Math.sign(position)
+        : 0;
+
     const target = direction < 0 ? next : previous;
     const pane = (direction < 0 ? nextPane : previousPane).current;
 
     if (!horizontal || direction === 0 || !target || !pane) {
       animate(x, 0, { ...SNAP_BACK, velocity: velocity.x, onComplete: settle });
+
       return;
     }
 
     if (reducedMotion) {
       land(target.href, pane);
+
       return;
     }
 
     animate(x, direction * innerWidth, {
       ...PAGE,
       velocity: velocity.x,
-      onComplete: () => land(target.href, pane),
+      onComplete: () => {
+        land(target.href, pane);
+      },
     });
   };
 
@@ -122,7 +164,9 @@ export function ViewSwipe({ previous, next, topInset, className, children }: Vie
       onDirectionLock={onDirectionLock}
       onDragEnd={onDragEnd}
       onClickCapture={(event) => {
-        if (dragged.current) event.stopPropagation();
+        if (dragged.current) {
+          event.stopPropagation();
+        }
       }}
     >
       {previous && (
@@ -169,11 +213,19 @@ function NeighbourPane({
     <motion.div
       inert
       aria-hidden
-      className={cn("absolute inset-y-0 w-full will-change-[opacity]", className)}
+      className={cn(
+        "absolute inset-y-0 w-full will-change-[opacity]",
+        className
+      )}
       style={{ opacity }}
     >
       <div ref={paneRef} className="absolute inset-x-0 h-0 overflow-clip">
-        <div className={cn(contentClassName, "min-h-[calc(100dvh-var(--pinned-height))]")}>
+        <div
+          className={cn(
+            contentClassName,
+            "min-h-[calc(100dvh-var(--pinned-height))]"
+          )}
+        >
           {children}
         </div>
       </div>

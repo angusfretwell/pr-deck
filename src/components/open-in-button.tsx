@@ -1,8 +1,8 @@
 import { ChevronDownIcon, MarkGithubIcon } from "@primer/octicons-react";
-import { type ComponentType, useRef } from "react";
+import { useRef } from "react";
+import type { ComponentType } from "react";
+
 import { DiffsHubIcon, T3CodeIcon } from "@/components/brand-icons";
-import { Button } from "@/components/ui/button";
-import { Group, GroupSeparator } from "@/components/ui/group";
 import {
   ResponsiveMenu,
   ResponsiveMenuGroup,
@@ -11,6 +11,8 @@ import {
   ResponsiveMenuPopup,
   ResponsiveMenuTrigger,
 } from "@/components/responsive-menu";
+import { Button } from "@/components/ui/button";
+import { Group, GroupSeparator } from "@/components/ui/group";
 import { useOpenIn } from "@/lib/storage";
 import type { OpenIn } from "@/types";
 
@@ -31,7 +33,13 @@ const TARGETS: Record<
   },
 };
 
-export function OpenInButton({ url, className }: { url: string; className?: string }) {
+export function OpenInButton({
+  url,
+  className,
+}: {
+  url: string;
+  className?: string;
+}) {
   const [openIn, setOpenIn] = useOpenIn();
   const { label, Icon, href } = TARGETS[openIn] ?? TARGETS.github;
   const groupRef = useRef<HTMLDivElement>(null);
@@ -47,21 +55,30 @@ export function OpenInButton({ url, className }: { url: string; className?: stri
       </Button>
       <GroupSeparator className="bg-primary/72" />
       <ResponsiveMenu>
-        <ResponsiveMenuTrigger render={<Button size="icon" aria-label="Open in…" />}>
+        <ResponsiveMenuTrigger
+          render={<Button size="icon" aria-label="Open in…" />}
+        >
           <ChevronDownIcon className="size-4" />
         </ResponsiveMenuTrigger>
-        <ResponsiveMenuPopup anchor={groupRef} align="end" className="min-w-(--anchor-width)">
+        <ResponsiveMenuPopup
+          anchor={groupRef}
+          align="end"
+          className="min-w-(--anchor-width)"
+        >
           <ResponsiveMenuGroup>
             <ResponsiveMenuGroupLabel>Open in</ResponsiveMenuGroupLabel>
             {(Object.keys(TARGETS) as OpenIn[]).map((target) => {
               const { label, Icon, href } = TARGETS[target];
+
               return (
                 <ResponsiveMenuLinkItem
                   key={target}
                   href={href(url)}
                   target="_blank"
                   rel="noopener"
-                  onClick={() => setOpenIn(target)}
+                  onClick={() => {
+                    setOpenIn(target);
+                  }}
                 >
                   <Icon />
                   {label}

@@ -1,10 +1,12 @@
 import { PlusIcon, XIcon } from "@primer/octicons-react";
 import type { ReactNode } from "react";
+
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Group, GroupSeparator, GroupText } from "@/components/ui/group";
 import { filterSummary, PROPERTY } from "@/lib/filters";
 import { cn } from "@/lib/utils";
 import type { Filter, PropertyKey, PullRequest } from "@/types";
+
 import { FilterTrigger } from "./filter-trigger";
 
 interface FilterBarProps {
@@ -17,7 +19,10 @@ interface FilterBarProps {
 }
 
 function operator(filter: Filter) {
-  if (filter.values.length > 1) return filter.negated ? "is not any of" : "is any of";
+  if (filter.values.length > 1) {
+    return filter.negated ? "is not any of" : "is any of";
+  }
+
   return filter.negated ? "is not" : "is";
 }
 
@@ -30,7 +35,7 @@ export function FilterBar({
   onRemove,
 }: FilterBarProps) {
   return (
-    <div className="mx-2 mb-2.5 flex flex-wrap items-center gap-1.5 rounded-lg bg-muted px-2 py-1.5 md:mx-4">
+    <div className="bg-muted mx-2 mb-2.5 flex flex-wrap items-center gap-1.5 rounded-lg px-2 py-1.5 md:mx-4">
       {filters.map((filter, index) => (
         <Group
           key={filter.key}
@@ -40,7 +45,7 @@ export function FilterBar({
           <GroupText
             className={cn(
               buttonVariants({ size: "sm", variant: "outline" }),
-              "pointer-events-none text-muted-foreground",
+              "text-muted-foreground pointer-events-none"
             )}
           >
             {PROPERTY[filter.key].name}
@@ -50,16 +55,22 @@ export function FilterBar({
             variant="outline"
             size="sm"
             className="text-muted-foreground"
-            onClick={() => onNegatedChange(filter.key, !filter.negated)}
+            onClick={() => {
+              onNegatedChange(filter.key, !filter.negated);
+            }}
           >
             {operator(filter)}
           </Button>
           <GroupSeparator />
           <FilterTrigger
             anchor={filter.key}
-            render={<Button variant="outline" size="sm" className="min-w-0 shrink" />}
+            render={
+              <Button variant="outline" size="sm" className="min-w-0 shrink" />
+            }
           >
-            <span className="truncate">{filterSummary(filter, orgPrs, viewer)}</span>
+            <span className="truncate">
+              {filterSummary(filter, orgPrs, viewer)}
+            </span>
           </FilterTrigger>
           <GroupSeparator />
           <Button
@@ -67,7 +78,9 @@ export function FilterBar({
             size="icon-sm"
             className="text-muted-foreground"
             aria-label="Remove filter"
-            onClick={() => onRemove(index)}
+            onClick={() => {
+              onRemove(index);
+            }}
           >
             <XIcon />
           </Button>

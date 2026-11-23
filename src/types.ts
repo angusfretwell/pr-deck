@@ -1,7 +1,11 @@
 export type CiState = "pass" | "fail" | "pending" | "none";
+
 export type CheckState = "pass" | "fail" | "pending" | "skipped";
+
 export type Mergeability = "clean" | "conflict" | "unknown";
+
 export type ReviewVerdict = "comment" | "changes" | "approved";
+
 export type ReviewState = ReviewVerdict | "none";
 
 export interface Account {
@@ -74,8 +78,16 @@ export interface PullRequestDetail {
   files: FileChange[];
 }
 
-export type PropertyKey = "author" | "ci" | "conflicts" | "review" | "myReview" | "repo";
+export type PropertyKey =
+  | "author"
+  | "ci"
+  | "conflicts"
+  | "review"
+  | "myReview"
+  | "repo";
+
 export type Group = "repo" | "author" | "none";
+
 export type OpenIn = "github" | "diffshub" | "t3code";
 
 export interface Filter {

@@ -1,6 +1,7 @@
 import type { CheckState, CiState, PullRequest, ReviewState } from "../types";
 
 export type Tone = "ok" | "bad" | "severe" | "warn" | "mute";
+
 export type BadgeIconName =
   | "pass"
   | "fail"
@@ -42,21 +43,47 @@ export const REVIEW_BADGE: Record<ReviewState, Badge> = {
   approved: { tone: "ok", icon: "pass", label: "Approved" },
 };
 
-export const CONFLICT_BADGE: Badge = { tone: "severe", icon: "alert", label: "Conflicts" };
+export const CONFLICT_BADGE: Badge = {
+  tone: "severe",
+  icon: "alert",
+  label: "Conflicts",
+};
 
 export type ViewerReviewState = ReviewState | "requested";
 
-export function viewerReview(pr: PullRequest, viewer: string): ViewerReviewState {
-  if (pr.reviewRequestedFromViewer) return "requested";
-  return pr.reviewers.find((reviewer) => reviewer.login === viewer)?.verdict ?? "none";
+export function viewerReview(
+  pr: PullRequest,
+  viewer: string
+): ViewerReviewState {
+  if (pr.reviewRequestedFromViewer) {
+    return "requested";
+  }
+
+  return (
+    pr.reviewers.find((reviewer) => reviewer.login === viewer)?.verdict ??
+    "none"
+  );
 }
 
 export function issueBadges(pr: PullRequest): Badge[] {
   const badges: Badge[] = [];
-  if (pr.ci === "fail") badges.push({ ...FAIL, label: "Checks" });
-  if (pr.ci === "pending") badges.push({ ...PENDING, label: "Checks" });
-  if (pr.mergeability === "conflict") badges.push(CONFLICT_BADGE);
-  if (pr.review === "changes" || pr.review === "approved") badges.push(REVIEW_BADGE[pr.review]);
+
+  if (pr.ci === "fail") {
+    badges.push({ ...FAIL, label: "Checks" });
+  }
+
+  if (pr.ci === "pending") {
+    badges.push({ ...PENDING, label: "Checks" });
+  }
+
+  if (pr.mergeability === "conflict") {
+    badges.push(CONFLICT_BADGE);
+  }
+
+  if (pr.review === "changes" || pr.review === "approved") {
+    badges.push(REVIEW_BADGE[pr.review]);
+  }
+
   return badges;
 }
 
@@ -66,15 +93,30 @@ export function statusBadge(pr: PullRequest): Badge {
     pr.mergeability === "conflict" && "Conflicts",
     pr.review === "changes" && "Changes requested",
   ].filter((label) => label !== false);
-  if (blockers.length)
+
+  if (blockers.length) {
     return {
-      tone: blockers.length === 1 && pr.mergeability === "conflict" ? "severe" : "bad",
+      tone:
+        blockers.length === 1 && pr.mergeability === "conflict"
+          ? "severe"
+          : "bad",
       icon: "fail",
       label: blockers.join(", "),
     };
-  if (pr.ci === "pending") return { ...PENDING, label: "Checks running" };
-  if (pr.review === "approved" && pr.ci === "pass" && pr.mergeability === "clean")
+  }
+
+  if (pr.ci === "pending") {
+    return { ...PENDING, label: "Checks running" };
+  }
+
+  if (
+    pr.review === "approved" &&
+    pr.ci === "pass" &&
+    pr.mergeability === "clean"
+  ) {
     return { tone: "ok", icon: "pass", label: "Ready to merge" };
+  }
+
   return { tone: "mute", icon: "open", label: "Awaiting review" };
 }
 
@@ -86,8 +128,15 @@ const hoursSince = (updatedAt: string, now: number) =>
 
 export function age(updatedAt: string, now = Date.now()) {
   const hours = Math.floor(hoursSince(updatedAt, now));
-  if (hours < 1) return "now";
-  if (hours < 24) return `${hours}h`;
+
+  if (hours < 1) {
+    return "now";
+  }
+
+  if (hours < 24) {
+    return `${hours}h`;
+  }
+
   return `${Math.round(hours / 24)}d`;
 }
 

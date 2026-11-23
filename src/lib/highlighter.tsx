@@ -2,20 +2,20 @@ import * as React from "react";
 import type { GrammarState, HighlighterCore } from "shiki/core";
 
 const languages = {
-  bash: () => import("shiki/langs/shellscript.mjs"),
-  css: () => import("shiki/langs/css.mjs"),
-  diff: () => import("shiki/langs/diff.mjs"),
-  html: () => import("shiki/langs/html.mjs"),
-  javascript: () => import("shiki/langs/javascript.mjs"),
-  json: () => import("shiki/langs/json.mjs"),
-  jsx: () => import("shiki/langs/jsx.mjs"),
-  markdown: () => import("shiki/langs/markdown.mjs"),
-  python: () => import("shiki/langs/python.mjs"),
-  sql: () => import("shiki/langs/sql.mjs"),
-  toml: () => import("shiki/langs/toml.mjs"),
-  tsx: () => import("shiki/langs/tsx.mjs"),
-  typescript: () => import("shiki/langs/typescript.mjs"),
-  yaml: () => import("shiki/langs/yaml.mjs"),
+  bash: async () => await import("shiki/langs/shellscript.mjs"),
+  css: async () => await import("shiki/langs/css.mjs"),
+  diff: async () => await import("shiki/langs/diff.mjs"),
+  html: async () => await import("shiki/langs/html.mjs"),
+  javascript: async () => await import("shiki/langs/javascript.mjs"),
+  json: async () => await import("shiki/langs/json.mjs"),
+  jsx: async () => await import("shiki/langs/jsx.mjs"),
+  markdown: async () => await import("shiki/langs/markdown.mjs"),
+  python: async () => await import("shiki/langs/python.mjs"),
+  sql: async () => await import("shiki/langs/sql.mjs"),
+  toml: async () => await import("shiki/langs/toml.mjs"),
+  tsx: async () => await import("shiki/langs/tsx.mjs"),
+  typescript: async () => await import("shiki/langs/typescript.mjs"),
+  yaml: async () => await import("shiki/langs/yaml.mjs"),
 };
 
 const aliases: Record<string, keyof typeof languages> = {
@@ -35,17 +35,23 @@ const aliases: Record<string, keyof typeof languages> = {
 
 let highlighter: Promise<HighlighterCore> | undefined;
 
-function getHighlighter() {
-  highlighter ??= Promise.all([import("shiki/core"), import("shiki/engine/javascript")]).then(
-    ([{ createHighlighterCore }, { createJavaScriptRegexEngine }]) =>
-      createHighlighterCore({
-        themes: [import("shiki/themes/github-light.mjs"), import("shiki/themes/github-dark.mjs")],
+async function getHighlighter() {
+  highlighter ??= Promise.all([
+    import("shiki/core"),
+    import("shiki/engine/javascript"),
+  ]).then(
+    async ([{ createHighlighterCore }, { createJavaScriptRegexEngine }]) =>
+      await createHighlighterCore({
+        themes: [
+          import("shiki/themes/github-light.mjs"),
+          import("shiki/themes/github-dark.mjs"),
+        ],
         langs: [],
         engine: createJavaScriptRegexEngine({ forgiving: true }),
-      }),
+      })
   );
 
-  return highlighter;
+  return await highlighter;
 }
 
 function getLanguage(language: string) {
@@ -86,7 +92,9 @@ export async function loadHighlighter(language: string) {
         }).tokens;
 
       const tokens =
-        lang === "ansi" ? code.split("\n").flatMap((line) => tokenize(line)) : tokenize(code);
+        lang === "ansi"
+          ? code.split("\n").flatMap((line) => tokenize(line))
+          : tokenize(code);
 
       return {
         lines: tokens.map((line) =>
@@ -98,7 +106,7 @@ export async function loadHighlighter(language: string) {
             >
               {token.content}
             </span>
-          )),
+          ))
         ),
         state: shiki.getLastGrammarState(tokens),
       };

@@ -1,7 +1,11 @@
 import type React from "react";
+
 import { cn } from "@/lib/utils";
 
-export function Spinner({ className, ...props }: React.ComponentProps<"svg">): React.ReactElement {
+export function Spinner({
+  className,
+  ...props
+}: React.ComponentProps<"svg">): React.ReactElement {
   return (
     <svg
       aria-label="Loading"

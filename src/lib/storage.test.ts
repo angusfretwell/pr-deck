@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { parseGroupsByOwner } from "./storage";
 
 describe("parseGroupsByOwner", () => {
@@ -8,6 +9,8 @@ describe("parseGroupsByOwner", () => {
   });
 
   it("discards the ownerless list stored by earlier versions", () => {
-    expect(parseGroupsByOwner(JSON.stringify(["repo:web", "author:bob"]))).toEqual({});
+    expect(
+      parseGroupsByOwner(JSON.stringify(["repo:web", "author:bob"]))
+    ).toEqual({});
   });
 });

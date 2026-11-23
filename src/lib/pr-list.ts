@@ -1,6 +1,7 @@
 import type { Filter, Group, PullRequest } from "../types";
 import { awaitsStatus, matchesText, passes } from "./filters";
-import { clusterByStack, type Cluster, type StackIndex } from "./stacks";
+import { clusterByStack } from "./stacks";
+import type { Cluster, StackIndex } from "./stacks";
 
 export interface Selection {
   selectedId: string | null;
@@ -62,9 +63,16 @@ export type SelectionAction =
 const groupId = (group: Group, key: string) => `${group}:${key}`;
 
 function groupRows(prs: PullRequest[], group: Group) {
-  if (group === "none") return [{ key: "", rows: prs }];
+  if (group === "none") {
+    return [{ key: "", rows: prs }];
+  }
+
   const keys = [...new Set(prs.map((pr) => pr[group]))].sort();
-  return keys.map((key) => ({ key, rows: prs.filter((pr) => pr[group] === key) }));
+
+  return keys.map((key) => ({
+    key,
+    rows: prs.filter((pr) => pr[group] === key),
+  }));
 }
 
 export function derivePrList({
@@ -81,9 +89,11 @@ export function derivePrList({
 }: PrListInput): PrList {
   const scoped = pullRequests.filter((pr) => matchesText(pr, query));
   const visible = scoped.filter((pr) => passes(pr, filters, viewer));
+
   const groups = groupRows(visible, group)
     .map(({ key, rows }) => {
       const clusters = clusterByStack(rows, stacks);
+
       return {
         key,
         rows: clusters.flatMap((cluster) => cluster.rows),
@@ -93,15 +103,20 @@ export function derivePrList({
       };
     })
     .sort((a, b) => Number(b.starred) - Number(a.starred));
+
   const selected = visible.find((pr) => pr.id === selection.selectedId);
+
   return {
     scoped,
     statusPending: awaitsStatus(filters, scoped),
     groups,
-    order: groups.flatMap((entry) => (entry.collapsed ? [] : entry.rows.map((pr) => pr.id))),
+    order: groups.flatMap((entry) =>
+      entry.collapsed ? [] : entry.rows.map((pr) => pr.id)
+    ),
     selected,
     previewed: desktop && selection.previewOpen ? selected : undefined,
-    highlightedId: desktop || selection.previewOpen ? selection.selectedId : null,
+    highlightedId:
+      desktop || selection.previewOpen ? selection.selectedId : null,
     selection,
     group,
     collapsed,
@@ -112,31 +127,58 @@ export function derivePrList({
 const navigableIndex = ({ order, selection }: PrList) =>
   selection.selectedId ? order.indexOf(selection.selectedId) : -1;
 
-export function applySelectionAction(list: PrList, action: SelectionAction): Selection {
+export function applySelectionAction(
+  list: PrList,
+  action: SelectionAction
+): Selection {
   const { order, selection } = list;
+
   switch (action.type) {
     case "move": {
-      if (!order.length) return selection;
+      if (!order.length) {
+        return selection;
+      }
+
       const index = navigableIndex(list);
-      const next = Math.max(0, Math.min(order.length - 1, index < 0 ? 0 : index + action.delta));
+
+      const next = Math.max(
+        0,
+        Math.min(order.length - 1, index < 0 ? 0 : index + action.delta)
+      );
+
       return { ...selection, selectedId: order[next] ?? null };
     }
-    case "select":
+
+    case "select": {
       return { selectedId: action.id, previewOpen: true };
-    case "togglePreview":
+    }
+
+    case "togglePreview": {
       return navigableIndex(list) < 0
         ? selection
         : { ...selection, previewOpen: !selection.previewOpen };
-    case "closePreview":
+    }
+
+    case "closePreview": {
       return { ...selection, previewOpen: false };
-    case "escape":
-      return selection.previewOpen ? { ...selection, previewOpen: false } : NO_SELECTION;
+    }
+
+    case "escape": {
+      return selection.previewOpen
+        ? { ...selection, previewOpen: false }
+        : NO_SELECTION;
+    }
   }
 }
 
-function setGroupsCollapsed(list: PrList, keys: string[], collapse: boolean): string[] {
+function setGroupsCollapsed(
+  list: PrList,
+  keys: string[],
+  collapse: boolean
+): string[] {
   const { collapsed, group } = list;
   const ids = keys.map((key) => groupId(group, key));
+
   return collapse
     ? [...collapsed, ...ids.filter((added) => !collapsed.includes(added))]
     : collapsed.filter((existing) => !ids.includes(existing));
@@ -144,24 +186,46 @@ function setGroupsCollapsed(list: PrList, keys: string[], collapse: boolean): st
 
 const groupKeys = ({ groups }: PrList) => groups.map((entry) => entry.key);
 
-export function toggleGroup(list: PrList, key: string, scope: ToggleScope): string[] {
+export function toggleGroup(
+  list: PrList,
+  key: string,
+  scope: ToggleScope
+): string[] {
   if (scope === "others") {
     const others = groupKeys(list).filter((other) => other !== key);
-    const focused = list.groups.every((entry) => entry.collapsed === (entry.key !== key));
-    if (focused) return setGroupsCollapsed(list, others, false);
+
+    const focused = list.groups.every(
+      (entry) => entry.collapsed === (entry.key !== key)
+    );
+
+    if (focused) {
+      return setGroupsCollapsed(list, others, false);
+    }
+
     const collapsed = setGroupsCollapsed(list, others, true);
+
     return setGroupsCollapsed({ ...list, collapsed }, [key], false);
   }
+
   const collapse = !list.collapsed.includes(groupId(list.group, key));
-  return setGroupsCollapsed(list, scope === "all" ? groupKeys(list) : [key], collapse);
+
+  return setGroupsCollapsed(
+    list,
+    scope === "all" ? groupKeys(list) : [key],
+    collapse
+  );
 }
 
-export const allGroupsCollapsed = ({ groups }: PrList) => groups.every((entry) => entry.collapsed);
+export const allGroupsCollapsed = ({ groups }: PrList) =>
+  groups.every((entry) => entry.collapsed);
 
 export const toggleAllGroups = (list: PrList) =>
   setGroupsCollapsed(list, groupKeys(list), !allGroupsCollapsed(list));
 
 export function toggleStar({ starred, group }: PrList, key: string): string[] {
   const id = groupId(group, key);
-  return starred.includes(id) ? starred.filter((existing) => existing !== id) : [...starred, id];
+
+  return starred.includes(id)
+    ? starred.filter((existing) => existing !== id)
+    : [...starred, id];
 }

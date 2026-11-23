@@ -9,7 +9,10 @@ interface UserAvatarProps {
 
 export function UserAvatar({ login, avatarUrl, className }: UserAvatarProps) {
   return (
-    <Avatar className={cn("[--avatar-size:--spacing(4.5)]", className)} title={login}>
+    <Avatar
+      className={cn("[--avatar-size:--spacing(4.5)]", className)}
+      title={login}
+    >
       <AvatarImage src={avatarUrl} alt={login} />
       <AvatarFallback>{login[0]?.toUpperCase()}</AvatarFallback>
     </Avatar>

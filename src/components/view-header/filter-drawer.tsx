@@ -1,5 +1,6 @@
 import { SearchIcon } from "@primer/octicons-react";
 import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -11,15 +12,30 @@ import {
   DrawerMenuTrigger,
   DrawerPanel,
   DrawerPopup,
-  type DrawerPrimitive,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { SegmentedControl, SegmentedControlItem } from "@/components/ui/segmented-control";
+import type { DrawerPrimitive } from "@/components/ui/drawer";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import {
+  SegmentedControl,
+  SegmentedControlItem,
+} from "@/components/ui/segmented-control";
 import { UserAvatar } from "@/components/user-avatar";
-import { facets, filterSummary, passes, PROPERTIES, PROPERTY, VIEWER_VALUE } from "@/lib/filters";
+import {
+  facets,
+  filterSummary,
+  passes,
+  PROPERTIES,
+  PROPERTY,
+  VIEWER_VALUE,
+} from "@/lib/filters";
 import { cn } from "@/lib/utils";
 import type { Filter, PropertyKey, PullRequest } from "@/types";
+
 import type { MenuAnchor } from "./filter-trigger-context";
 
 const SEARCH_THRESHOLD = 6;
@@ -41,16 +57,25 @@ interface FilterDrawerProps extends FilterDrawerContentProps {
   onOpenChange: (open: boolean, trigger: Element | undefined) => void;
 }
 
-export function FilterDrawer({ handle, triggerId, onOpenChange, ...content }: FilterDrawerProps) {
+export function FilterDrawer({
+  handle,
+  triggerId,
+  onOpenChange,
+  ...content
+}: FilterDrawerProps) {
   return (
     <Drawer
       handle={handle}
       open={triggerId !== null}
       triggerId={triggerId}
-      onOpenChange={(open, { trigger }) => onOpenChange(open, trigger)}
+      onOpenChange={(open, { trigger }) => {
+        onOpenChange(open, trigger);
+      }}
     >
       {({ payload: anchor }) => {
-        if (anchor === undefined) return null;
+        if (anchor === undefined) {
+          return null;
+        }
 
         return (
           <DrawerPopup showBar>
@@ -78,15 +103,20 @@ function PropertyList(props: FilterDrawerContentProps) {
       <DrawerPanel>
         <DrawerMenu>
           {PROPERTIES.map((property) => {
-            const filter = filters.find((candidate) => candidate.key === property.key);
+            const filter = filters.find(
+              (candidate) => candidate.key === property.key
+            );
+
             return (
               <Drawer key={property.key}>
                 <DrawerMenuTrigger>
-                  <span className="flex-1 truncate text-start">{property.name}</span>
+                  <span className="flex-1 truncate text-start">
+                    {property.name}
+                  </span>
                   <span
                     className={cn(
                       "max-w-1/2 truncate text-sm",
-                      filter ? "font-medium" : "text-muted-foreground",
+                      filter ? "font-medium" : "text-muted-foreground"
                     )}
                   >
                     {filter
@@ -103,7 +133,11 @@ function PropertyList(props: FilterDrawerContentProps) {
         </DrawerMenu>
       </DrawerPanel>
       <DrawerFooter variant="bare">
-        <Button variant="secondary" disabled={filters.length === 0} onClick={onClearAll}>
+        <Button
+          variant="secondary"
+          disabled={filters.length === 0}
+          onClick={onClearAll}
+        >
           Clear all
         </Button>
         <DrawerClose render={<Button />}>
@@ -132,18 +166,31 @@ function PropertyPane({
 }: PropertyPaneProps) {
   const property = PROPERTY[propertyKey];
   const filter = filters.find((candidate) => candidate.key === propertyKey);
-  const [pendingNegated, setPendingNegated] = useState(filter?.negated ?? false);
+
+  const [pendingNegated, setPendingNegated] = useState(
+    filter?.negated ?? false
+  );
+
   const negated = filter?.negated ?? pendingNegated;
   const [query, setQuery] = useState("");
 
   const all = facets(property, filters, scopedPrs, orgPrs, viewer);
   const needle = query.trim().toLowerCase();
-  const shown = all.filter((facet) => facet.option.label.toLowerCase().includes(needle));
-  const avatarUrls = new Map(orgPrs.map((pr) => [pr.author, pr.authorAvatarUrl]));
+
+  const shown = all.filter((facet) =>
+    facet.option.label.toLowerCase().includes(needle)
+  );
+
+  const avatarUrls = new Map(
+    orgPrs.map((pr) => [pr.author, pr.authorAvatarUrl])
+  );
 
   const changeNegated = (next: boolean) => {
     setPendingNegated(next);
-    if (filter) onNegatedChange(propertyKey, next);
+
+    if (filter) {
+      onNegatedChange(propertyKey, next);
+    }
   };
 
   return (
@@ -157,7 +204,9 @@ function PropertyPane({
               role="radio"
               aria-checked={negated === value}
               data-checked={negated === value || undefined}
-              onClick={() => changeNegated(value)}
+              onClick={() => {
+                changeNegated(value);
+              }}
             >
               {value ? "is not" : "is"}
             </SegmentedControlItem>
@@ -173,7 +222,9 @@ function PropertyPane({
               placeholder={`Search ${property.noun}`}
               spellCheck={false}
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => {
+                setQuery(event.target.value);
+              }}
             />
             <InputGroupAddon>
               <SearchIcon aria-hidden />
@@ -185,23 +236,29 @@ function PropertyPane({
         <DrawerMenu>
           {shown.map(({ option, checked, count }) => {
             const login = option.value === VIEWER_VALUE ? viewer : option.value;
+
             return (
               <DrawerMenuCheckboxItem
                 key={option.value}
                 checked={checked}
-                onCheckedChange={() => onToggle(propertyKey, option.value, negated)}
+                onCheckedChange={() => {
+                  onToggle(propertyKey, option.value, negated);
+                }}
               >
                 <span className="flex items-center gap-2">
                   {propertyKey === "author" && (
                     <span aria-hidden className="contents">
-                      <UserAvatar login={login} avatarUrl={avatarUrls.get(login) ?? ""} />
+                      <UserAvatar
+                        login={login}
+                        avatarUrl={avatarUrls.get(login) ?? ""}
+                      />
                     </span>
                   )}
                   <span className="truncate">{option.label}</span>
                   <span
                     className={cn(
-                      "ms-auto text-muted-foreground text-sm tabular-nums",
-                      count === 0 && "opacity-56",
+                      "text-muted-foreground ms-auto text-sm tabular-nums",
+                      count === 0 && "opacity-56"
                     )}
                   >
                     {count}
@@ -211,12 +268,20 @@ function PropertyPane({
             );
           })}
           {shown.length === 0 && (
-            <p className="py-6 text-center text-muted-foreground text-sm">No matches</p>
+            <p className="text-muted-foreground py-6 text-center text-sm">
+              No matches
+            </p>
           )}
         </DrawerMenu>
       </DrawerPanel>
       <DrawerFooter variant="bare">
-        <Button variant="secondary" disabled={!filter} onClick={() => onClear(propertyKey)}>
+        <Button
+          variant="secondary"
+          disabled={!filter}
+          onClick={() => {
+            onClear(propertyKey);
+          }}
+        >
           Clear
         </Button>
         {!nested && <DrawerClose render={<Button />}>Done</DrawerClose>}

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import type { Filter, PullRequest, View } from "../types";
-import { countByView, openViews, type ViewsChange, type ViewsSession } from "./views";
+import { countByView, openViews } from "./views";
+import type { ViewsChange, ViewsSession } from "./views";
 
 const OWNER = "acme";
 
@@ -26,20 +28,40 @@ const pr = (overrides: Partial<PullRequest> = {}): PullRequest => ({
   ...overrides,
 });
 
-const is = (key: Filter["key"], ...values: string[]): Filter => ({ key, values, negated: false });
-const view = (id: string, name: string, filters: Filter[] = []): View => ({ id, name, filters });
+const is = (key: Filter["key"], ...values: string[]): Filter => ({
+  key,
+  values,
+  negated: false,
+});
 
-const STORED = [view("1", "Mine"), view("2", "Needs my review", [is("ci", "fail")])];
+const view = (id: string, name: string, filters: Filter[] = []): View => ({
+  id,
+  name,
+  filters,
+});
 
-const open = (slug: string | null, stored: View[] = STORED, session?: ViewsSession) =>
-  openViews({ owner: OWNER, stored, slug, session });
+const STORED = [
+  view("1", "Mine"),
+  view("2", "Needs my review", [is("ci", "fail")]),
+];
 
-const seed = () => openViews({ owner: OWNER, stored: undefined, slug: null }).list;
+const open = (
+  slug: string | null,
+  stored: View[] = STORED,
+  session?: ViewsSession
+) => openViews({ owner: OWNER, stored, slug, session });
+
+const seed = () =>
+  openViews({ owner: OWNER, stored: undefined, slug: null }).list;
 
 const slugOf = (path: string) => path.split("/")[2] ?? null;
 
 const follow = (change: ViewsChange, slug: string | null) =>
-  open(change.navigate ? slugOf(change.navigate.to) : slug, change.views, change.session);
+  open(
+    change.navigate ? slugOf(change.navigate.to) : slug,
+    change.views,
+    change.session
+  );
 
 const names = (views: View[]) => views.map((v) => v.name);
 
@@ -47,7 +69,11 @@ describe("seeding", () => {
   const seeded = seed();
 
   it("seeds three default views with unique ids for a new owner", () => {
-    expect(names(seeded)).toEqual(["Mine", "Needs my review", "Ready to merge"]);
+    expect(names(seeded)).toEqual([
+      "Mine",
+      "Needs my review",
+      "Ready to merge",
+    ]);
     expect(new Set(seeded.map((v) => v.id)).size).toBe(3);
     expect(seeded.every((v) => v.isDefault)).toBe(true);
   });
@@ -61,21 +87,29 @@ describe("seeding", () => {
   it("marks unmarked views that still match a default", () => {
     const legacy = seeded.map((v) => ({ ...v, isDefault: undefined }));
     const stored = [...legacy, view("x", "Custom")];
-    expect(open(null, stored).list.map((v) => !!v.isDefault)).toEqual([true, true, true, false]);
+    expect(open(null, stored).list.map((v) => !!v.isDefault)).toEqual([
+      true,
+      true,
+      true,
+      false,
+    ]);
   });
 
   it("leaves renamed or refiltered defaults unmarked", () => {
     const [mine, review] = seeded.map((v) => ({ ...v, isDefault: undefined }));
+
     const stored = [
       { ...mine, name: "Mine!" },
       { ...review, filters: [] },
     ];
+
     expect(open(null, stored).list).toBe(stored);
   });
 });
 
 describe("countByView", () => {
   const seeded = seed();
+
   const count = (name: string, ...prs: PullRequest[]) =>
     countByView(seeded, prs, "me")[seeded.find((v) => v.name === name)!.id];
 
@@ -84,7 +118,9 @@ describe("countByView", () => {
   });
 
   it("Needs my review counts requested PRs", () => {
-    expect(count("Needs my review", pr({ reviewRequestedFromViewer: true }), pr())).toBe(1);
+    expect(
+      count("Needs my review", pr({ reviewRequestedFromViewer: true }), pr())
+    ).toBe(1);
   });
 
   it("Ready to merge counts approved, passing, clean PRs", () => {
@@ -94,8 +130,8 @@ describe("countByView", () => {
         pr({ review: "approved" }),
         pr({ review: "approved", ci: "fail" }),
         pr({ review: "approved", mergeability: "conflict" }),
-        pr({ review: "comment" }),
-      ),
+        pr({ review: "comment" })
+      )
     ).toBe(1);
   });
   it("leaves out views that filter on status until it loads", () => {
@@ -128,7 +164,11 @@ describe("routing", () => {
   });
 
   it("links each view by slug and anything else to the root", () => {
-    const views = open(null, [view("1", "  Needs my review!! "), view("2", "A -- B")]);
+    const views = open(null, [
+      view("1", "  Needs my review!! "),
+      view("2", "A -- B"),
+    ]);
+
     expect(views.hrefFor("1")).toBe("/acme/needs-my-review");
     expect(views.hrefFor("2")).toBe("/acme/a-b");
     expect(views.hrefFor(null)).toBe("/acme");
@@ -164,11 +204,17 @@ describe("draft filters", () => {
     const saved = [is("ci", "fail", "pass"), is("repo", "web")];
     const start = open("mine", [view("1", "Mine", saved)]);
     const reordered = [is("repo", "web"), is("ci", "pass", "fail")];
-    expect(follow(start.setFilters(reordered), "mine").filtersChanged).toBe(false);
+    expect(follow(start.setFilters(reordered), "mine").filtersChanged).toBe(
+      false
+    );
   });
 
   it("reset to the saved filters", () => {
-    const edited = follow(open("needs-my-review").setFilters(draft), "needs-my-review");
+    const edited = follow(
+      open("needs-my-review").setFilters(draft),
+      "needs-my-review"
+    );
+
     const views = follow(edited.resetFilters(), "needs-my-review");
     expect(views.filters).toEqual([is("ci", "fail")]);
     expect(views.filtersChanged).toBe(false);
@@ -256,14 +302,19 @@ describe("rename", () => {
   it("enters and leaves rename mode", () => {
     const renaming = follow(open("mine").setRenaming("2"), "mine");
     expect(renaming.session.renamingViewId).toBe("2");
-    expect(follow(renaming.setRenaming(null), "mine").session.renamingViewId).toBeNull();
+    expect(
+      follow(renaming.setRenaming(null), "mine").session.renamingViewId
+    ).toBeNull();
   });
 
   it("renames the active view and replaces the URL", () => {
     const renaming = follow(open("mine").setRenaming("1"), "mine");
     const change = renaming.rename("1", "  Authored by me ");
     expect(names(change.views)).toEqual(["Authored by me", "Needs my review"]);
-    expect(change.navigate).toEqual({ to: "/acme/authored-by-me", replace: true });
+    expect(change.navigate).toEqual({
+      to: "/acme/authored-by-me",
+      replace: true,
+    });
 
     const views = follow(change, "mine");
     expect(views.active?.id).toBe("1");
@@ -291,7 +342,9 @@ describe("rename", () => {
 
   it("numbers a name whose slug is taken by another view", () => {
     const stored = [view("1", "Mine"), view("2", "Mine 2"), view("3", "Other")];
-    expect(open(null, stored).rename("3", "MINE!").views[2].name).toBe("MINE! 3");
+    expect(open(null, stored).rename("3", "MINE!").views[2].name).toBe(
+      "MINE! 3"
+    );
   });
 
   it("lets a view keep its own name", () => {
@@ -308,7 +361,10 @@ describe("rename", () => {
 });
 
 describe("delete", () => {
-  const stored = [{ ...view("1", "Mine"), isDefault: true }, view("2", "Custom")];
+  const stored = [
+    { ...view("1", "Mine"), isDefault: true },
+    view("2", "Custom"),
+  ];
 
   it("offers delete only for an active view that is not a default", () => {
     expect(open("custom", stored).deletableViewId).toBe("2");

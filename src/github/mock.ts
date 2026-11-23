@@ -8,9 +8,12 @@ import type {
   ReviewState,
   Session,
 } from "@/types";
+
 import { PENDING_STATUS } from "./mapping";
 
-const avatar = (seed: string) => `https://api.dicebear.com/9.x/shapes/svg?seed=${seed}`;
+const avatar = (seed: string) =>
+  `https://api.dicebear.com/9.x/shapes/svg?seed=${seed}`;
+
 const account = (login: string, name: string): Account => ({
   login,
   name,
@@ -19,6 +22,7 @@ const account = (login: string, name: string): Account => ({
 
 function session(): Session {
   const viewer = account("you", "You");
+
   return {
     viewer,
     owners: [
@@ -34,7 +38,15 @@ const repos = ["web", "api", "mobile", "infra", "docs", "design-system"];
 const authors = ["you", "sam", "priya", "lee", "noor", "alex", "kai"];
 const ciStates: CiState[] = ["pass", "fail", "pending", "none", "pass", "pass"];
 const mergeStates: Mergeability[] = ["clean", "clean", "conflict", "clean"];
-const reviewStates: ReviewState[] = ["none", "approved", "changes", "comment", "none"];
+
+const reviewStates: ReviewState[] = [
+  "none",
+  "approved",
+  "changes",
+  "comment",
+  "none",
+];
+
 const titles = [
   "Fix flaky checkout test on slow CI runners",
   "Add dark mode support to the settings page",
@@ -52,39 +64,45 @@ const branch = (index: number) => `feature/change-${index}`;
 const STACKED_ON: Record<number, number> = { 6: 0, 12: 6, 18: 12, 7: 1 };
 
 const pollsUntilMergeable = new Map<string, number>();
-const settledMergeability = (index: number) => mergeStates[index % mergeStates.length]!;
+
+const settledMergeability = (index: number) =>
+  mergeStates[index % mergeStates.length];
 
 function pullRequests(owner: string): PullRequest[] {
   return Array.from({ length: 48 }, (_, index) => {
     const id = `${owner}-${index}`;
-    const author = authors[index % authors.length]!;
-    const review = reviewStates[index % reviewStates.length]!;
+    const author = authors[index % authors.length];
+    const review = reviewStates[index % reviewStates.length];
+
     if (index % 7 === 2 && !pollsUntilMergeable.has(id)) {
       pollsUntilMergeable.set(id, index < 24 ? 1 : 2);
     }
+
     return {
       id,
       owner,
-      repo: repos[(index * 7) % repos.length]!,
+      repo: repos[(index * 7) % repos.length],
       number: 1200 - index * 3,
-      title: titles[index % titles.length]!,
+      title: titles[index % titles.length],
       url: `https://github.com/${owner}/${repos[0]}/pull/${1200 - index * 3}`,
       author,
       authorAvatarUrl: avatar(author),
       isDraft: index % 9 === 4,
       branch: branch(index),
-      baseBranch: index in STACKED_ON ? branch(STACKED_ON[index]!) : "main",
+      baseBranch: index in STACKED_ON ? branch(STACKED_ON[index]) : "main",
       isCrossRepository: false,
       updatedAt: new Date(Date.now() - index * 47 * 60_000).toISOString(),
-      ci: ciStates[index % ciStates.length]!,
-      mergeability: pollsUntilMergeable.get(id) ? "unknown" : settledMergeability(index),
+      ci: ciStates[index % ciStates.length],
+      mergeability: pollsUntilMergeable.get(id)
+        ? "unknown"
+        : settledMergeability(index),
       review,
       reviewers:
         review === "none"
           ? []
           : [
               {
-                login: authors[(index + 2) % authors.length]!,
+                login: authors[(index + 2) % authors.length],
                 avatarUrl: avatar(`r${index}`),
                 verdict: review,
               },
@@ -114,20 +132,23 @@ const codeSample = fence(
     return retry(task, attempts - 1);
   });
 }`,
-  "ts",
+  "ts"
 );
 
-const shellSample = fence("pnpm install\npnpm test -- --run src/lib/retry.test.ts", "shell");
+const shellSample = fence(
+  "pnpm install\npnpm test -- --run src/lib/retry.test.ts",
+  "shell"
+);
 
 const diffSample = fence(
   `- const timeout = 1000;
 + const timeout = 5000;
   fetchWithTimeout(url, timeout);`,
-  "diff",
+  "diff"
 );
 
 const plainSample = fence(
-  "Error: request timed out after 1000ms\n    at fetchWithTimeout (src/lib/http.ts:42:11)",
+  "Error: request timed out after 1000ms\n    at fetchWithTimeout (src/lib/http.ts:42:11)"
 );
 
 const detail = (): PullRequestDetail => ({
@@ -139,7 +160,13 @@ const detail = (): PullRequestDetail => ({
     { name: "build", state: "pass", seconds: 84, url: null, required: true },
     { name: "test", state: "fail", seconds: 212, url: null, required: true },
     { name: "lint", state: "pass", seconds: 31, url: null, required: false },
-    { name: "deploy-preview", state: "pending", seconds: null, url: null, required: false },
+    {
+      name: "deploy-preview",
+      state: "pending",
+      seconds: null,
+      url: null,
+      required: false,
+    },
   ],
   files: Array.from({ length: 14 }, (_, index) => ({
     path: `src/features/module-${index}/index.ts`,
@@ -148,14 +175,20 @@ const detail = (): PullRequestDetail => ({
   })),
 });
 
-const delay = <T>(value: T) => new Promise<T>((resolve) => setTimeout(() => resolve(value), 300));
+const delay = async <T>(value: T) =>
+  await new Promise<T>((resolve) =>
+    setTimeout(() => {
+      resolve(value);
+    }, 300)
+  );
 
-export const fetchSession = (_token: string) => delay(session());
+export const fetchSession = async (_token: string) => await delay(session());
+
 export async function fetchPullRequests(
   _token: string,
   owner: string,
   _viewer: string,
-  onRows: (list: PullRequestList) => void = () => {},
+  onRows: (list: PullRequestList) => void = () => {}
 ): Promise<PullRequestList> {
   const list = { pullRequests: pullRequests(owner), totalCount: 48 };
   onRows(
@@ -166,19 +199,24 @@ export async function fetchPullRequests(
         ...PENDING_STATUS,
         statusPending: true as const,
       })),
-    }),
+    })
   );
-  return delay(list);
+
+  return await delay(list);
 }
-export const fetchMergeability = (_token: string, ids: string[]) =>
-  delay<Record<string, Mergeability>>(
+
+export const fetchMergeability = async (_token: string, ids: string[]) =>
+  await delay<Record<string, Mergeability>>(
     Object.fromEntries(
       ids.map((id) => {
         const remaining = Math.max(0, (pollsUntilMergeable.get(id) ?? 0) - 1);
         pollsUntilMergeable.set(id, remaining);
         const index = Number(id.split("-").at(-1));
+
         return [id, remaining > 0 ? "unknown" : settledMergeability(index)];
-      }),
-    ),
+      })
+    )
   );
-export const fetchPullRequestDetail = (_token: string, _id: string) => delay(detail());
+
+export const fetchPullRequestDetail = async (_token: string, _id: string) =>
+  await delay(detail());

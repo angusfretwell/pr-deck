@@ -1,7 +1,14 @@
-import { MarkGithubIcon, SearchIcon, SignOutIcon, XIcon } from "@primer/octicons-react";
+import {
+  MarkGithubIcon,
+  SearchIcon,
+  SignOutIcon,
+  XIcon,
+} from "@primer/octicons-react";
 import { useIsFetching } from "@tanstack/react-query";
-import { useState, type RefObject } from "react";
+import { useState } from "react";
+import type { RefObject } from "react";
 import { useLocation } from "wouter";
+
 import { AccountAvatar } from "@/components/account-avatar";
 import { OwnerSwitcher } from "@/components/owner-switcher";
 import {
@@ -18,7 +25,11 @@ import {
   ResponsiveMenuTrigger,
 } from "@/components/responsive-menu";
 import { Button } from "@/components/ui/button";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
 import { REPO_URL } from "@/lib/repo";
 import { THEMES, useColorMode } from "@/lib/storage";
@@ -57,6 +68,7 @@ export function AppShell({
   const searching = searchVisible || searchTapped;
   const fetching = useIsFetching() > 0;
   const { ternaryDarkMode, setTernaryDarkMode } = useColorMode();
+
   const dismissSearch = () => {
     onQueryChange("");
     setSearchTapped(false);
@@ -65,13 +77,15 @@ export function AppShell({
 
   return (
     <div className="h-12.5 shrink-0">
-      <header className="flex h-12.5 items-center gap-3 border-b bg-background px-2 max-md:fixed md:px-4 max-md:inset-x-0 max-md:top-0 max-md:z-20">
+      <header className="bg-background flex h-12.5 items-center gap-3 border-b px-2 max-md:fixed max-md:inset-x-0 max-md:top-0 max-md:z-20 md:px-4">
         <div className={cn("contents", searching && "max-md:hidden")}>
           <OwnerSwitcher
             owners={enabledOwners}
             viewerLogin={session.viewer.login}
             activeOwner={activeOwner}
-            onSelect={(owner) => navigate(`/${owner}`)}
+            onSelect={(owner) => {
+              navigate(`/${owner}`);
+            }}
           />
         </div>
         {searching ? (
@@ -84,7 +98,9 @@ export function AppShell({
               autoComplete="off"
               autoFocus
               value={query}
-              onChange={(event) => onQueryChange(event.target.value)}
+              onChange={(event) => {
+                onQueryChange(event.target.value);
+              }}
               onBlur={() => {
                 setSearchTapped(false);
                 onSearchBlur();
@@ -98,7 +114,9 @@ export function AppShell({
                 variant="ghost"
                 size="icon-xs"
                 aria-label="Close search"
-                onMouseDown={(event) => event.preventDefault()}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                }}
                 onClick={dismissSearch}
               >
                 <XIcon aria-hidden />
@@ -109,7 +127,7 @@ export function AppShell({
           <>
             <span className="flex size-8 shrink-0 items-center justify-center sm:size-7">
               {fetching && (
-                <Spinner className="size-4.5 text-muted-foreground transition-opacity delay-300 duration-200 ease-snappy starting:opacity-0 sm:size-4" />
+                <Spinner className="text-muted-foreground ease-snappy size-4.5 transition-opacity delay-300 duration-200 sm:size-4 starting:opacity-0" />
               )}
             </span>
             <Button
@@ -117,37 +135,49 @@ export function AppShell({
               size="icon-sm"
               className="md:hidden"
               aria-label="Search pull requests"
-              onClick={() => setSearchTapped(true)}
+              onClick={() => {
+                setSearchTapped(true);
+              }}
             >
               <SearchIcon />
             </Button>
             <ResponsiveMenu>
               <ResponsiveMenuTrigger
-                render={<Button variant="ghost" size="icon-sm" aria-label="Account" />}
+                render={
+                  <Button variant="ghost" size="icon-sm" aria-label="Account" />
+                }
               >
                 <AccountAvatar account={session.viewer} className="size-5.5" />
               </ResponsiveMenuTrigger>
               <ResponsiveMenuPopup align="end" className="w-64">
                 <ResponsiveMenuGroup>
-                  <ResponsiveMenuGroupLabel>Organisations</ResponsiveMenuGroupLabel>
+                  <ResponsiveMenuGroupLabel>
+                    Organisations
+                  </ResponsiveMenuGroupLabel>
                   {session.owners.map((owner) => {
                     const enabled = !hiddenOwners.includes(owner.login);
+
                     return (
                       <ResponsiveMenuCheckboxItem
                         className="grid-cols-[.75rem_minmax(0,1fr)]"
                         key={owner.login}
                         checked={enabled}
                         disabled={enabled && enabledOwners.length === 1}
-                        onCheckedChange={(checked) =>
+                        onCheckedChange={(checked) => {
                           onHiddenOwnersChange(
                             checked
-                              ? hiddenOwners.filter((login) => login !== owner.login)
-                              : [...hiddenOwners, owner.login],
-                          )
-                        }
+                              ? hiddenOwners.filter(
+                                  (login) => login !== owner.login
+                                )
+                              : [...hiddenOwners, owner.login]
+                          );
+                        }}
                       >
                         <span className="flex min-w-0 items-center gap-2">
-                          <AccountAvatar account={owner} className="size-4 rounded-sm" />
+                          <AccountAvatar
+                            account={owner}
+                            className="size-4 rounded-sm"
+                          />
                           <span className="truncate" title={owner.login}>
                             {owner.login}
                           </span>
@@ -171,7 +201,11 @@ export function AppShell({
                   </ResponsiveMenuRadioGroup>
                 </ResponsiveMenuGroup>
                 <ResponsiveMenuSeparator />
-                <ResponsiveMenuLinkItem href={REPO_URL} target="_blank" rel="noopener">
+                <ResponsiveMenuLinkItem
+                  href={REPO_URL}
+                  target="_blank"
+                  rel="noopener"
+                >
                   <MarkGithubIcon />
                   Source on GitHub
                 </ResponsiveMenuLinkItem>

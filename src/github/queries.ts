@@ -21,7 +21,12 @@ export const SESSION_QUERY = /* GraphQL */ `
 `;
 
 export const PULL_REQUESTS_QUERY = /* GraphQL */ `
-  query PullRequests($owner: String!, $search: String!, $first: Int!, $after: String) {
+  query PullRequests(
+    $owner: String!
+    $search: String!
+    $first: Int!
+    $after: String
+  ) {
     repositoryOwner(login: $owner) {
       login
     }

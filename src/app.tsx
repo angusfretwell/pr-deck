@@ -2,6 +2,7 @@ import { CloudOfflineIcon } from "@primer/octicons-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Redirect, Route, Switch, useLocation } from "wouter";
+
 import { AppShell } from "@/components/app-shell";
 import { OrgRoute } from "@/components/org-page";
 import { SetupScreen } from "@/components/setup-screen";
@@ -18,7 +19,12 @@ import { Spinner } from "@/components/ui/spinner";
 import { errorMessage, isAuthError } from "@/github/api";
 import { useSession } from "@/github/hooks";
 import { clearQueryCache } from "@/lib/query-cache";
-import { useColorMode, useHiddenOwners, useLastPath, useToken } from "@/lib/storage";
+import {
+  useColorMode,
+  useHiddenOwners,
+  useLastPath,
+  useToken,
+} from "@/lib/storage";
 import type { Session } from "@/types";
 
 export default function App() {
@@ -40,7 +46,7 @@ export default function App() {
       removeToken();
       clearQueryCache();
     },
-    [removeToken],
+    [removeToken]
   );
 
   const signIn = (newToken: string, session: Session) => {
@@ -61,13 +67,17 @@ export default function App() {
           signOut(errorMessage(event.action.error));
         }
       }),
-    [queryClient, signOut],
+    [queryClient, signOut]
   );
 
   return (
     <div className="flex min-h-dvh flex-col pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)] md:h-dvh">
       {token ? (
-        <Workspace onSignOut={() => signOut(null)} />
+        <Workspace
+          onSignOut={() => {
+            signOut(null);
+          }}
+        />
       ) : (
         <SetupScreen initialError={authError} onSignIn={signIn} />
       )}
@@ -77,7 +87,11 @@ export default function App() {
 
 function Workspace({ onSignOut }: { onSignOut: () => void }) {
   const session = useSession();
-  if (session.data) return <Dashboard session={session.data} onSignOut={onSignOut} />;
+
+  if (session.data) {
+    return <Dashboard session={session.data} onSignOut={onSignOut} />;
+  }
+
   if (session.isError && !isAuthError(session.error)) {
     return (
       <Empty>
@@ -93,7 +107,7 @@ function Workspace({ onSignOut }: { onSignOut: () => void }) {
             size="sm"
             variant="outline"
             loading={session.isFetching}
-            onClick={() => session.refetch()}
+            onClick={async () => await session.refetch()}
           >
             Try again
           </Button>
@@ -101,26 +115,37 @@ function Workspace({ onSignOut }: { onSignOut: () => void }) {
       </Empty>
     );
   }
+
   return (
-    <div className="grid flex-1 place-items-center text-muted-foreground">
+    <div className="text-muted-foreground grid flex-1 place-items-center">
       <Spinner className="size-5" />
     </div>
   );
 }
 
-function Dashboard({ session, onSignOut }: { session: Session; onSignOut: () => void }) {
+function Dashboard({
+  session,
+  onSignOut,
+}: {
+  session: Session;
+  onSignOut: () => void;
+}) {
   const [query, setQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
   const [searchOpen, setSearchOpen] = useState(false);
+
   const openSearch = () => {
     setSearchOpen(true);
     searchRef.current?.focus();
   };
+
   const [hiddenOwners, setHiddenOwners] = useHiddenOwners();
+
   const enabledOwners = useMemo(
     () => session.owners.filter((owner) => !hiddenOwners.includes(owner.login)),
-    [session.owners, hiddenOwners],
+    [session.owners, hiddenOwners]
   );
+
   const owners = enabledOwners.map((owner) => owner.login);
 
   return (
@@ -138,7 +163,9 @@ function Dashboard({ session, onSignOut }: { session: Session; onSignOut: () => 
               onQueryChange={setQuery}
               searchRef={searchRef}
               searchVisible={searchOpen || query !== ""}
-              onSearchBlur={() => setSearchOpen(false)}
+              onSearchBlur={() => {
+                setSearchOpen(false);
+              }}
               onSignOut={onSignOut}
             />
             {owners.includes(org) ? (
@@ -153,7 +180,11 @@ function Dashboard({ session, onSignOut }: { session: Session; onSignOut: () => 
                 onOpenSearch={openSearch}
               />
             ) : (
-              <OwnerNotFound owner={org} hidden={hiddenOwners.includes(org)} owners={owners} />
+              <OwnerNotFound
+                owner={org}
+                hidden={hiddenOwners.includes(org)}
+                owners={owners}
+              />
             )}
           </>
         )}
@@ -168,7 +199,10 @@ function Dashboard({ session, onSignOut }: { session: Session; onSignOut: () => 
 function useFallbackPath(owners: string[]) {
   const [lastPath] = useLastPath();
   const lastOwner = lastPath?.split("/")[1];
-  return lastPath && lastOwner && owners.includes(lastOwner) ? lastPath : `/${owners[0]}`;
+
+  return lastPath && lastOwner && owners.includes(lastOwner)
+    ? lastPath
+    : `/${owners[0]}`;
 }
 
 function RootRedirect({ owners }: { owners: string[] }) {
@@ -186,10 +220,13 @@ function OwnerNotFound({
 }) {
   const [, navigate] = useLocation();
   const fallbackPath = useFallbackPath(owners);
+
   return (
     <Empty>
       <EmptyHeader>
-        <EmptyTitle>{hidden ? `${owner} is hidden` : `No access to ${owner}`}</EmptyTitle>
+        <EmptyTitle>
+          {hidden ? `${owner} is hidden` : `No access to ${owner}`}
+        </EmptyTitle>
         <EmptyDescription>
           {hidden
             ? "You hid this account from the account menu. Show it again there to see its pull requests."
@@ -200,7 +237,9 @@ function OwnerNotFound({
         <Button
           size="sm"
           variant="outline"
-          onClick={() => navigate(fallbackPath, { replace: true })}
+          onClick={() => {
+            navigate(fallbackPath, { replace: true });
+          }}
         >
           Back to {fallbackPath.split("/")[1]}
         </Button>

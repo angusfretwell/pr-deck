@@ -4,10 +4,12 @@ import { loadHighlighter } from "@/lib/highlighter";
 
 export function useHighlightedCode(value: string, language: string) {
   const code = value.endsWith("\n") ? value.slice(0, -1) : value;
+
   const [loaded, setLoaded] = React.useState<{
     language: string;
     highlighter: Awaited<ReturnType<typeof loadHighlighter>>;
   } | null>(null);
+
   const highlighter = loaded?.language === language ? loaded.highlighter : null;
 
   React.useEffect(() => {
@@ -42,7 +44,10 @@ export function useHighlightedCode(value: string, language: string) {
   const end = code.lastIndexOf("\n") + 1;
 
   if (highlighter && end > next.text.length) {
-    const result = highlighter.highlight(code.slice(next.text.length, end - 1), next.state);
+    const result = highlighter.highlight(
+      code.slice(next.text.length, end - 1),
+      next.state
+    );
 
     next = {
       highlighter,

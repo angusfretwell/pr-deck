@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import type { PullRequest } from "../types";
-import { age, CI_BADGE, CHECK_BADGE, isStale, issueBadges, statusBadge, viewerReview } from "./pr";
+import {
+  age,
+  CI_BADGE,
+  CHECK_BADGE,
+  isStale,
+  issueBadges,
+  statusBadge,
+  viewerReview,
+} from "./pr";
 
 const pr = (overrides: Partial<PullRequest> = {}): PullRequest => ({
   id: "1",
@@ -26,18 +35,28 @@ const pr = (overrides: Partial<PullRequest> = {}): PullRequest => ({
 
 describe("badge tables", () => {
   it("labels the none and skipped states", () => {
-    expect(CI_BADGE.none).toMatchObject({ tone: "mute", icon: "ring", label: "No checks" });
-    expect(CHECK_BADGE.skipped).toMatchObject({ tone: "mute", icon: "ring", label: "Skipped" });
+    expect(CI_BADGE.none).toMatchObject({
+      tone: "mute",
+      icon: "ring",
+      label: "No checks",
+    });
+    expect(CHECK_BADGE.skipped).toMatchObject({
+      tone: "mute",
+      icon: "ring",
+      label: "Skipped",
+    });
   });
 });
 
 describe("viewerReview", () => {
-  const reviewers = [{ login: "me", avatarUrl: "", verdict: "approved" as const }];
+  const reviewers = [
+    { login: "me", avatarUrl: "", verdict: "approved" as const },
+  ];
 
   it("prefers a pending request", () => {
-    expect(viewerReview(pr({ reviewers, reviewRequestedFromViewer: true }), "me")).toBe(
-      "requested",
-    );
+    expect(
+      viewerReview(pr({ reviewers, reviewRequestedFromViewer: true }), "me")
+    ).toBe("requested");
   });
 
   it("returns the viewer's verdict", () => {
@@ -52,15 +71,14 @@ describe("viewerReview", () => {
 describe("statusBadge", () => {
   const status = (overrides: Partial<PullRequest>) => {
     const { tone, icon, label } = statusBadge(pr(overrides));
+
     return [tone, icon, label];
   };
 
   it("lists every blocker under one failing icon", () => {
-    expect(status({ ci: "fail", mergeability: "conflict", review: "changes" })).toEqual([
-      "bad",
-      "fail",
-      "Checks failing, Conflicts, Changes requested",
-    ]);
+    expect(
+      status({ ci: "fail", mergeability: "conflict", review: "changes" })
+    ).toEqual(["bad", "fail", "Checks failing, Conflicts, Changes requested"]);
   });
 
   it("puts blockers ahead of running checks", () => {
@@ -69,11 +87,19 @@ describe("statusBadge", () => {
       "fail",
       "Changes requested",
     ]);
-    expect(status({ ci: "pending" })).toEqual(["warn", "pending", "Checks running"]);
+    expect(status({ ci: "pending" })).toEqual([
+      "warn",
+      "pending",
+      "Checks running",
+    ]);
   });
 
   it("is ready only when approved, passing and clean", () => {
-    expect(status({ review: "approved" })).toEqual(["ok", "pass", "Ready to merge"]);
+    expect(status({ review: "approved" })).toEqual([
+      "ok",
+      "pass",
+      "Ready to merge",
+    ]);
     expect(status({ review: "approved", mergeability: "unknown" })).toEqual([
       "mute",
       "open",
@@ -96,16 +122,22 @@ describe("issueBadges", () => {
   });
 
   it("flags conflicts but not unknown mergeability", () => {
-    expect(labels({ mergeability: "conflict" })).toEqual([["severe", "Conflicts"]]);
+    expect(labels({ mergeability: "conflict" })).toEqual([
+      ["severe", "Conflicts"],
+    ]);
     expect(labels({ mergeability: "unknown" })).toEqual([]);
   });
 
   it("flags requested changes", () => {
-    expect(labels({ review: "changes" })).toEqual([["bad", "Changes requested"]]);
+    expect(labels({ review: "changes" })).toEqual([
+      ["bad", "Changes requested"],
+    ]);
   });
 
   it("combines issues in order", () => {
-    expect(labels({ ci: "fail", mergeability: "conflict", review: "changes" })).toEqual([
+    expect(
+      labels({ ci: "fail", mergeability: "conflict", review: "changes" })
+    ).toEqual([
       ["bad", "Checks"],
       ["severe", "Conflicts"],
       ["bad", "Changes requested"],
@@ -124,7 +156,9 @@ describe("issueBadges", () => {
 
 describe("age and isStale", () => {
   const now = Date.parse("2026-01-10T00:00:00Z");
-  const ago = (hours: number) => new Date(now - hours * 3_600_000).toISOString();
+
+  const ago = (hours: number) =>
+    new Date(now - hours * 3_600_000).toISOString();
 
   it("formats age", () => {
     expect(age(ago(0.5), now)).toBe("now");
