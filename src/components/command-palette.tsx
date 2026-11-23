@@ -80,22 +80,29 @@ export interface CommandPaletteProps {
   onSearch: (query: string) => void;
 }
 
-const Check = () => <CheckIcon className="text-muted-foreground size-3.5" />;
+function Check() {
+  return <CheckIcon className="text-muted-foreground size-3.5" />;
+}
 
-const Count = ({ children }: { children: ReactNode }) => (
-  <span className="text-muted-foreground text-xs tabular-nums">{children}</span>
-);
+function Count({ children }: { children: ReactNode }) {
+  return (
+    <span className="text-muted-foreground text-xs tabular-nums">
+      {children}
+    </span>
+  );
+}
 
-const sentenceCase = (name: string) =>
-  name === "CI" ? name : name.toLowerCase();
+function sentenceCase(name: string) {
+  return name === "CI" ? name : name.toLowerCase();
+}
 
-const matches = (text: string, needle: string) => {
+function matches(text: string, needle: string) {
   const haystack = text.toLowerCase();
 
   return needle.split(/\s+/u).every((word) => haystack.includes(word));
-};
+}
 
-const CommandPaletteList = ({
+function CommandPaletteList({
   onClose,
   owner,
   owners,
@@ -115,7 +122,7 @@ const CommandPaletteList = ({
   onSearch,
 }: Omit<CommandPaletteProps, "open" | "onOpenChange"> & {
   onClose: () => void;
-}) => {
+}) {
   const [query, setQuery] = useState("");
   const [, navigate] = useLocation();
   const { ternaryDarkMode, setTernaryDarkMode } = useColorMode();
@@ -123,9 +130,9 @@ const CommandPaletteList = ({
   const { filters } = views;
   const activeViewId = views.active?.id ?? null;
 
-  const setFilters = (next: typeof filters) => {
+  function setFilters(next: typeof filters) {
     onViewsChange(views.setFilters(next));
-  };
+  }
 
   const viewItems: PaletteCommand[] = [
     { id: null, name: ALL_OPEN_NAME, count: allOpenCount },
@@ -329,13 +336,13 @@ const CommandPaletteList = ({
     });
   }
 
-  const run = (item: PaletteCommand) => {
+  function run(item: PaletteCommand) {
     item.run();
 
     if (item.keepOpen !== true) {
       onClose();
     }
-  };
+  }
 
   return (
     <Command
@@ -407,21 +414,23 @@ const CommandPaletteList = ({
       </CommandFooter>
     </Command>
   );
-};
+}
 
-export const CommandPalette = ({
+export function CommandPalette({
   open,
   onOpenChange,
   ...props
-}: CommandPaletteProps) => (
-  <CommandDialog open={open} onOpenChange={onOpenChange}>
-    <CommandDialogPopup finalFocus={false}>
-      <CommandPaletteList
-        onClose={() => {
-          onOpenChange(false);
-        }}
-        {...props}
-      />
-    </CommandDialogPopup>
-  </CommandDialog>
-);
+}: CommandPaletteProps) {
+  return (
+    <CommandDialog open={open} onOpenChange={onOpenChange}>
+      <CommandDialogPopup finalFocus={false}>
+        <CommandPaletteList
+          onClose={() => {
+            onOpenChange(false);
+          }}
+          {...props}
+        />
+      </CommandDialogPopup>
+    </CommandDialog>
+  );
+}

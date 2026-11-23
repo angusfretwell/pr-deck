@@ -44,15 +44,20 @@ interface ActiveItemRect {
   width: number;
 }
 
-const isSameRect = (a: ActiveItemRect | null, b: ActiveItemRect | null) =>
-  a?.left === b?.left &&
-  a?.top === b?.top &&
-  a?.width === b?.width &&
-  a?.height === b?.height;
+function isSameRect(a: ActiveItemRect | null, b: ActiveItemRect | null) {
+  return (
+    a?.left === b?.left &&
+    a?.top === b?.top &&
+    a?.width === b?.width &&
+    a?.height === b?.height
+  );
+}
 
-const parsePixels = (value: string) => Number(value.replace(/px$/u, "")) || 0;
+function parsePixels(value: string) {
+  return Number(value.replace(/px$/u, "")) || 0;
+}
 
-const getCssSize = (element: HTMLElement) => {
+function getCssSize(element: HTMLElement) {
   const style = getComputedStyle(element);
   const width = parsePixels(style.width);
   const height = parsePixels(style.height);
@@ -65,9 +70,9 @@ const getCssSize = (element: HTMLElement) => {
   }
 
   return { height, width };
-};
+}
 
-const measureItem = (item: HTMLElement, root: HTMLElement) => {
+function measureItem(item: HTMLElement, root: HTMLElement) {
   const { width, height } = getCssSize(item);
   const rootSize = getCssSize(root);
   const itemRect = item.getBoundingClientRect();
@@ -93,31 +98,23 @@ const measureItem = (item: HTMLElement, root: HTMLElement) => {
     top: isUndistorted ? rectTop : item.offsetTop,
     width,
   } satisfies ActiveItemRect;
-};
+}
 
-const observeActiveItem = (
+function observeActiveItem(
   root: HTMLElement,
   setRect: React.Dispatch<React.SetStateAction<ActiveItemRect | null>>
-) => {
-  const update = () => {
+) {
+  function update() {
     const item = root.querySelector<HTMLElement>(activeItemSelector);
     const next = item ? measureItem(item, root) : null;
     setRect((previous) => (isSameRect(previous, next) ? previous : next));
-  };
+  }
 
   update();
 
   const resizeObserver = new ResizeObserver(update);
 
-  const mutationObserver = new MutationObserver((records) => {
-    if (records.some((record) => record.type === "childList")) {
-      observeItems();
-    }
-
-    update();
-  });
-
-  const observeItems = () => {
+  function observeItems() {
     resizeObserver.disconnect();
     resizeObserver.observe(root);
 
@@ -128,7 +125,15 @@ const observeActiveItem = (
         attributes: true,
       });
     }
-  };
+  }
+
+  const mutationObserver = new MutationObserver((records) => {
+    if (records.some((record) => record.type === "childList")) {
+      observeItems();
+    }
+
+    update();
+  });
 
   mutationObserver.observe(root, { childList: true });
   observeItems();
@@ -137,12 +142,12 @@ const observeActiveItem = (
     resizeObserver.disconnect();
     mutationObserver.disconnect();
   };
-};
+}
 
 type IndicatorStyle = React.CSSProperties &
   Record<`--active-item-${string}`, string>;
 
-const SegmentedControlIndicator = () => {
+function SegmentedControlIndicator() {
   const ref = React.useRef<HTMLSpanElement>(null);
   const [rect, setRect] = React.useState<ActiveItemRect | null>(null);
 
@@ -172,9 +177,9 @@ const SegmentedControlIndicator = () => {
       style={style}
     />
   );
-};
+}
 
-export const SegmentedControl = ({
+export function SegmentedControl({
   className,
   children,
   render,
@@ -182,7 +187,7 @@ export const SegmentedControl = ({
   ...props
 }: useRender.ComponentProps<"div"> & {
   size?: SegmentedControlSize;
-}) => {
+}) {
   const defaultProps = {
     children: (
       <>
@@ -209,16 +214,16 @@ export const SegmentedControl = ({
       {element}
     </SegmentedControlContext.Provider>
   );
-};
+}
 
-export const SegmentedControlItem = ({
+export function SegmentedControlItem({
   className,
   render,
   size,
   ...props
 }: useRender.ComponentProps<"button"> & {
   size?: SegmentedControlSize;
-}) => {
+}) {
   const contextSize = React.useContext(SegmentedControlContext);
   const resolvedSize = size ?? contextSize;
 
@@ -246,4 +251,4 @@ export const SegmentedControlItem = ({
     props: mergeProps<"button">(defaultProps, props),
     render,
   });
-};
+}

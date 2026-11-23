@@ -30,8 +30,9 @@ interface Connection<T> {
   nodes: (T | null)[] | null;
 }
 
-export const nodesOf = <T>(connection: Connection<T> | null | undefined) =>
-  (connection?.nodes ?? []).filter((node) => node !== null);
+export function nodesOf<T>(connection: Connection<T> | null | undefined) {
+  return (connection?.nodes ?? []).filter((node) => node !== null);
+}
 
 type NodeOf<C> = NonNullable<C> extends Connection<infer T> ? T : never;
 
@@ -121,27 +122,31 @@ const CHECK_STATES: Record<
   STALE: "skipped",
 };
 
-export const toMergeability = (raw: MergeableState) => MERGEABILITY[raw];
+export function toMergeability(raw: MergeableState) {
+  return MERGEABILITY[raw];
+}
 
-export const withMergeability = (
+export function withMergeability(
   list: PullRequestList,
   states: Record<string, Mergeability>
-) =>
-  ({
+) {
+  return {
     ...list,
     pullRequests: list.pullRequests.map((pr) =>
       pr.id in states ? { ...pr, mergeability: states[pr.id] } : pr
     ),
-  }) satisfies PullRequestList;
+  } satisfies PullRequestList;
+}
 
-export const toAccount = (raw: RawAccount) =>
-  ({
+export function toAccount(raw: RawAccount) {
+  return {
     login: raw.login,
     name: raw.name === null || raw.name === "" ? raw.login : raw.name,
     avatarUrl: raw.avatarUrl,
-  }) satisfies Account;
+  } satisfies Account;
+}
 
-export const toSession = ({ viewer }: RawSession) => {
+export function toSession({ viewer }: RawSession) {
   const account = toAccount(viewer);
 
   const orgs = nodesOf(viewer.organizations)
@@ -149,20 +154,20 @@ export const toSession = ({ viewer }: RawSession) => {
     .toSorted((a, b) => a.login.localeCompare(b.login));
 
   return { viewer: account, owners: [account, ...orgs] } satisfies Session;
-};
+}
 
-export const toCi = (node: Pick<RawPullRequestStatus, "commits">) => {
+export function toCi(node: Pick<RawPullRequestStatus, "commits">) {
   const rollup = nodesOf(node.commits)[0]?.commit.statusCheckRollup;
 
   return rollup ? CI_STATES[rollup.state] : "none";
-};
+}
 
-export const toReviewers = (
+export function toReviewers(
   node: Pick<
     RawPullRequestStatus,
     "author" | "latestReviews" | "latestOpinionatedReviews"
   >
-) => {
+) {
   const authorLogin = node.author?.login ?? GHOST.login;
   const reviewers = new Map<string, Reviewer>();
 
@@ -189,12 +194,12 @@ export const toReviewers = (
   }
 
   return [...reviewers.values()];
-};
+}
 
-export const toReviewState = (
+export function toReviewState(
   decision: PullRequestReviewDecision | null,
   reviewers: Reviewer[]
-) => {
+) {
   const verdicts = new Set(reviewers.map((reviewer) => reviewer.verdict));
 
   if (decision === "APPROVED") {
@@ -222,13 +227,13 @@ export const toReviewState = (
   }
 
   return "none";
-};
+}
 
-export const isReviewRequestedFrom = (
+export function isReviewRequestedFrom(
   node: Pick<RawPullRequestStatus, "reviewRequests">,
   { viewer, viewerTeams }: ReviewContext
-) =>
-  nodesOf(node.reviewRequests).some(({ requestedReviewer }) => {
+) {
+  return nodesOf(node.reviewRequests).some(({ requestedReviewer }) => {
     if (requestedReviewer?.__typename === "User") {
       return requestedReviewer.login === viewer;
     }
@@ -239,6 +244,7 @@ export const isReviewRequestedFrom = (
 
     return false;
   });
+}
 
 export const PENDING_STATUS: PullRequestStatus = {
   ci: "none",
@@ -248,7 +254,7 @@ export const PENDING_STATUS: PullRequestStatus = {
   reviewRequestedFromViewer: false,
 };
 
-export const toPullRequestRow = (node: RawPullRequestRow) => {
+export function toPullRequestRow(node: RawPullRequestRow) {
   const author = node.author ?? GHOST;
 
   return {
@@ -268,12 +274,12 @@ export const toPullRequestRow = (node: RawPullRequestRow) => {
     ...PENDING_STATUS,
     statusPending: true,
   } satisfies PullRequest;
-};
+}
 
-export const toPullRequestStatus = (
+export function toPullRequestStatus(
   node: RawPullRequestStatus,
   context: ReviewContext
-) => {
+) {
   const reviewers = toReviewers(node);
   const author = node.author?.login ?? GHOST.login;
 
@@ -285,34 +291,35 @@ export const toPullRequestStatus = (
     reviewRequestedFromViewer:
       author !== context.viewer && isReviewRequestedFrom(node, context),
   } satisfies PullRequestStatus;
-};
+}
 
-export const withStatus = (pr: PullRequest, status: PullRequestStatus) => {
+export function withStatus(pr: PullRequest, status: PullRequestStatus) {
   const { statusPending: _, ...row } = pr;
   const updated: PullRequest = { ...row, ...status };
 
   return updated;
-};
+}
 
-const statusOf = ({
+function statusOf({
   ci,
   mergeability,
   review,
   reviewers,
   reviewRequestedFromViewer,
-}: PullRequestStatus) =>
-  ({
+}: PullRequestStatus) {
+  return {
     ci,
     mergeability,
     review,
     reviewers,
     reviewRequestedFromViewer,
-  }) satisfies PullRequestStatus;
+  } satisfies PullRequestStatus;
+}
 
-export const withRows = (
+export function withRows(
   previous: PullRequestList | undefined,
   rows: PullRequestList
-) => {
+) {
   const known = new Map(
     previous?.pullRequests
       .filter((pr) => !pr.statusPending)
@@ -327,12 +334,9 @@ export const withRows = (
       return previousPr ? withStatus(row, statusOf(previousPr)) : row;
     }),
   };
-};
+}
 
-const secondsBetween = (
-  startedAt: string | null,
-  completedAt: string | null
-) => {
+function secondsBetween(startedAt: string | null, completedAt: string | null) {
   if (
     startedAt === null ||
     startedAt === "" ||
@@ -346,9 +350,9 @@ const secondsBetween = (
     0,
     Math.round((Date.parse(completedAt) - Date.parse(startedAt)) / 1000)
   );
-};
+}
 
-export const toCheck = (node: RawCheckContext) => {
+export function toCheck(node: RawCheckContext) {
   if (node.__typename === "StatusContext") {
     return {
       name: node.context,
@@ -370,9 +374,9 @@ export const toCheck = (node: RawCheckContext) => {
     url: node.detailsUrl,
     required: node.isRequired,
   } satisfies Check;
-};
+}
 
-export const toPullRequestDetail = (node: RawPullRequestDetail) => {
+export function toPullRequestDetail(node: RawPullRequestDetail) {
   const contexts = nodesOf(
     nodesOf(node.commits)[0]?.commit.statusCheckRollup?.contexts
   );
@@ -389,4 +393,4 @@ export const toPullRequestDetail = (node: RawPullRequestDetail) => {
       deletions,
     })),
   } satisfies PullRequestDetail;
-};
+}

@@ -10,9 +10,12 @@ import { TOKEN_KEY } from "./storage";
 
 const PERSISTED_QUERIES = new Set<unknown>(["session", "pull-requests"]);
 
-export const shouldPersistQuery = (query: Query) =>
-  PERSISTED_QUERIES.has(query.queryKey[0]) &&
-  defaultShouldDehydrateQuery(query);
+export function shouldPersistQuery(query: Query) {
+  return (
+    PERSISTED_QUERIES.has(query.queryKey[0]) &&
+    defaultShouldDehydrateQuery(query)
+  );
+}
 
 export const queryClient = new QueryClient();
 
@@ -38,19 +41,19 @@ export const persistOptions: PersistQueryClientProviderProps["persistOptions"] =
     dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
   };
 
-export const refetchRestoredQueries = async () => {
+export async function refetchRestoredQueries() {
   await queryClient.invalidateQueries();
-};
+}
 
-export const clearQueryCache = () => {
+export function clearQueryCache() {
   queryClient.clear();
   void persister.removeClient();
-};
+}
 
-export const resetQueryCache = () => {
+export function resetQueryCache() {
   void persister.removeClient();
   void queryClient.invalidateQueries({ queryKey: ["session"] });
   void queryClient.resetQueries({
     predicate: (query) => query.queryKey[0] !== "session",
   });
-};
+}

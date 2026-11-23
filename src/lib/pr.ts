@@ -51,16 +51,16 @@ export const CONFLICT_BADGE: Badge = {
 
 export type ViewerReviewState = ReviewState | "requested";
 
-export const viewerReview = (pr: PullRequest, viewer: string) => {
+export function viewerReview(pr: PullRequest, viewer: string) {
   if (pr.reviewRequestedFromViewer) {
     return "requested";
   }
 
   return (pr.reviewers.find((reviewer) => reviewer.login === viewer)?.verdict ??
     "none") satisfies ViewerReviewState;
-};
+}
 
-export const issueBadges = (pr: PullRequest) => {
+export function issueBadges(pr: PullRequest) {
   const badges: Badge[] = [];
 
   if (pr.ci === "fail") {
@@ -80,9 +80,9 @@ export const issueBadges = (pr: PullRequest) => {
   }
 
   return badges;
-};
+}
 
-export const statusBadge = (pr: PullRequest) => {
+export function statusBadge(pr: PullRequest) {
   const blockers = [
     pr.ci === "fail" && "Checks failing",
     pr.mergeability === "conflict" && "Conflicts",
@@ -121,15 +121,16 @@ export const statusBadge = (pr: PullRequest) => {
     icon: "open",
     label: "Awaiting review",
   } satisfies Badge;
-};
+}
 
 const HOUR_MS = 3_600_000;
 const STALE_AFTER_HOURS = 120;
 
-const hoursSince = (updatedAt: string, now: number) =>
-  Math.max(0, (now - Date.parse(updatedAt)) / HOUR_MS);
+function hoursSince(updatedAt: string, now: number) {
+  return Math.max(0, (now - Date.parse(updatedAt)) / HOUR_MS);
+}
 
-export const age = (updatedAt: string, now = Date.now()) => {
+export function age(updatedAt: string, now = Date.now()) {
   const hours = Math.floor(hoursSince(updatedAt, now));
 
   if (hours < 1) {
@@ -141,7 +142,8 @@ export const age = (updatedAt: string, now = Date.now()) => {
   }
 
   return `${Math.round(hours / 24)}d`;
-};
+}
 
-export const isStale = (updatedAt: string, now = Date.now()) =>
-  hoursSince(updatedAt, now) > STALE_AFTER_HOURS;
+export function isStale(updatedAt: string, now = Date.now()) {
+  return hoursSince(updatedAt, now) > STALE_AFTER_HOURS;
+}

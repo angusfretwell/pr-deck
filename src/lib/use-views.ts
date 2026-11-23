@@ -6,7 +6,7 @@ import { useStoredViews } from "./storage";
 import { NEW_SESSION, openViews } from "./views";
 import type { ViewsChange } from "./views";
 
-export const useViews = (owner: string, slug: string | null) => {
+export function useViews(owner: string, slug: string | null) {
   const [storedViews, setStoredViews] = useStoredViews();
   const [session, setSession] = useState(NEW_SESSION);
   const [, navigate] = useLocation();
@@ -31,7 +31,7 @@ export const useViews = (owner: string, slug: string | null) => {
     return null;
   }
 
-  const commit = (change: ViewsChange) => {
+  function commit(change: ViewsChange) {
     if (change.views !== stored) {
       setStoredViews((prev) => ({ ...prev, [owner]: change.views }));
     }
@@ -43,7 +43,7 @@ export const useViews = (owner: string, slug: string | null) => {
     if (change.navigate) {
       navigate(change.navigate.to, { replace: change.navigate.replace });
     }
-  };
+  }
 
   return { views, commit };
-};
+}

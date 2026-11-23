@@ -15,43 +15,47 @@ import {
 import { isRetryable } from "./api";
 import { mergeabilityPollInterval } from "./polling";
 
-const httpError = (status: number) =>
-  Object.assign(new Error("HTTP error"), { status });
+function httpError(status: number) {
+  return Object.assign(new Error("HTTP error"), { status });
+}
 
-const interval = (dataUpdateCount: number, errorUpdateCount: number) =>
-  mergeabilityPollInterval({ dataUpdateCount, errorUpdateCount });
+function interval(dataUpdateCount: number, errorUpdateCount: number) {
+  return mergeabilityPollInterval({ dataUpdateCount, errorUpdateCount });
+}
 
-const startPolling = (
+function startPolling(
   failure: (fetchNumber: number) => Error | null,
   ids = ["a"]
-) => {
+) {
   const client = new QueryClient();
   const startedAt = Date.now();
   const seconds: number[] = [];
 
-  const options = (queryIds: string[]) => ({
-    queryKey: ["mergeability", "acme", queryIds],
-    queryFn: () => {
-      seconds.push((Date.now() - startedAt) / 1000);
-      const error = failure(seconds.length);
+  function options(queryIds: string[]) {
+    return {
+      queryKey: ["mergeability", "acme", queryIds],
+      queryFn: () => {
+        seconds.push((Date.now() - startedAt) / 1000);
+        const error = failure(seconds.length);
 
-      if (error) {
-        throw error;
-      }
+        if (error) {
+          throw error;
+        }
 
-      return {};
-    },
-    initialData: {},
-    staleTime: Infinity,
-    refetchInterval: ({
-      state,
-    }: {
-      state: Parameters<typeof mergeabilityPollInterval>[0];
-    }) => mergeabilityPollInterval(state),
-    retry: (failureCount: number, error: Error) =>
-      isRetryable(error) && failureCount < 1,
-    retryDelay: 1000,
-  });
+        return {};
+      },
+      initialData: {},
+      staleTime: Infinity,
+      refetchInterval: ({
+        state,
+      }: {
+        state: Parameters<typeof mergeabilityPollInterval>[0];
+      }) => mergeabilityPollInterval(state),
+      retry: (failureCount: number, error: Error) =>
+        isRetryable(error) && failureCount < 1,
+      retryDelay: 1000,
+    };
+  }
 
   const observer = new QueryObserver(client, options(ids));
   const unsubscribe = observer.subscribe(() => {});
@@ -67,7 +71,7 @@ const startPolling = (
       client.clear();
     },
   };
-};
+}
 
 describe("mergeabilityPollInterval", () => {
   it("doubles after each successful poll and stops after the fourth", () => {

@@ -30,7 +30,7 @@ interface OwnerSwitcherProps {
   onSelect: (owner: string) => void;
 }
 
-const observeResize = (targets: Element[], onResize: () => void) => {
+function observeResize(targets: Element[], onResize: () => void) {
   onResize();
   const observer = new ResizeObserver(onResize);
 
@@ -41,9 +41,11 @@ const observeResize = (targets: Element[], onResize: () => void) => {
   return () => {
     observer.disconnect();
   };
-};
+}
 
-const pixels = (value: string) => Number(value.replace("px", ""));
+function pixels(value: string) {
+  return Number(value.replace("px", ""));
+}
 
 interface NavLayout {
   widths: number[];
@@ -51,12 +53,12 @@ interface NavLayout {
   padding: number;
 }
 
-const fitOwners = (
+function fitOwners(
   owners: Account[],
   { widths, gap, padding }: NavLayout,
   activeOwner: string,
   available: number
-) => {
+) {
   const total = widths.reduce((sum, width) => sum + width + gap, padding - gap);
 
   if (total <= available) {
@@ -83,44 +85,50 @@ const fitOwners = (
   return owners.flatMap((owner, index) =>
     fitted.has(index) ? [owner.login] : []
   );
-};
+}
 
-const OwnerNav = ({
+function OwnerNav({
   owners,
   activeOwner,
 }: {
   owners: Account[];
   activeOwner: string;
-}) => (
-  <SegmentedControl aria-label="Accounts" render={<nav />} className="min-w-0">
-    {owners.map((owner) => (
-      <SegmentedControlItem
-        key={owner.login}
-        className="min-w-0 shrink"
-        render={
-          <Link
-            href={`/${owner.login}`}
-            aria-current={owner.login === activeOwner ? "page" : undefined}
-          />
-        }
-      >
-        <AccountAvatar account={owner} className="size-4.5 rounded-sm" />
-        <span className="max-w-45 min-w-0 truncate" title={owner.login}>
-          {owner.login}
-        </span>
-      </SegmentedControlItem>
-    ))}
-  </SegmentedControl>
-);
+}) {
+  return (
+    <SegmentedControl
+      aria-label="Accounts"
+      render={<nav />}
+      className="min-w-0"
+    >
+      {owners.map((owner) => (
+        <SegmentedControlItem
+          key={owner.login}
+          className="min-w-0 shrink"
+          render={
+            <Link
+              href={`/${owner.login}`}
+              aria-current={owner.login === activeOwner ? "page" : undefined}
+            />
+          }
+        >
+          <AccountAvatar account={owner} className="size-4.5 rounded-sm" />
+          <span className="max-w-45 min-w-0 truncate" title={owner.login}>
+            {owner.login}
+          </span>
+        </SegmentedControlItem>
+      ))}
+    </SegmentedControl>
+  );
+}
 
-const OwnerMenu = ({
+function OwnerMenu({
   owners,
   viewerLogin,
   activeOwner,
   onSelect,
   trigger,
   children,
-}: OwnerSwitcherProps & { trigger: ReactElement; children: ReactNode }) => {
+}: OwnerSwitcherProps & { trigger: ReactElement; children: ReactNode }) {
   const groups = [
     {
       label: "Personal account",
@@ -167,9 +175,9 @@ const OwnerMenu = ({
       </ResponsiveMenuPopup>
     </ResponsiveMenu>
   );
-};
+}
 
-const OwnerDropdown = (props: OwnerSwitcherProps) => {
+function OwnerDropdown(props: OwnerSwitcherProps) {
   const active = props.owners.find(
     (owner) => owner.login === props.activeOwner
   );
@@ -190,9 +198,9 @@ const OwnerDropdown = (props: OwnerSwitcherProps) => {
       <ChevronDownIcon />
     </OwnerMenu>
   );
-};
+}
 
-const OwnerLinks = (props: OwnerSwitcherProps) => {
+function OwnerLinks(props: OwnerSwitcherProps) {
   const { owners, activeOwner } = props;
   const container = useRef<HTMLDivElement>(null);
   const measurer = useRef<HTMLDivElement>(null);
@@ -269,10 +277,10 @@ const OwnerLinks = (props: OwnerSwitcherProps) => {
       )}
     </div>
   );
-};
+}
 
-export const OwnerSwitcher = (props: OwnerSwitcherProps) => {
+export function OwnerSwitcher(props: OwnerSwitcherProps) {
   const desktop = useDesktop();
 
   return desktop ? <OwnerLinks {...props} /> : <OwnerDropdown {...props} />;
-};
+}

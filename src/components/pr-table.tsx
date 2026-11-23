@@ -51,13 +51,15 @@ export interface PrTableProps {
   onToggleStar: (key: string) => void;
 }
 
-const shownColumns = (group: Group, summary: boolean) => ({
-  repo: !summary && group !== "repo",
-  author: !summary && group !== "author",
-  face: summary && group !== "author",
-});
+function shownColumns(group: Group, summary: boolean) {
+  return {
+    repo: !summary && group !== "repo",
+    author: !summary && group !== "author",
+    face: summary && group !== "author",
+  };
+}
 
-const toggleScope = (event: Event) => {
+function toggleScope(event: Event) {
   if (!(event instanceof MouseEvent || event instanceof KeyboardEvent)) {
     return "group";
   }
@@ -67,9 +69,9 @@ const toggleScope = (event: Event) => {
   }
 
   return event.altKey ? "all" : "group";
-};
+}
 
-const StarButton = ({
+function StarButton({
   name,
   starred,
   onToggle,
@@ -77,7 +79,7 @@ const StarButton = ({
   name: string;
   starred: boolean;
   onToggle: () => void;
-}) => {
+}) {
   const reducedMotion = useReducedMotion();
   const pop = starred && reducedMotion !== true;
 
@@ -106,12 +108,12 @@ const StarButton = ({
       </motion.span>
     </Button>
   );
-};
+}
 
 const GROUP_HEADER =
   "flex h-9 items-center gap-2 rounded-md bg-muted px-2 text-start font-medium sm:h-8";
 
-const GroupHeading = ({
+function GroupHeading({
   group,
   name,
   rows,
@@ -119,20 +121,22 @@ const GroupHeading = ({
   group: Group;
   name: string;
   rows: PullRequest[];
-}) => (
-  <>
-    <ChevronRightIcon className="text-muted-foreground size-4 shrink-0 transition-transform duration-150 in-data-panel-open:rotate-90 motion-reduce:transition-none sm:size-3.5" />
-    {group === "author" && rows.length > 0 && (
-      <UserAvatar login={name} avatarUrl={rows[0].authorAvatarUrl} />
-    )}
-    <span className="flex min-w-0 items-baseline gap-2">
-      <span className="truncate">{name}</span>
-      <span className="text-muted-foreground text-sm tabular-nums sm:text-xs">
-        {rows.length}
+}) {
+  return (
+    <>
+      <ChevronRightIcon className="text-muted-foreground size-4 shrink-0 transition-transform duration-150 in-data-panel-open:rotate-90 motion-reduce:transition-none sm:size-3.5" />
+      {group === "author" && rows.length > 0 && (
+        <UserAvatar login={name} avatarUrl={rows[0].authorAvatarUrl} />
+      )}
+      <span className="flex min-w-0 items-baseline gap-2">
+        <span className="truncate">{name}</span>
+        <span className="text-muted-foreground text-sm tabular-nums sm:text-xs">
+          {rows.length}
+        </span>
       </span>
-    </span>
-  </>
-);
+    </>
+  );
+}
 
 interface RowContext {
   group: Group;
@@ -149,32 +153,35 @@ interface ClusterRowsProps extends RowContext {
 const BRANCH = "absolute border-black/17 dark:border-white/18";
 const ROOT_ICON_CLEARANCE = "15px";
 
-const rowCentre = (index: number) =>
-  `calc(${index} * (var(--row) + 2px) + var(--row) / 2)`;
+function rowCentre(index: number) {
+  return `calc(${index} * (var(--row) + 2px) + var(--row) / 2)`;
+}
 
-const StackTree = ({ nested }: { nested: number }) => (
-  <span aria-hidden className="pointer-events-none absolute inset-0">
-    <span
-      className={cn(
-        BRANCH,
-        "left-[14px] w-3 rounded-bl-[3px] border-b border-l"
-      )}
-      style={{
-        top: `calc(var(--row) / 2 + ${ROOT_ICON_CLEARANCE})`,
-        height: `calc(${nested} * (var(--row) + 2px) - ${ROOT_ICON_CLEARANCE} + 1px)`,
-      }}
-    />
-    {Array.from({ length: nested - 1 }, (_, index) => (
+function StackTree({ nested }: { nested: number }) {
+  return (
+    <span aria-hidden className="pointer-events-none absolute inset-0">
       <span
-        key={index}
-        className={cn(BRANCH, "left-[15px] w-[11px] border-t")}
-        style={{ top: rowCentre(index + 1) }}
+        className={cn(
+          BRANCH,
+          "left-[14px] w-3 rounded-bl-[3px] border-b border-l"
+        )}
+        style={{
+          top: `calc(var(--row) / 2 + ${ROOT_ICON_CLEARANCE})`,
+          height: `calc(${nested} * (var(--row) + 2px) - ${ROOT_ICON_CLEARANCE} + 1px)`,
+        }}
       />
-    ))}
-  </span>
-);
+      {Array.from({ length: nested - 1 }, (_, index) => (
+        <span
+          key={index}
+          className={cn(BRANCH, "left-[15px] w-[11px] border-t")}
+          style={{ top: rowCentre(index + 1) }}
+        />
+      ))}
+    </span>
+  );
+}
 
-const StackBadge = ({ stack }: { stack: Stack }) => {
+function StackBadge({ stack }: { stack: Stack }) {
   const ready = stack.layers.every((layer) => statusBadge(layer).tone === "ok");
   const Glyph = ready ? StackCheckIcon : StackIcon;
 
@@ -192,7 +199,7 @@ const StackBadge = ({ stack }: { stack: Stack }) => {
       {stack.layers.length}
     </Badge>
   );
-};
+}
 
 interface PrRowProps extends RowContext {
   pr: PullRequest;
@@ -201,7 +208,7 @@ interface PrRowProps extends RowContext {
   nested: boolean;
 }
 
-const StatusCell = ({ pr, summary }: { pr: PullRequest; summary: boolean }) => {
+function StatusCell({ pr, summary }: { pr: PullRequest; summary: boolean }) {
   if (pr.statusPending) {
     return (
       <span className="inline-flex h-5 items-center justify-end">
@@ -223,7 +230,7 @@ const StatusCell = ({ pr, summary }: { pr: PullRequest; summary: boolean }) => {
       ))}
     </span>
   );
-};
+}
 
 const PrRow = memo(
   ({
@@ -329,19 +336,21 @@ const PrRow = memo(
 
 PrRow.displayName = "PrRow";
 
-const ClusterRows = ({ cluster, selectedId, ...context }: ClusterRowsProps) => {
+function ClusterRows({ cluster, selectedId, ...context }: ClusterRowsProps) {
   const { stack, rows } = cluster;
 
-  const row = (pr: PullRequest, index: number) => (
-    <PrRow
-      key={pr.id}
-      pr={pr}
-      selected={pr.id === selectedId}
-      stack={index === 0 ? stack : null}
-      nested={index > 0}
-      {...context}
-    />
-  );
+  function row(pr: PullRequest, index: number) {
+    return (
+      <PrRow
+        key={pr.id}
+        pr={pr}
+        selected={pr.id === selectedId}
+        stack={index === 0 ? stack : null}
+        nested={index > 0}
+        {...context}
+      />
+    );
+  }
 
   if (!stack) {
     return rows.map(row);
@@ -353,9 +362,9 @@ const ClusterRows = ({ cluster, selectedId, ...context }: ClusterRowsProps) => {
       {rows.length > 1 && <StackTree nested={rows.length - 1} />}
     </div>
   );
-};
+}
 
-export const PrTable = ({
+export function PrTable({
   groups,
   group,
   compact,
@@ -367,7 +376,7 @@ export const PrTable = ({
   onClearSearch,
   onToggleGroup,
   onToggleStar,
-}: PrTableProps) => {
+}: PrTableProps) {
   const ref = useRef<HTMLDivElement>(null);
   const summary = useMediaQuery("(max-width: 639px)") || compact;
   useEffect(() => {
@@ -486,4 +495,4 @@ export const PrTable = ({
       ))}
     </div>
   );
-};
+}

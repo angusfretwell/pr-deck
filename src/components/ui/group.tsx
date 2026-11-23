@@ -26,7 +26,7 @@ export const groupVariants = cva(
   }
 );
 
-export const Group = ({
+export function Group({
   className,
   orientation,
   children,
@@ -35,22 +35,24 @@ export const Group = ({
   className?: string;
   orientation?: VariantProps<typeof groupVariants>["orientation"];
   children: React.ReactNode;
-} & React.ComponentProps<"fieldset">) => (
-  <fieldset
-    className={cn(groupVariants({ orientation }), className)}
-    data-orientation={orientation}
-    data-slot="group"
-    {...props}
-  >
-    {children}
-  </fieldset>
-);
+} & React.ComponentProps<"fieldset">) {
+  return (
+    <fieldset
+      className={cn(groupVariants({ orientation }), className)}
+      data-orientation={orientation}
+      data-slot="group"
+      {...props}
+    >
+      {children}
+    </fieldset>
+  );
+}
 
-export const GroupText = ({
+export function GroupText({
   className,
   render,
   ...props
-}: useRender.ComponentProps<"div">) => {
+}: useRender.ComponentProps<"div">) {
   const defaultProps = {
     className: cn(
       "border-input bg-muted text-muted-foreground dark:bg-input/64 relative inline-flex items-center gap-2 rounded-lg border px-[calc(--spacing(3)-1px)] text-base whitespace-nowrap shadow-xs/5 transition-shadow outline-none not-dark:bg-clip-padding before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] before:shadow-[0_1px_--theme(--color-black/6%)] sm:text-sm dark:before:shadow-[0_-1px_--theme(--color-white/6%)] [&_svg]:-mx-0.5 [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4",
@@ -64,24 +66,26 @@ export const GroupText = ({
     props: mergeProps(defaultProps, props),
     render,
   });
-};
+}
 
-export const GroupSeparator = ({
+export function GroupSeparator({
   className,
   orientation = "vertical",
   ...props
 }: {
   className?: string;
-} & React.ComponentProps<typeof Separator>) => (
-  <Separator
-    className={cn(
-      "bg-input has-[+[data-slot=input-control]:focus-within,+[data-slot=input-group]:focus-within,+[data-slot=select-trigger]:focus-visible+*,+[data-slot=number-field]:focus-within]:bg-ring dark:before:bg-input/32 [[data-slot=input-control]:focus-within+&,[data-slot=input-group]:focus-within+&,[data-slot=select-trigger]:focus-visible+*+&,[data-slot=number-field]:focus-within+&,[data-slot=number-field]:focus-within+input+&]:bg-ring pointer-events-none relative z-2 before:absolute before:inset-0 has-[+[data-slot=input-control]:focus-within,+[data-slot=input-group]:focus-within,+[data-slot=select-trigger]:focus-visible+*,+[data-slot=number-field]:focus-within]:translate-x-px [[data-slot=input-control]:focus-within+&,[data-slot=input-group]:focus-within+&,[data-slot=select-trigger]:focus-visible+*+&,[data-slot=number-field]:focus-within+input+&]:-translate-x-px",
-      className
-    )}
-    orientation={orientation}
-    {...props}
-  />
-);
+} & React.ComponentProps<typeof Separator>) {
+  return (
+    <Separator
+      className={cn(
+        "bg-input has-[+[data-slot=input-control]:focus-within,+[data-slot=input-group]:focus-within,+[data-slot=select-trigger]:focus-visible+*,+[data-slot=number-field]:focus-within]:bg-ring dark:before:bg-input/32 [[data-slot=input-control]:focus-within+&,[data-slot=input-group]:focus-within+&,[data-slot=select-trigger]:focus-visible+*+&,[data-slot=number-field]:focus-within+&,[data-slot=number-field]:focus-within+input+&]:bg-ring pointer-events-none relative z-2 before:absolute before:inset-0 has-[+[data-slot=input-control]:focus-within,+[data-slot=input-group]:focus-within,+[data-slot=select-trigger]:focus-visible+*,+[data-slot=number-field]:focus-within]:translate-x-px [[data-slot=input-control]:focus-within+&,[data-slot=input-group]:focus-within+&,[data-slot=select-trigger]:focus-visible+*+&,[data-slot=number-field]:focus-within+input+&]:-translate-x-px",
+        className
+      )}
+      orientation={orientation}
+      {...props}
+    />
+  );
+}
 
 export {
   Group as ButtonGroup,

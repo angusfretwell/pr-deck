@@ -4,60 +4,67 @@ import { Field as FieldPrimitive } from "@base-ui/react/field";
 
 import { cn } from "@/lib/utils";
 
-export const Field = ({ className, ...props }: FieldPrimitive.Root.Props) => (
-  <FieldPrimitive.Root
-    className={cn("flex flex-col items-start gap-2", className)}
-    data-slot="field"
-    {...props}
-  />
-);
+export function Field({ className, ...props }: FieldPrimitive.Root.Props) {
+  return (
+    <FieldPrimitive.Root
+      className={cn("flex flex-col items-start gap-2", className)}
+      data-slot="field"
+      {...props}
+    />
+  );
+}
 
-export const FieldLabel = ({
+export function FieldLabel({
   className,
   ...props
-}: FieldPrimitive.Label.Props) => (
-  <FieldPrimitive.Label
-    className={cn(
-      "text-foreground inline-flex items-center gap-2 text-base/4.5 font-medium data-disabled:opacity-64 sm:text-sm/4",
-      className
-    )}
-    data-slot="field-label"
-    {...props}
-  />
-);
+}: FieldPrimitive.Label.Props) {
+  return (
+    <FieldPrimitive.Label
+      className={cn(
+        "text-foreground inline-flex items-center gap-2 text-base/4.5 font-medium data-disabled:opacity-64 sm:text-sm/4",
+        className
+      )}
+      data-slot="field-label"
+      {...props}
+    />
+  );
+}
 
-export const FieldItem = ({
+export function FieldItem({ className, ...props }: FieldPrimitive.Item.Props) {
+  return (
+    <FieldPrimitive.Item
+      className={cn("flex", className)}
+      data-slot="field-item"
+      {...props}
+    />
+  );
+}
+
+export function FieldDescription({
   className,
   ...props
-}: FieldPrimitive.Item.Props) => (
-  <FieldPrimitive.Item
-    className={cn("flex", className)}
-    data-slot="field-item"
-    {...props}
-  />
-);
+}: FieldPrimitive.Description.Props) {
+  return (
+    <FieldPrimitive.Description
+      className={cn("text-muted-foreground text-xs", className)}
+      data-slot="field-description"
+      {...props}
+    />
+  );
+}
 
-export const FieldDescription = ({
+export function FieldError({
   className,
   ...props
-}: FieldPrimitive.Description.Props) => (
-  <FieldPrimitive.Description
-    className={cn("text-muted-foreground text-xs", className)}
-    data-slot="field-description"
-    {...props}
-  />
-);
-
-export const FieldError = ({
-  className,
-  ...props
-}: FieldPrimitive.Error.Props) => (
-  <FieldPrimitive.Error
-    className={cn("text-destructive-foreground text-xs", className)}
-    data-slot="field-error"
-    {...props}
-  />
-);
+}: FieldPrimitive.Error.Props) {
+  return (
+    <FieldPrimitive.Error
+      className={cn("text-destructive-foreground text-xs", className)}
+      data-slot="field-error"
+      {...props}
+    />
+  );
+}
 
 export const FieldControl: typeof FieldPrimitive.Control =
   FieldPrimitive.Control;

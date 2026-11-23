@@ -36,13 +36,13 @@ const directionMap: Record<
 export const DrawerCreateHandle: typeof DrawerPrimitive.createHandle =
   DrawerPrimitive.createHandle;
 
-export const Drawer = <Payload = unknown,>({
+export function Drawer<Payload = unknown>({
   swipeDirection,
   position = "bottom",
   ...props
 }: DrawerPrimitive.Root.Props<Payload> & {
   position?: DrawerPosition;
-}) => {
+}) {
   const contextValue = useMemo(() => ({ position }), [position]);
 
   return (
@@ -53,26 +53,26 @@ export const Drawer = <Payload = unknown,>({
       />
     </DrawerContext.Provider>
   );
-};
+}
 
 export const DrawerPortal: typeof DrawerPrimitive.Portal =
   DrawerPrimitive.Portal;
 
-export const DrawerTrigger = (props: DrawerPrimitive.Trigger.Props) => (
-  <DrawerPrimitive.Trigger data-slot="drawer-trigger" {...props} />
-);
+export function DrawerTrigger(props: DrawerPrimitive.Trigger.Props) {
+  return <DrawerPrimitive.Trigger data-slot="drawer-trigger" {...props} />;
+}
 
-export const DrawerClose = (props: DrawerPrimitive.Close.Props) => (
-  <DrawerPrimitive.Close data-slot="drawer-close" {...props} />
-);
+export function DrawerClose(props: DrawerPrimitive.Close.Props) {
+  return <DrawerPrimitive.Close data-slot="drawer-close" {...props} />;
+}
 
-export const DrawerSwipeArea = ({
+export function DrawerSwipeArea({
   className,
   position: positionProp,
   ...props
 }: DrawerPrimitive.SwipeArea.Props & {
   position?: DrawerPosition;
-}) => {
+}) {
   const { position: contextPosition } = useContext(DrawerContext);
   const position = positionProp ?? contextPosition;
 
@@ -90,23 +90,25 @@ export const DrawerSwipeArea = ({
       {...props}
     />
   );
-};
+}
 
-export const DrawerBackdrop = ({
+export function DrawerBackdrop({
   className,
   ...props
-}: DrawerPrimitive.Backdrop.Props) => (
-  <DrawerPrimitive.Backdrop
-    className={cn(
-      "fixed inset-0 z-50 bg-black/32 opacity-[calc(1-var(--drawer-swipe-progress))] backdrop-blur-sm transition-opacity duration-450 ease-[cubic-bezier(0.32,0.72,0,1)] data-ending-style:opacity-0 data-ending-style:duration-[calc(var(--drawer-swipe-strength)*400ms)] data-starting-style:opacity-0 data-swiping:duration-0 supports-[-webkit-touch-callout:none]:absolute",
-      className
-    )}
-    data-slot="drawer-backdrop"
-    {...props}
-  />
-);
+}: DrawerPrimitive.Backdrop.Props) {
+  return (
+    <DrawerPrimitive.Backdrop
+      className={cn(
+        "fixed inset-0 z-50 bg-black/32 opacity-[calc(1-var(--drawer-swipe-progress))] backdrop-blur-sm transition-opacity duration-450 ease-[cubic-bezier(0.32,0.72,0,1)] data-ending-style:opacity-0 data-ending-style:duration-[calc(var(--drawer-swipe-strength)*400ms)] data-starting-style:opacity-0 data-swiping:duration-0 supports-[-webkit-touch-callout:none]:absolute",
+        className
+      )}
+      data-slot="drawer-backdrop"
+      {...props}
+    />
+  );
+}
 
-export const DrawerViewport = ({
+export function DrawerViewport({
   className,
   position,
   variant = "default",
@@ -114,34 +116,36 @@ export const DrawerViewport = ({
 }: DrawerPrimitive.Viewport.Props & {
   position?: DrawerPosition;
   variant?: "default" | "straight" | "inset";
-}) => (
-  <DrawerPrimitive.Viewport
-    className={cn(
-      "fixed inset-0 z-50 [--bleed:--spacing(12)] [--inset:0px]",
-      "touch-none",
-      position === "bottom" &&
-        "grid grid-rows-[1fr_auto] pt-[max(--spacing(2),env(safe-area-inset-top,0px))]",
-      position === "top" && "grid grid-rows-[auto_1fr] pb-12",
-      position === "left" && "flex justify-start",
-      position === "right" && "flex justify-end",
-      variant === "inset" && "px-(--inset) sm:[--inset:--spacing(4)]",
-      variant === "inset" && position !== "bottom" && "pt-(--inset)",
-      variant === "inset" && position !== "top" && "pb-(--inset)",
-      className
-    )}
-    data-slot="drawer-viewport"
-    {...props}
-  />
-);
+}) {
+  return (
+    <DrawerPrimitive.Viewport
+      className={cn(
+        "fixed inset-0 z-50 [--bleed:--spacing(12)] [--inset:0px]",
+        "touch-none",
+        position === "bottom" &&
+          "grid grid-rows-[1fr_auto] pt-[max(--spacing(2),env(safe-area-inset-top,0px))]",
+        position === "top" && "grid grid-rows-[auto_1fr] pb-12",
+        position === "left" && "flex justify-start",
+        position === "right" && "flex justify-end",
+        variant === "inset" && "px-(--inset) sm:[--inset:--spacing(4)]",
+        variant === "inset" && position !== "bottom" && "pt-(--inset)",
+        variant === "inset" && position !== "top" && "pb-(--inset)",
+        className
+      )}
+      data-slot="drawer-viewport"
+      {...props}
+    />
+  );
+}
 
-export const DrawerBar = ({
+export function DrawerBar({
   className,
   position: positionProp,
   render,
   ...props
 }: useRender.ComponentProps<"div"> & {
   position?: DrawerPosition;
-}) => {
+}) {
   const { position: contextPosition } = useContext(DrawerContext);
   const position = positionProp ?? contextPosition;
   const horizontal = position === "left" || position === "right";
@@ -167,7 +171,7 @@ export const DrawerBar = ({
     props: mergeProps<"div">(defaultProps, props),
     render,
   });
-};
+}
 
 export const DrawerContent: typeof DrawerPrimitive.Content =
   DrawerPrimitive.Content;
@@ -205,7 +209,7 @@ const POPUP_STACK_CLASSES: Record<DrawerPosition, string> = {
     "origin-left data-nested-drawer-open:transform-[translateX(calc(var(--drawer-swipe-movement-x)-var(--stack-peek-offset)))_scale(var(--scale))]",
 };
 
-export const DrawerPopup = ({
+export function DrawerPopup({
   className,
   children,
   showCloseButton = false,
@@ -222,7 +226,7 @@ export const DrawerPopup = ({
   showBar?: boolean;
   portalProps?: DrawerPrimitive.Portal.Props;
   backdropProps?: DrawerPrimitive.Backdrop.Props;
-}) => {
+}) {
   const { position: contextPosition } = useContext(DrawerContext);
   const position = positionProp ?? contextPosition;
 
@@ -269,16 +273,16 @@ export const DrawerPopup = ({
   ) : (
     popup
   );
-};
+}
 
-export const DrawerHeader = ({
+export function DrawerHeader({
   className,
   allowSelection = false,
   render,
   ...props
 }: useRender.ComponentProps<"div"> & {
   allowSelection?: boolean;
-}) => {
+}) {
   const defaultProps = {
     className: cn(
       "flex flex-col gap-2 p-6 in-[[data-slot=drawer-popup]:has([data-slot=drawer-panel])]:pb-3 max-sm:pb-4",
@@ -293,9 +297,9 @@ export const DrawerHeader = ({
     props: mergeProps<"div">(defaultProps, props),
     render: allowSelection ? <DrawerContent render={render} /> : render,
   });
-};
+}
 
-export const DrawerFooter = ({
+export function DrawerFooter({
   className,
   variant = "default",
   allowSelection = true,
@@ -304,7 +308,7 @@ export const DrawerFooter = ({
 }: useRender.ComponentProps<"div"> & {
   variant?: "default" | "bare";
   allowSelection?: boolean;
-}) => {
+}) {
   const defaultProps = {
     className: cn(
       "flex flex-col-reverse gap-2 px-6 pb-(--safe-area-inset-bottom,0px) sm:flex-row sm:justify-end",
@@ -323,31 +327,35 @@ export const DrawerFooter = ({
     props: mergeProps<"div">(defaultProps, props),
     render: allowSelection ? <DrawerContent render={render} /> : render,
   });
-};
+}
 
-export const DrawerTitle = ({
+export function DrawerTitle({
   className,
   ...props
-}: DrawerPrimitive.Title.Props) => (
-  <DrawerPrimitive.Title
-    className={cn("font-heading text-xl leading-none font-bold", className)}
-    data-slot="drawer-title"
-    {...props}
-  />
-);
+}: DrawerPrimitive.Title.Props) {
+  return (
+    <DrawerPrimitive.Title
+      className={cn("font-heading text-xl leading-none font-bold", className)}
+      data-slot="drawer-title"
+      {...props}
+    />
+  );
+}
 
-export const DrawerDescription = ({
+export function DrawerDescription({
   className,
   ...props
-}: DrawerPrimitive.Description.Props) => (
-  <DrawerPrimitive.Description
-    className={cn("text-muted-foreground text-sm", className)}
-    data-slot="drawer-description"
-    {...props}
-  />
-);
+}: DrawerPrimitive.Description.Props) {
+  return (
+    <DrawerPrimitive.Description
+      className={cn("text-muted-foreground text-sm", className)}
+      data-slot="drawer-description"
+      {...props}
+    />
+  );
+}
 
-export const DrawerPanel = ({
+export function DrawerPanel({
   className,
   scrollFade = true,
   scrollable = true,
@@ -358,7 +366,7 @@ export const DrawerPanel = ({
   scrollFade?: boolean;
   scrollable?: boolean;
   allowSelection?: boolean;
-}) => {
+}) {
   const defaultProps = {
     className: cn(
       "p-6 in-[[data-slot=drawer-popup]:has([data-slot=drawer-footer]:not(.border-t))]:pb-1 in-[[data-slot=drawer-popup]:has([data-slot=drawer-header])]:pt-1",
@@ -387,13 +395,13 @@ export const DrawerPanel = ({
   }
 
   return content;
-};
+}
 
-export const DrawerMenu = ({
+export function DrawerMenu({
   className,
   render,
   ...props
-}: useRender.ComponentProps<"nav">) => {
+}: useRender.ComponentProps<"nav">) {
   const defaultProps = {
     className: cn("-m-2 flex flex-col", className),
     "data-slot": "drawer-menu",
@@ -404,9 +412,9 @@ export const DrawerMenu = ({
     props: mergeProps<"nav">(defaultProps, props),
     render,
   });
-};
+}
 
-export const DrawerMenuItem = ({
+export function DrawerMenuItem({
   className,
   variant = "default",
   render,
@@ -414,7 +422,7 @@ export const DrawerMenuItem = ({
   ...props
 }: useRender.ComponentProps<"button"> & {
   variant?: "default" | "destructive";
-}) => {
+}) {
   const defaultProps = {
     className: cn(
       "text-foreground hover:bg-accent hover:text-accent-foreground data-[variant=destructive]:text-destructive-foreground flex min-h-9 w-full cursor-default items-center gap-2 rounded-sm px-2 py-1 text-base outline-none select-none disabled:pointer-events-none disabled:opacity-64 sm:min-h-8 sm:text-sm [&>svg]:pointer-events-none [&>svg]:-mx-0.5 [&>svg]:shrink-0 [&>svg:not([class*='opacity-'])]:opacity-80 [&>svg:not([class*='size-'])]:size-4.5 sm:[&>svg:not([class*='size-'])]:size-4",
@@ -431,13 +439,13 @@ export const DrawerMenuItem = ({
     props: mergeProps<"button">(defaultProps, props),
     render,
   });
-};
+}
 
-export const DrawerMenuSeparator = ({
+export function DrawerMenuSeparator({
   className,
   render,
   ...props
-}: useRender.ComponentProps<"div">) => {
+}: useRender.ComponentProps<"div">) {
   const defaultProps = {
     className: cn("bg-border mx-2 my-1 h-px", className),
     "data-slot": "drawer-menu-separator",
@@ -448,13 +456,13 @@ export const DrawerMenuSeparator = ({
     props: mergeProps<"div">(defaultProps, props),
     render,
   });
-};
+}
 
-export const DrawerMenuGroup = ({
+export function DrawerMenuGroup({
   className,
   render,
   ...props
-}: useRender.ComponentProps<"div">) => {
+}: useRender.ComponentProps<"div">) {
   const defaultProps = {
     className: cn("flex flex-col", className),
     "data-slot": "drawer-menu-group",
@@ -465,13 +473,13 @@ export const DrawerMenuGroup = ({
     props: mergeProps<"div">(defaultProps, props),
     render,
   });
-};
+}
 
-export const DrawerMenuGroupLabel = ({
+export function DrawerMenuGroupLabel({
   className,
   render,
   ...props
-}: useRender.ComponentProps<"div">) => {
+}: useRender.ComponentProps<"div">) {
   const defaultProps = {
     className: cn(
       "text-muted-foreground px-2 py-1.5 text-xs font-medium",
@@ -485,27 +493,29 @@ export const DrawerMenuGroupLabel = ({
     props: mergeProps<"div">(defaultProps, props),
     render,
   });
-};
+}
 
-export const DrawerMenuTrigger = ({
+export function DrawerMenuTrigger({
   className,
   children,
   ...props
-}: DrawerPrimitive.Trigger.Props) => (
-  <DrawerTrigger
-    className={cn(
-      "text-foreground hover:bg-accent hover:text-accent-foreground flex min-h-9 w-full cursor-default items-center gap-2 rounded-sm px-2 py-1 text-base outline-none select-none sm:min-h-8 sm:text-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not(:last-child)]:-mx-0.5 [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4",
-      className
-    )}
-    data-slot="drawer-menu-trigger"
-    {...props}
-  >
-    {children}
-    <ChevronRightIcon className="ms-auto -me-0.5 opacity-80" />
-  </DrawerTrigger>
-);
+}: DrawerPrimitive.Trigger.Props) {
+  return (
+    <DrawerTrigger
+      className={cn(
+        "text-foreground hover:bg-accent hover:text-accent-foreground flex min-h-9 w-full cursor-default items-center gap-2 rounded-sm px-2 py-1 text-base outline-none select-none sm:min-h-8 sm:text-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not(:last-child)]:-mx-0.5 [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4",
+        className
+      )}
+      data-slot="drawer-menu-trigger"
+      {...props}
+    >
+      {children}
+      <ChevronRightIcon className="ms-auto -me-0.5 opacity-80" />
+    </DrawerTrigger>
+  );
+}
 
-export const DrawerMenuCheckboxItem = ({
+export function DrawerMenuCheckboxItem({
   className,
   children,
   checked,
@@ -518,68 +528,72 @@ export const DrawerMenuCheckboxItem = ({
 }: CheckboxPrimitive.Root.Props & {
   variant?: "default" | "switch";
   render?: React.ReactElement;
-}) => (
-  <CheckboxPrimitive.Root
-    checked={checked}
-    className={cn(
-      "text-foreground hover:bg-accent hover:text-accent-foreground grid min-h-9 w-full cursor-default items-center gap-2 rounded-sm px-2 py-1 text-base outline-none select-none data-disabled:pointer-events-none data-disabled:opacity-64 sm:min-h-8 sm:text-sm [&_svg]:pointer-events-none [&_svg]:-mx-0.5 [&_svg]:shrink-0 [&_svg:not([class*='opacity-'])]:opacity-80 [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4",
-      variant === "switch"
-        ? "grid-cols-[minmax(0,1fr)_auto] gap-4 pe-1.5"
-        : "grid-cols-[1rem_minmax(0,1fr)] pe-4",
-      className
-    )}
-    data-slot="drawer-menu-checkbox-item"
-    defaultChecked={defaultChecked}
-    disabled={disabled}
-    onCheckedChange={onCheckedChange}
-    render={render}
-    {...props}
-  >
-    {variant === "switch" ? (
-      <>
-        <span className="col-start-1 min-w-0 wrap-anywhere">{children}</span>
-        <CheckboxPrimitive.Indicator
-          className="focus-visible:ring-ring focus-visible:ring-offset-background data-checked:bg-primary data-unchecked:bg-input col-start-2 inline-flex h-[calc(var(--thumb-size)+2px)] w-[calc(var(--thumb-size)*2-2px)] shrink-0 items-center rounded-full p-px inset-shadow-[0_1px_--theme(--color-black/4%)] transition-[background-color,box-shadow] duration-200 outline-none [--thumb-size:--spacing(4)] focus-visible:ring-2 focus-visible:ring-offset-1 data-disabled:opacity-64 sm:[--thumb-size:--spacing(3)]"
-          keepMounted
-        >
-          <span className="bg-background pointer-events-none block aspect-square h-full origin-left rounded-(--thumb-size) shadow-sm/5 will-change-transform [transition:translate_.15s,border-radius_.15s,scale_.1s_.1s,transform-origin_.15s] in-[[data-slot=drawer-menu-checkbox-item]:active]:rounded-[var(--thumb-size)/calc(var(--thumb-size)*1.10)] in-[[data-slot=drawer-menu-checkbox-item]:active]:not-data-disabled:scale-x-110 in-[[data-slot=drawer-menu-checkbox-item][data-checked]]:origin-[var(--thumb-size)_50%] in-[[data-slot=drawer-menu-checkbox-item][data-checked]]:translate-x-[calc(var(--thumb-size)-4px)] rtl:origin-right rtl:in-[[data-slot=drawer-menu-checkbox-item][data-checked]]:origin-left rtl:in-[[data-slot=drawer-menu-checkbox-item][data-checked]]:-translate-x-[calc(var(--thumb-size)-4px)]" />
-        </CheckboxPrimitive.Indicator>
-      </>
-    ) : (
-      <>
-        <CheckboxPrimitive.Indicator className="col-start-1">
-          <svg
-            fill="none"
-            height="24"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-            width="24"
-            xmlns="http://www.w3.org/2000/svg"
+}) {
+  return (
+    <CheckboxPrimitive.Root
+      checked={checked}
+      className={cn(
+        "text-foreground hover:bg-accent hover:text-accent-foreground grid min-h-9 w-full cursor-default items-center gap-2 rounded-sm px-2 py-1 text-base outline-none select-none data-disabled:pointer-events-none data-disabled:opacity-64 sm:min-h-8 sm:text-sm [&_svg]:pointer-events-none [&_svg]:-mx-0.5 [&_svg]:shrink-0 [&_svg:not([class*='opacity-'])]:opacity-80 [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4",
+        variant === "switch"
+          ? "grid-cols-[minmax(0,1fr)_auto] gap-4 pe-1.5"
+          : "grid-cols-[1rem_minmax(0,1fr)] pe-4",
+        className
+      )}
+      data-slot="drawer-menu-checkbox-item"
+      defaultChecked={defaultChecked}
+      disabled={disabled}
+      onCheckedChange={onCheckedChange}
+      render={render}
+      {...props}
+    >
+      {variant === "switch" ? (
+        <>
+          <span className="col-start-1 min-w-0 wrap-anywhere">{children}</span>
+          <CheckboxPrimitive.Indicator
+            className="focus-visible:ring-ring focus-visible:ring-offset-background data-checked:bg-primary data-unchecked:bg-input col-start-2 inline-flex h-[calc(var(--thumb-size)+2px)] w-[calc(var(--thumb-size)*2-2px)] shrink-0 items-center rounded-full p-px inset-shadow-[0_1px_--theme(--color-black/4%)] transition-[background-color,box-shadow] duration-200 outline-none [--thumb-size:--spacing(4)] focus-visible:ring-2 focus-visible:ring-offset-1 data-disabled:opacity-64 sm:[--thumb-size:--spacing(3)]"
+            keepMounted
           >
-            <path d="M5.252 12.7 10.2 18.63 18.748 5.37" />
-          </svg>
-        </CheckboxPrimitive.Indicator>
-        <span className="col-start-2 min-w-0 wrap-anywhere">{children}</span>
-      </>
-    )}
-  </CheckboxPrimitive.Root>
-);
+            <span className="bg-background pointer-events-none block aspect-square h-full origin-left rounded-(--thumb-size) shadow-sm/5 will-change-transform [transition:translate_.15s,border-radius_.15s,scale_.1s_.1s,transform-origin_.15s] in-[[data-slot=drawer-menu-checkbox-item]:active]:rounded-[var(--thumb-size)/calc(var(--thumb-size)*1.10)] in-[[data-slot=drawer-menu-checkbox-item]:active]:not-data-disabled:scale-x-110 in-[[data-slot=drawer-menu-checkbox-item][data-checked]]:origin-[var(--thumb-size)_50%] in-[[data-slot=drawer-menu-checkbox-item][data-checked]]:translate-x-[calc(var(--thumb-size)-4px)] rtl:origin-right rtl:in-[[data-slot=drawer-menu-checkbox-item][data-checked]]:origin-left rtl:in-[[data-slot=drawer-menu-checkbox-item][data-checked]]:-translate-x-[calc(var(--thumb-size)-4px)]" />
+          </CheckboxPrimitive.Indicator>
+        </>
+      ) : (
+        <>
+          <CheckboxPrimitive.Indicator className="col-start-1">
+            <svg
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M5.252 12.7 10.2 18.63 18.748 5.37" />
+            </svg>
+          </CheckboxPrimitive.Indicator>
+          <span className="col-start-2 min-w-0 wrap-anywhere">{children}</span>
+        </>
+      )}
+    </CheckboxPrimitive.Root>
+  );
+}
 
-export const DrawerMenuRadioGroup = ({
+export function DrawerMenuRadioGroup({
   className,
   ...props
-}: RadioGroupPrimitive.Props) => (
-  <RadioGroupPrimitive
-    className={cn("flex flex-col", className)}
-    data-slot="drawer-menu-radio-group"
-    {...props}
-  />
-);
+}: RadioGroupPrimitive.Props) {
+  return (
+    <RadioGroupPrimitive
+      className={cn("flex flex-col", className)}
+      data-slot="drawer-menu-radio-group"
+      {...props}
+    />
+  );
+}
 
-export const DrawerMenuRadioItem = ({
+export function DrawerMenuRadioItem({
   className,
   children,
   value,
@@ -588,36 +602,38 @@ export const DrawerMenuRadioItem = ({
   ...props
 }: RadioPrimitive.Root.Props<string> & {
   render?: React.ReactElement;
-}) => (
-  <RadioPrimitive.Root
-    className={cn(
-      "text-foreground hover:bg-accent hover:text-accent-foreground grid min-h-9 w-full cursor-default items-center gap-2 rounded-sm px-2 py-1 text-base outline-none select-none data-disabled:pointer-events-none data-disabled:opacity-64 sm:min-h-8 sm:text-sm [&_svg]:pointer-events-none [&_svg]:-mx-0.5 [&_svg]:shrink-0 [&_svg:not([class*='opacity-'])]:opacity-80 [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4",
-      "grid-cols-[1rem_minmax(0,1fr)] items-center pe-4",
-      className
-    )}
-    data-slot="drawer-menu-radio-item"
-    disabled={disabled}
-    render={render}
-    value={value}
-    {...props}
-  >
-    <RadioPrimitive.Indicator className="col-start-1">
-      <svg
-        fill="none"
-        height="24"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-        width="24"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path d="M5.252 12.7 10.2 18.63 18.748 5.37" />
-      </svg>
-    </RadioPrimitive.Indicator>
-    <span className="col-start-2 min-w-0 wrap-anywhere">{children}</span>
-  </RadioPrimitive.Root>
-);
+}) {
+  return (
+    <RadioPrimitive.Root
+      className={cn(
+        "text-foreground hover:bg-accent hover:text-accent-foreground grid min-h-9 w-full cursor-default items-center gap-2 rounded-sm px-2 py-1 text-base outline-none select-none data-disabled:pointer-events-none data-disabled:opacity-64 sm:min-h-8 sm:text-sm [&_svg]:pointer-events-none [&_svg]:-mx-0.5 [&_svg]:shrink-0 [&_svg:not([class*='opacity-'])]:opacity-80 [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4",
+        "grid-cols-[1rem_minmax(0,1fr)] items-center pe-4",
+        className
+      )}
+      data-slot="drawer-menu-radio-item"
+      disabled={disabled}
+      render={render}
+      value={value}
+      {...props}
+    >
+      <RadioPrimitive.Indicator className="col-start-1">
+        <svg
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M5.252 12.7 10.2 18.63 18.748 5.37" />
+        </svg>
+      </RadioPrimitive.Indicator>
+      <span className="col-start-2 min-w-0 wrap-anywhere">{children}</span>
+    </RadioPrimitive.Root>
+  );
+}
 
 export { Drawer as DrawerPrimitive } from "@base-ui/react/drawer";

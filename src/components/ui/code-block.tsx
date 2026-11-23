@@ -25,72 +25,74 @@ const codeBlockVariants = cva(
   }
 );
 
-const CodeBlock = ({
+function CodeBlock({
   className,
   variant = "default",
   size = "default",
   ...props
 }: React.ComponentProps<"div"> &
-  VariantProps<typeof codeBlockVariants> & { size?: "default" | "sm" }) => (
-  <div
-    data-slot="code-block"
-    data-variant={variant}
-    data-size={size}
-    className={cn(codeBlockVariants({ variant }), className)}
-    {...props}
-  />
-);
+  VariantProps<typeof codeBlockVariants> & { size?: "default" | "sm" }) {
+  return (
+    <div
+      data-slot="code-block"
+      data-variant={variant}
+      data-size={size}
+      className={cn(codeBlockVariants({ variant }), className)}
+      {...props}
+    />
+  );
+}
 
-const CodeBlockHeader = ({
+function CodeBlockHeader({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="code-block-header"
+      className={cn(
+        "text-muted-foreground group-data-[variant=destructive]/code-block:text-destructive flex min-w-0 shrink-0 items-center gap-2 px-4 pt-4 group-data-[size=sm]/code-block:px-3 group-data-[size=sm]/code-block:pt-3 *:has-[>[data-slot=code-block-title]]:min-w-0",
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+function CodeBlockTitle({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="code-block-title"
+      className={cn(
+        "text-foreground group-data-[variant=destructive]/code-block:text-destructive min-w-0 truncate font-sans text-sm font-medium group-data-[size=sm]/code-block:text-xs [&_svg]:pointer-events-none [&_svg]:inline-block [&_svg]:align-middle [&_svg:not([class*='size-'])]:size-4 group-data-[size=sm]/code-block:[&_svg:not([class*='size-'])]:size-3.5 *:[svg]:me-1.5",
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+function CodeBlockActions({
   className,
   ...props
-}: React.ComponentProps<"div">) => (
-  <div
-    data-slot="code-block-header"
-    className={cn(
-      "text-muted-foreground group-data-[variant=destructive]/code-block:text-destructive flex min-w-0 shrink-0 items-center gap-2 px-4 pt-4 group-data-[size=sm]/code-block:px-3 group-data-[size=sm]/code-block:pt-3 *:has-[>[data-slot=code-block-title]]:min-w-0",
-      className
-    )}
-    {...props}
-  />
-);
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="code-block-actions"
+      className={cn(
+        "[[data-slot=code-block]>&]:*:[button]:bg-background [[data-slot=code-block]>&]:*:[button]:ring-foreground/10 -my-1 ms-auto -me-1.5 flex shrink-0 items-center gap-1 [[data-slot=code-block]>&]:absolute [[data-slot=code-block]>&]:end-3 [[data-slot=code-block]>&]:top-3 [[data-slot=code-block]>&]:z-10 [[data-slot=code-block]>&]:m-0 [[data-slot=code-block]>&]:opacity-0 [[data-slot=code-block]>&]:transition-opacity [[data-slot=code-block]>&]:group-focus-within/code-block:opacity-100 [[data-slot=code-block]>&]:group-hover/code-block:opacity-100 group-data-[size=sm]/code-block:[[data-slot=code-block]>&]:end-2 group-data-[size=sm]/code-block:[[data-slot=code-block]>&]:top-2 [[data-slot=code-block]>&]:pointer-coarse:opacity-100 [[data-slot=code-block]>&]:*:[button]:ring-1",
+        className
+      )}
+      {...props}
+    />
+  );
+}
 
-const CodeBlockTitle = ({
-  className,
-  ...props
-}: React.ComponentProps<"div">) => (
-  <div
-    data-slot="code-block-title"
-    className={cn(
-      "text-foreground group-data-[variant=destructive]/code-block:text-destructive min-w-0 truncate font-sans text-sm font-medium group-data-[size=sm]/code-block:text-xs [&_svg]:pointer-events-none [&_svg]:inline-block [&_svg]:align-middle [&_svg:not([class*='size-'])]:size-4 group-data-[size=sm]/code-block:[&_svg:not([class*='size-'])]:size-3.5 *:[svg]:me-1.5",
-      className
-    )}
-    {...props}
-  />
-);
-
-const CodeBlockActions = ({
-  className,
-  ...props
-}: React.ComponentProps<"div">) => (
-  <div
-    data-slot="code-block-actions"
-    className={cn(
-      "[[data-slot=code-block]>&]:*:[button]:bg-background [[data-slot=code-block]>&]:*:[button]:ring-foreground/10 -my-1 ms-auto -me-1.5 flex shrink-0 items-center gap-1 [[data-slot=code-block]>&]:absolute [[data-slot=code-block]>&]:end-3 [[data-slot=code-block]>&]:top-3 [[data-slot=code-block]>&]:z-10 [[data-slot=code-block]>&]:m-0 [[data-slot=code-block]>&]:opacity-0 [[data-slot=code-block]>&]:transition-opacity [[data-slot=code-block]>&]:group-focus-within/code-block:opacity-100 [[data-slot=code-block]>&]:group-hover/code-block:opacity-100 group-data-[size=sm]/code-block:[[data-slot=code-block]>&]:end-2 group-data-[size=sm]/code-block:[[data-slot=code-block]>&]:top-2 [[data-slot=code-block]>&]:pointer-coarse:opacity-100 [[data-slot=code-block]>&]:*:[button]:ring-1",
-      className
-    )}
-    {...props}
-  />
-);
-
-const CodeBlockCopyButton = ({
+function CodeBlockCopyButton({
   value,
   variant = "ghost",
   size = "icon-xs",
   className,
   onClick,
   ...props
-}: React.ComponentProps<typeof Button> & { value: string }) => {
+}: React.ComponentProps<typeof Button> & { value: string }) {
   const [copied, setCopied] = React.useState(false);
 
   React.useEffect(() => {
@@ -105,7 +107,7 @@ const CodeBlockCopyButton = ({
     };
   }, [copied]);
 
-  const copyValue = async () => {
+  async function copyValue() {
     try {
       await navigator.clipboard.writeText(value);
     } catch {
@@ -113,7 +115,7 @@ const CodeBlockCopyButton = ({
     }
 
     setCopied(true);
-  };
+  }
 
   return (
     <>
@@ -137,7 +139,7 @@ const CodeBlockCopyButton = ({
       </span>
     </>
   );
-};
+}
 
 const codeBlockLineVariants = cva(
   "before:text-muted-foreground after:text-muted-foreground relative -mx-4 block min-h-lh px-4 group-data-[size=sm]/code-block:-mx-3 group-data-[size=sm]/code-block:px-3 before:min-w-6 before:text-end after:absolute after:start-1 after:top-0 after:select-none in-data-numbered:col-span-2 in-data-numbered:grid in-data-numbered:grid-cols-subgrid in-data-numbered:gap-x-3 in-data-numbered:[counter-increment:line] in-data-numbered:before:content-[counter(line)] in-data-numbered:before:select-none in-data-numbered:supports-[content:counter(line)_/_'']:before:content-[counter(line)_/_'']",
@@ -156,13 +158,12 @@ const codeBlockLineVariants = cva(
   }
 );
 
-const CodeBlockLine = ({
+function CodeBlockLine({
   className,
   variant = "default",
   children,
   ...props
-}: React.ComponentProps<"span"> &
-  VariantProps<typeof codeBlockLineVariants>) => {
+}: React.ComponentProps<"span"> & VariantProps<typeof codeBlockLineVariants>) {
   const empty =
     children === undefined ||
     children === null ||
@@ -181,12 +182,13 @@ const CodeBlockLine = ({
       </span>
     </span>
   );
-};
+}
 
-const isText = (node: React.ReactNode): node is string =>
-  typeof node === "string";
+function isText(node: React.ReactNode): node is string {
+  return typeof node === "string";
+}
 
-const CodeBlockContent = ({
+function CodeBlockContent({
   className,
   children,
   style,
@@ -198,50 +200,51 @@ const CodeBlockContent = ({
   wrap?: boolean;
   lineNumbers?: boolean;
   startLine?: number;
-}) => (
-  <pre
-    data-slot="code-block-content"
-    data-wrap={wrap || undefined}
-    data-numbered={lineNumbers || undefined}
-    dir="ltr"
-    // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable region must be keyboard-focusable
-    tabIndex={0}
-    style={{ counterReset: `line ${startLine - 1}`, ...style }}
-    className={cn(
-      "min-h-0 min-w-0 overflow-auto px-4 py-4 text-start font-mono leading-relaxed outline-none group-has-data-[slot=code-block-footer]/code-block:pb-2 group-has-data-[slot=code-block-header]/code-block:pt-2 group-data-[size=sm]/code-block:px-3 group-data-[size=sm]/code-block:py-3 group-data-[size=sm]/code-block:group-has-data-[slot=code-block-header]/code-block:pt-1.5 data-wrap:wrap-break-word data-wrap:whitespace-pre-wrap",
-      className
-    )}
-    {...props}
-  >
-    <code
-      data-slot="code-block-code"
-      className="grid min-h-lh min-w-max content-start in-data-numbered:grid-cols-[auto_1fr] in-data-wrap:min-w-0"
+}) {
+  return (
+    <pre
+      data-slot="code-block-content"
+      data-wrap={wrap || undefined}
+      data-numbered={lineNumbers || undefined}
+      dir="ltr"
+      // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable region must be keyboard-focusable
+      tabIndex={0}
+      style={{ counterReset: `line ${startLine - 1}`, ...style }}
+      className={cn(
+        "min-h-0 min-w-0 overflow-auto px-4 py-4 text-start font-mono leading-relaxed outline-none group-has-data-[slot=code-block-footer]/code-block:pb-2 group-has-data-[slot=code-block-header]/code-block:pt-2 group-data-[size=sm]/code-block:px-3 group-data-[size=sm]/code-block:py-3 group-data-[size=sm]/code-block:group-has-data-[slot=code-block-header]/code-block:pt-1.5 data-wrap:wrap-break-word data-wrap:whitespace-pre-wrap",
+        className
+      )}
+      {...props}
     >
-      {lineNumbers && isText(children)
-        ? children
-            .replace(/\n$/u, "")
-            .split("\n")
-            .map((line, index) => (
-              <CodeBlockLine key={index}>{line}</CodeBlockLine>
-            ))
-        : children}
-    </code>
-  </pre>
-);
+      <code
+        data-slot="code-block-code"
+        className="grid min-h-lh min-w-max content-start in-data-numbered:grid-cols-[auto_1fr] in-data-wrap:min-w-0"
+      >
+        {lineNumbers && isText(children)
+          ? children
+              .replace(/\n$/u, "")
+              .split("\n")
+              .map((line, index) => (
+                <CodeBlockLine key={index}>{line}</CodeBlockLine>
+              ))
+          : children}
+      </code>
+    </pre>
+  );
+}
 
-const CodeBlockFooter = ({
-  className,
-  ...props
-}: React.ComponentProps<"div">) => (
-  <div
-    data-slot="code-block-footer"
-    className={cn(
-      "text-muted-foreground flex min-w-0 shrink-0 items-center gap-2 px-4 pb-4 group-data-[size=sm]/code-block:px-3 group-data-[size=sm]/code-block:pb-3",
-      className
-    )}
-    {...props}
-  />
-);
+function CodeBlockFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="code-block-footer"
+      className={cn(
+        "text-muted-foreground flex min-w-0 shrink-0 items-center gap-2 px-4 pb-4 group-data-[size=sm]/code-block:px-3 group-data-[size=sm]/code-block:pb-3",
+        className
+      )}
+      {...props}
+    />
+  );
+}
 
 export {
   CodeBlock,

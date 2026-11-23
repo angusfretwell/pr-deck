@@ -14,14 +14,14 @@ export type InputProps = Omit<
   nativeInput?: boolean;
 };
 
-export const Input = ({
+export function Input({
   className,
   size = "default",
   unstyled = false,
   nativeInput = false,
   style,
   ...props
-}: InputProps) => {
+}: InputProps) {
   const nativeSize =
     size === "sm" || size === "default" || size === "lg" ? undefined : size;
 
@@ -67,6 +67,6 @@ export const Input = ({
       )}
     </span>
   );
-};
+}
 
 export { Input as InputPrimitive } from "@base-ui/react/input";

@@ -44,25 +44,28 @@ import {
 
 type Client = typeof graphql;
 
-const createClient = (token: string) =>
-  graphql.defaults({ headers: { authorization: `bearer ${token}` } });
+function createClient(token: string) {
+  return graphql.defaults({ headers: { authorization: `bearer ${token}` } });
+}
 
-const assertOwnerFound = (
+function assertOwnerFound(
   { repositoryOwner }: PullRequestsQuery,
   owner: string
-) => {
+) {
   if (!repositoryOwner) {
     throw new Error(`GitHub account "${owner}" was not found.`);
   }
-};
+}
 
-const isSessionResponseError = (
+function isSessionResponseError(
   cause: unknown
 ): cause is GraphqlResponseError<
   { viewer?: SessionQuery["viewer"] | null } | null | undefined
-> => cause instanceof GraphqlResponseError;
+> {
+  return cause instanceof GraphqlResponseError;
+}
 
-export const fetchSession = async (token: string) => {
+export async function fetchSession(token: string) {
   try {
     return toSession(await createClient(token)<SessionQuery>(SESSION_QUERY));
   } catch (error) {
@@ -72,13 +75,9 @@ export const fetchSession = async (token: string) => {
 
     throw error;
   }
-};
+}
 
-const fetchViewerTeams = async (
-  client: Client,
-  owner: string,
-  viewer: string
-) => {
+async function fetchViewerTeams(client: Client, owner: string, viewer: string) {
   if (owner === viewer) {
     return [];
   }
@@ -100,25 +99,26 @@ const fetchViewerTeams = async (
   } catch {
     return [];
   }
-};
+}
 
 const STATUS_BATCH_SIZE = 10;
 const MAX_STATUS_REQUESTS = 20;
 
-const chunk = <T>(items: T[], size: number) =>
-  Array.from({ length: Math.ceil(items.length / size) }, (_, index) =>
+function chunk<T>(items: T[], size: number) {
+  return Array.from({ length: Math.ceil(items.length / size) }, (_, index) =>
     items.slice(index * size, (index + 1) * size)
   );
+}
 
-const fetchRows = async (
+async function fetchRows(
   client: Client,
   owner: string,
   onRows?: (list: PullRequestList) => void
-) => {
+) {
   const rows = new Map<string, PullRequest>();
   let totalCount = 0;
 
-  const fetchPage = async (after: string | null) => {
+  async function fetchPage(after: string | null) {
     const response = await client<PullRequestsQuery>(PULL_REQUESTS_QUERY, {
       owner,
       search: searchQuery(owner),
@@ -142,7 +142,7 @@ const fetchRows = async (
     if (hasNextPage && endCursor !== null && endCursor !== "") {
       await fetchPage(endCursor);
     }
-  };
+  }
 
   await fetchPage(null);
 
@@ -150,13 +150,13 @@ const fetchRows = async (
     pullRequests: [...rows.values()],
     totalCount,
   } satisfies PullRequestList;
-};
+}
 
-const fetchStatuses = async (
+async function fetchStatuses(
   client: Client,
   ids: string[],
   context: ReviewContext
-) => {
+) {
   const size = Math.max(
     STATUS_BATCH_SIZE,
     Math.ceil(ids.length / MAX_STATUS_REQUESTS)
@@ -180,14 +180,14 @@ const fetchStatuses = async (
   }
 
   return statuses;
-};
+}
 
-export const fetchPullRequests = async (
+export async function fetchPullRequests(
   token: string,
   owner: string,
   viewer: string,
   onRows?: (list: PullRequestList) => void
-) => {
+) {
   const client = createClient(token);
 
   const [viewerTeams, rows] = await Promise.all([
@@ -209,11 +209,11 @@ export const fetchPullRequests = async (
       return status ? [withStatus(pr, status)] : [];
     }),
   } satisfies PullRequestList;
-};
+}
 
 const MAX_NODE_IDS = 100;
 
-export const fetchMergeability = async (token: string, ids: string[]) => {
+export async function fetchMergeability(token: string, ids: string[]) {
   const client = createClient(token);
 
   const responses = await Promise.all(
@@ -234,9 +234,9 @@ export const fetchMergeability = async (token: string, ids: string[]) => {
   }
 
   return states;
-};
+}
 
-export const fetchPullRequestDetail = async (token: string, id: string) => {
+export async function fetchPullRequestDetail(token: string, id: string) {
   const { node } = await createClient(token)<PullRequestDetailQuery>(
     PULL_REQUEST_DETAIL_QUERY,
     {
@@ -249,20 +249,26 @@ export const fetchPullRequestDetail = async (token: string, id: string) => {
   }
 
   return toPullRequestDetail(node) satisfies PullRequestDetail;
-};
+}
 
-const hasHttpStatus = (cause: unknown): cause is { status: number } =>
-  typeof cause === "object" &&
-  cause !== null &&
-  "status" in cause &&
-  typeof cause.status === "number";
+function hasHttpStatus(cause: unknown): cause is { status: number } {
+  return (
+    typeof cause === "object" &&
+    cause !== null &&
+    "status" in cause &&
+    typeof cause.status === "number"
+  );
+}
 
-const httpStatus = (cause: unknown) =>
-  hasHttpStatus(cause) ? cause.status : undefined;
+function httpStatus(cause: unknown) {
+  return hasHttpStatus(cause) ? cause.status : undefined;
+}
 
-export const isAuthError = (cause: unknown) => httpStatus(cause) === 401;
+export function isAuthError(cause: unknown) {
+  return httpStatus(cause) === 401;
+}
 
-export const isRetryable = (cause: unknown) => {
+export function isRetryable(cause: unknown) {
   const status = httpStatus(cause);
 
   if (status === 401 || status === 403 || status === 429) {
@@ -273,9 +279,9 @@ export const isRetryable = (cause: unknown) => {
     cause instanceof GraphqlResponseError &&
     cause.errors?.some((entry) => entry.type === "RATE_LIMITED") === true
   );
-};
+}
 
-export const errorMessage = (cause: unknown) => {
+export function errorMessage(cause: unknown) {
   const status = httpStatus(cause);
 
   if (status === 401) {
@@ -299,4 +305,4 @@ export const errorMessage = (cause: unknown) => {
   }
 
   return "Something went wrong talking to GitHub.";
-};
+}

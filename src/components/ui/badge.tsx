@@ -44,13 +44,13 @@ export interface BadgeProps extends useRender.ComponentProps<"span"> {
   size?: VariantProps<typeof badgeVariants>["size"];
 }
 
-export const Badge = ({
+export function Badge({
   className,
   variant,
   size,
   render,
   ...props
-}: BadgeProps) => {
+}: BadgeProps) {
   const defaultProps = {
     className: cn(badgeVariants({ className, size, variant })),
     "data-slot": "badge",
@@ -61,4 +61,4 @@ export const Badge = ({
     props: mergeProps<"span">(defaultProps, props),
     render,
   });
-};
+}

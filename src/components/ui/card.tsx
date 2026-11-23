@@ -5,11 +5,11 @@ import { useRender } from "@base-ui/react/use-render";
 
 import { cn } from "@/lib/utils";
 
-export const Card = ({
+export function Card({
   className,
   render,
   ...props
-}: useRender.ComponentProps<"div">) => {
+}: useRender.ComponentProps<"div">) {
   const defaultProps = {
     className: cn(
       "bg-card text-card-foreground relative flex flex-col rounded-2xl border shadow-xs/5 not-dark:bg-clip-padding before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]",
@@ -23,13 +23,13 @@ export const Card = ({
     props: mergeProps<"div">(defaultProps, props),
     render,
   });
-};
+}
 
-export const CardFrame = ({
+export function CardFrame({
   className,
   render,
   ...props
-}: useRender.ComponentProps<"div">) => {
+}: useRender.ComponentProps<"div">) {
   const defaultProps = {
     className: cn(
       "bg-card text-card-foreground before:bg-muted/72 relative flex flex-col rounded-2xl border shadow-xs/5 [--clip-bottom:-1rem] [--clip-top:-1rem] not-dark:bg-clip-padding before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] has-data-[slot=table-container]:overflow-hidden *:data-[slot=card]:-m-px *:data-[slot=card]:bg-clip-padding *:data-[slot=card]:shadow-none *:data-[slot=card]:[clip-path:inset(var(--clip-top)_1px_var(--clip-bottom)_1px_round_calc(var(--radius-2xl)-1px))] *:not-first:data-[slot=card]:rounded-t-xl *:not-last:data-[slot=card]:rounded-b-xl *:data-[slot=card]:before:hidden *:not-first:data-[slot=card]:before:rounded-t-[calc(var(--radius-xl)-1px)] *:not-last:data-[slot=card]:before:rounded-b-[calc(var(--radius-xl)-1px)] *:data-[slot=card]:first:[--clip-top:1px] *:data-[slot=card]:last:[--clip-bottom:1px] *:data-[slot=table-container]:-m-px *:data-[slot=table-container]:w-[calc(100%+2px)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]",
@@ -43,13 +43,13 @@ export const CardFrame = ({
     props: mergeProps<"div">(defaultProps, props),
     render,
   });
-};
+}
 
-export const CardFrameHeader = ({
+export function CardFrameHeader({
   className,
   render,
   ...props
-}: useRender.ComponentProps<"div">) => {
+}: useRender.ComponentProps<"div">) {
   const defaultProps = {
     className: cn(
       "relative flex grid auto-rows-min grid-rows-[auto_auto] flex-col items-start gap-x-4 px-6 py-4 has-data-[slot=card-frame-action]:grid-cols-[1fr_auto]",
@@ -63,13 +63,13 @@ export const CardFrameHeader = ({
     props: mergeProps<"div">(defaultProps, props),
     render,
   });
-};
+}
 
-export const CardFrameTitle = ({
+export function CardFrameTitle({
   className,
   render,
   ...props
-}: useRender.ComponentProps<"div">) => {
+}: useRender.ComponentProps<"div">) {
   const defaultProps = {
     className: cn("self-center text-sm font-semibold", className),
     "data-slot": "card-frame-title",
@@ -80,13 +80,13 @@ export const CardFrameTitle = ({
     props: mergeProps<"div">(defaultProps, props),
     render,
   });
-};
+}
 
-export const CardFrameDescription = ({
+export function CardFrameDescription({
   className,
   render,
   ...props
-}: useRender.ComponentProps<"div">) => {
+}: useRender.ComponentProps<"div">) {
   const defaultProps = {
     className: cn("text-muted-foreground self-center text-sm", className),
     "data-slot": "card-frame-description",
@@ -97,13 +97,13 @@ export const CardFrameDescription = ({
     props: mergeProps<"div">(defaultProps, props),
     render,
   });
-};
+}
 
-export const CardFrameAction = ({
+export function CardFrameAction({
   className,
   render,
   ...props
-}: useRender.ComponentProps<"div">) => {
+}: useRender.ComponentProps<"div">) {
   const defaultProps = {
     className: cn(
       "col-start-2 inline-flex self-center justify-self-end nth-3:row-span-2 nth-3:row-start-1",
@@ -117,13 +117,13 @@ export const CardFrameAction = ({
     props: mergeProps<"div">(defaultProps, props),
     render,
   });
-};
+}
 
-export const CardFrameFooter = ({
+export function CardFrameFooter({
   className,
   render,
   ...props
-}: useRender.ComponentProps<"div">) => {
+}: useRender.ComponentProps<"div">) {
   const defaultProps = {
     className: cn("px-6 py-4", className),
     "data-slot": "card-frame-footer",
@@ -134,13 +134,13 @@ export const CardFrameFooter = ({
     props: mergeProps<"div">(defaultProps, props),
     render,
   });
-};
+}
 
-export const CardHeader = ({
+export function CardHeader({
   className,
   render,
   ...props
-}: useRender.ComponentProps<"div">) => {
+}: useRender.ComponentProps<"div">) {
   const defaultProps = {
     className: cn(
       "grid auto-rows-min grid-rows-[auto_auto] items-start gap-1.5 p-6 in-[[data-slot=card]:has(>[data-slot=card-panel])]:pb-4 has-data-[slot=card-action]:grid-cols-[1fr_auto]",
@@ -154,13 +154,13 @@ export const CardHeader = ({
     props: mergeProps<"div">(defaultProps, props),
     render,
   });
-};
+}
 
-export const CardTitle = ({
+export function CardTitle({
   className,
   render,
   ...props
-}: useRender.ComponentProps<"div">) => {
+}: useRender.ComponentProps<"div">) {
   const defaultProps = {
     className: cn("font-heading text-lg leading-none font-semibold", className),
     "data-slot": "card-title",
@@ -171,13 +171,13 @@ export const CardTitle = ({
     props: mergeProps<"div">(defaultProps, props),
     render,
   });
-};
+}
 
-export const CardDescription = ({
+export function CardDescription({
   className,
   render,
   ...props
-}: useRender.ComponentProps<"div">) => {
+}: useRender.ComponentProps<"div">) {
   const defaultProps = {
     className: cn("text-muted-foreground text-sm", className),
     "data-slot": "card-description",
@@ -188,13 +188,13 @@ export const CardDescription = ({
     props: mergeProps<"div">(defaultProps, props),
     render,
   });
-};
+}
 
-export const CardAction = ({
+export function CardAction({
   className,
   render,
   ...props
-}: useRender.ComponentProps<"div">) => {
+}: useRender.ComponentProps<"div">) {
   const defaultProps = {
     className: cn(
       "col-start-2 row-span-2 row-start-1 inline-flex self-start justify-self-end",
@@ -208,13 +208,13 @@ export const CardAction = ({
     props: mergeProps<"div">(defaultProps, props),
     render,
   });
-};
+}
 
-export const CardPanel = ({
+export function CardPanel({
   className,
   render,
   ...props
-}: useRender.ComponentProps<"div">) => {
+}: useRender.ComponentProps<"div">) {
   const defaultProps = {
     className: cn(
       "flex-1 p-6 in-[[data-slot=card]:has(>[data-slot=card-footer]:not(.border-t))]:pb-0 in-[[data-slot=card]:has(>[data-slot=card-header]:not(.border-b))]:pt-0",
@@ -228,13 +228,13 @@ export const CardPanel = ({
     props: mergeProps<"div">(defaultProps, props),
     render,
   });
-};
+}
 
-export const CardFooter = ({
+export function CardFooter({
   className,
   render,
   ...props
-}: useRender.ComponentProps<"div">) => {
+}: useRender.ComponentProps<"div">) {
   const defaultProps = {
     className: cn(
       "flex items-center p-6 in-[[data-slot=card]:has(>[data-slot=card-panel])]:pt-4",
@@ -248,6 +248,6 @@ export const CardFooter = ({
     props: mergeProps<"div">(defaultProps, props),
     render,
   });
-};
+}
 
 export { CardPanel as CardContent };

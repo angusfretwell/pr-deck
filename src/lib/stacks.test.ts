@@ -3,13 +3,13 @@ import { describe, expect, it } from "vite-plus/test";
 import type { PullRequest } from "../types";
 import { clusterByStack, deriveStacks } from "./stacks";
 
-const pr = (
+function pr(
   id: string,
   branch: string,
   baseBranch = "main",
   overrides: Partial<PullRequest> = {}
-) =>
-  ({
+) {
+  return {
     id,
     owner: "acme",
     repo: "web",
@@ -29,12 +29,14 @@ const pr = (
     reviewers: [],
     reviewRequestedFromViewer: false,
     ...overrides,
-  }) satisfies PullRequest;
+  } satisfies PullRequest;
+}
 
-const layerIds = (prs: PullRequest[], id: string) =>
-  deriveStacks(prs)
+function layerIds(prs: PullRequest[], id: string) {
+  return deriveStacks(prs)
     .get(id)
     ?.layers.map((layer) => layer.id);
+}
 
 describe("deriveStacks", () => {
   it("chains pull requests from the one targeting the trunk upwards", () => {
@@ -90,10 +92,11 @@ describe("clusterByStack", () => {
 
   const stacks = deriveStacks(prs);
 
-  const ids = (rows: PullRequest[]) =>
-    clusterByStack(rows, stacks).map((cluster) =>
+  function ids(rows: PullRequest[]) {
+    return clusterByStack(rows, stacks).map((cluster) =>
       cluster.rows.map((row) => row.id)
     );
+  }
 
   it("gathers a stack in merge order where its first row appears", () => {
     expect(ids(prs)).toEqual([["1", "2", "3"], ["9"]]);

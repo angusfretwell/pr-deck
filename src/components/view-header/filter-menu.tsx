@@ -29,10 +29,11 @@ type Item =
       count: number;
     };
 
-const itemKey = (item: Item) =>
-  item.kind === "value"
+function itemKey(item: Item) {
+  return item.kind === "value"
     ? `${item.property.key}:${item.option.value}`
     : item.property.key;
+}
 
 interface FilterMenuProps {
   handle: PopoverPrimitive.Handle<MenuAnchor>;
@@ -55,7 +56,7 @@ interface FilterMenuListProps {
   onToggle: (key: PropertyKey, value: string) => void;
 }
 
-const FilterMenuList = ({
+function FilterMenuList({
   initialKey,
   canGoBack,
   orgPrs,
@@ -63,7 +64,7 @@ const FilterMenuList = ({
   filters,
   viewer,
   onToggle,
-}: FilterMenuListProps) => {
+}: FilterMenuListProps) {
   const [propertyKey, setPropertyKey] = useState(initialKey);
   const [query, setQuery] = useState("");
 
@@ -71,7 +72,7 @@ const FilterMenuList = ({
     orgPrs.map((pr) => [pr.author, pr.authorAvatarUrl])
   );
 
-  const avatarOf = (item: Extract<Item, { kind: "value" }>) => {
+  function avatarOf(item: Extract<Item, { kind: "value" }>) {
     if (item.property.key !== "author") {
       return null;
     }
@@ -86,18 +87,22 @@ const FilterMenuList = ({
         className="sm:[--avatar-size:--spacing(4)]"
       />
     );
-  };
+  }
 
   const needle = query.trim().toLowerCase();
-  const matches = (label: string) => label.toLowerCase().includes(needle);
 
-  const valueItems = (property: Property, prefixed: boolean) =>
-    facets(property, filters, scopedPrs, orgPrs, viewer)
+  function matches(label: string) {
+    return label.toLowerCase().includes(needle);
+  }
+
+  function valueItems(property: Property, prefixed: boolean) {
+    return facets(property, filters, scopedPrs, orgPrs, viewer)
       .filter(({ option }) => matches(option.label))
       .map(
         (facet) =>
           ({ kind: "value", property, prefixed, ...facet }) satisfies Item
       );
+  }
 
   const items: Item[] = propertyKey
     ? valueItems(PROPERTY[propertyKey], false)
@@ -114,7 +119,7 @@ const FilterMenuList = ({
           : []),
       ];
 
-  const pick = (item: Item) => {
+  function pick(item: Item) {
     if (item.kind === "value") {
       onToggle(item.property.key, item.option.value);
 
@@ -123,7 +128,7 @@ const FilterMenuList = ({
 
     setPropertyKey(item.property.key);
     setQuery("");
-  };
+  }
 
   return (
     <div className="flex max-h-[min(calc(var(--available-height)-2px),24rem)] flex-col *:first:border-b">
@@ -202,42 +207,44 @@ const FilterMenuList = ({
       </Command>
     </div>
   );
-};
+}
 
-export const FilterMenu = ({
+export function FilterMenu({
   handle,
   triggerId,
   onOpenChange,
   ...list
-}: FilterMenuProps) => (
-  <Popover
-    handle={handle}
-    open={triggerId !== null}
-    triggerId={triggerId}
-    onOpenChange={(open, { trigger }) => {
-      onOpenChange(open, trigger);
-    }}
-  >
-    {({ payload: anchor }) => {
-      if (anchor === undefined) {
-        return null;
-      }
+}: FilterMenuProps) {
+  return (
+    <Popover
+      handle={handle}
+      open={triggerId !== null}
+      triggerId={triggerId}
+      onOpenChange={(open, { trigger }) => {
+        onOpenChange(open, trigger);
+      }}
+    >
+      {({ payload: anchor }) => {
+        if (anchor === undefined) {
+          return null;
+        }
 
-      const chipKey = anchor === "header" || anchor === "add" ? null : anchor;
+        const chipKey = anchor === "header" || anchor === "add" ? null : anchor;
 
-      return (
-        <PopoverPopup
-          align={anchor === "header" ? "end" : "start"}
-          className="w-72 *:data-[slot=popover-viewport]:py-0 *:data-[slot=popover-viewport]:[--viewport-inline-padding:0] sm:w-62.5"
-        >
-          <FilterMenuList
-            key={anchor}
-            initialKey={chipKey}
-            canGoBack={chipKey === null}
-            {...list}
-          />
-        </PopoverPopup>
-      );
-    }}
-  </Popover>
-);
+        return (
+          <PopoverPopup
+            align={anchor === "header" ? "end" : "start"}
+            className="w-72 *:data-[slot=popover-viewport]:py-0 *:data-[slot=popover-viewport]:[--viewport-inline-padding:0] sm:w-62.5"
+          >
+            <FilterMenuList
+              key={anchor}
+              initialKey={chipKey}
+              canGoBack={chipKey === null}
+              {...list}
+            />
+          </PopoverPopup>
+        );
+      }}
+    </Popover>
+  );
+}

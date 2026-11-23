@@ -13,8 +13,8 @@ import {
 import type { PrListInput, Selection, SelectionAction } from "./pr-list";
 import { deriveStacks } from "./stacks";
 
-const pr = (id: string, repo: string, author: string) =>
-  ({
+function pr(id: string, repo: string, author: string) {
+  return {
     id,
     owner: "acme",
     repo,
@@ -33,7 +33,8 @@ const pr = (id: string, repo: string, author: string) =>
     review: "none",
     reviewers: [],
     reviewRequestedFromViewer: false,
-  }) satisfies PullRequest;
+  } satisfies PullRequest;
+}
 
 const PRS = [
   pr("1", "web", "bob"),
@@ -42,8 +43,8 @@ const PRS = [
   pr("4", "docs", "bob"),
 ];
 
-const list = (overrides: Partial<PrListInput> = {}) =>
-  derivePrList({
+function list(overrides: Partial<PrListInput> = {}) {
+  return derivePrList({
     pullRequests: PRS,
     stacks: new Map(),
     query: "",
@@ -56,21 +57,26 @@ const list = (overrides: Partial<PrListInput> = {}) =>
     desktop: true,
     ...overrides,
   });
+}
 
-const selecting = (selectedId: string | null, previewOpen = false) =>
-  ({
+function selecting(selectedId: string | null, previewOpen = false) {
+  return {
     selectedId,
     previewOpen,
-  }) satisfies Selection;
+  } satisfies Selection;
+}
 
-const rowIds = (groups: { key: string; rows: PullRequest[] }[]) =>
-  groups.map((group) => [group.key, group.rows.map((row) => row.id)]);
+function rowIds(groups: { key: string; rows: PullRequest[] }[]) {
+  return groups.map((group) => [group.key, group.rows.map((row) => row.id)]);
+}
 
-const act = (
+function act(
   selection: Selection,
   action: SelectionAction,
   overrides?: Partial<PrListInput>
-) => applySelectionAction(list({ selection, ...overrides }), action);
+) {
+  return applySelectionAction(list({ selection, ...overrides }), action);
+}
 
 describe("pipeline", () => {
   it("groups by repo with sorted keys, keeping input order within a group", () => {

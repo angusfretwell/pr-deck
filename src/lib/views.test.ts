@@ -6,8 +6,8 @@ import type { ViewsChange, ViewsSession } from "./views";
 
 const OWNER = "acme";
 
-const pr = (overrides: Partial<PullRequest> = {}) =>
-  ({
+function pr(overrides: Partial<PullRequest> = {}) {
+  return {
     id: "1",
     owner: OWNER,
     repo: "web",
@@ -27,46 +27,57 @@ const pr = (overrides: Partial<PullRequest> = {}) =>
     reviewers: [],
     reviewRequestedFromViewer: false,
     ...overrides,
-  }) satisfies PullRequest;
+  } satisfies PullRequest;
+}
 
-const is = (key: Filter["key"], ...values: string[]) =>
-  ({
+function is(key: Filter["key"], ...values: string[]) {
+  return {
     key,
     values,
     negated: false,
-  }) satisfies Filter;
+  } satisfies Filter;
+}
 
-const view = (id: string, name: string, filters: Filter[] = []) =>
-  ({
+function view(id: string, name: string, filters: Filter[] = []) {
+  return {
     id,
     name,
     filters,
-  }) satisfies View;
+  } satisfies View;
+}
 
 const STORED = [
   view("1", "Mine"),
   view("2", "Needs my review", [is("ci", "fail")]),
 ];
 
-const open = (
+function open(
   slug: string | null,
   stored: View[] = STORED,
   session?: ViewsSession
-) => openViews({ owner: OWNER, stored, slug, session });
+) {
+  return openViews({ owner: OWNER, stored, slug, session });
+}
 
-const seed = () =>
-  openViews({ owner: OWNER, stored: undefined, slug: null }).list;
+function seed() {
+  return openViews({ owner: OWNER, stored: undefined, slug: null }).list;
+}
 
-const slugOf = (path: string) => path.split("/")[2] ?? null;
+function slugOf(path: string) {
+  return path.split("/")[2] ?? null;
+}
 
-const follow = (change: ViewsChange, slug: string | null) =>
-  open(
+function follow(change: ViewsChange, slug: string | null) {
+  return open(
     change.navigate ? slugOf(change.navigate.to) : slug,
     change.views,
     change.session
   );
+}
 
-const names = (views: View[]) => views.map((v) => v.name);
+function names(views: View[]) {
+  return views.map((v) => v.name);
+}
 
 describe("seeding", () => {
   const seeded = seed();
@@ -113,10 +124,11 @@ describe("seeding", () => {
 describe("countByView", () => {
   const seeded = seed();
 
-  const count = (name: string, ...prs: PullRequest[]) =>
-    countByView(seeded, prs, "me")[
+  function count(name: string, ...prs: PullRequest[]) {
+    return countByView(seeded, prs, "me")[
       seeded.find((v) => v.name === name)?.id ?? ""
     ];
+  }
 
   it("Mine counts the viewer's PRs", () => {
     expect(count("Mine", pr({ author: "me" }), pr({ author: "bob" }))).toBe(1);

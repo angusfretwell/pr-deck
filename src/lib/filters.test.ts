@@ -10,8 +10,8 @@ import {
   toggleValue,
 } from "./filters";
 
-const pr = (overrides: Partial<PullRequest> = {}) =>
-  ({
+function pr(overrides: Partial<PullRequest> = {}) {
+  return {
     id: "1",
     owner: "acme",
     repo: "web",
@@ -31,19 +31,24 @@ const pr = (overrides: Partial<PullRequest> = {}) =>
     reviewers: [],
     reviewRequestedFromViewer: false,
     ...overrides,
-  }) satisfies PullRequest;
+  } satisfies PullRequest;
+}
 
-const is = (key: Filter["key"], ...values: string[]) => ({
-  key,
-  values,
-  negated: false,
-});
+function is(key: Filter["key"], ...values: string[]) {
+  return {
+    key,
+    values,
+    negated: false,
+  };
+}
 
-const isNot = (key: Filter["key"], ...values: string[]) => ({
-  key,
-  values,
-  negated: true,
-});
+function isNot(key: Filter["key"], ...values: string[]) {
+  return {
+    key,
+    values,
+    negated: true,
+  };
+}
 
 describe("passes", () => {
   it("passes everything with no filters", () => {

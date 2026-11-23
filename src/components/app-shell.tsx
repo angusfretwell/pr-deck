@@ -50,7 +50,7 @@ interface AppShellProps {
   onSignOut: () => void;
 }
 
-export const AppShell = ({
+export function AppShell({
   session,
   enabledOwners,
   hiddenOwners,
@@ -62,18 +62,18 @@ export const AppShell = ({
   searchVisible,
   onSearchBlur,
   onSignOut,
-}: AppShellProps) => {
+}: AppShellProps) {
   const [, navigate] = useLocation();
   const [searchTapped, setSearchTapped] = useState(false);
   const searching = searchVisible || searchTapped;
   const fetching = useIsFetching() > 0;
   const { ternaryDarkMode, setTernaryDarkMode } = useColorMode();
 
-  const dismissSearch = () => {
+  function dismissSearch() {
     onQueryChange("");
     setSearchTapped(false);
     onSearchBlur();
-  };
+  }
 
   return (
     <div className="h-12.5 shrink-0">
@@ -221,4 +221,4 @@ export const AppShell = ({
       </header>
     </div>
   );
-};
+}

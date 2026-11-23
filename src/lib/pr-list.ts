@@ -60,9 +60,11 @@ export type SelectionAction =
   | { type: "closePreview" }
   | { type: "escape" };
 
-const groupId = (group: Group, key: string) => `${group}:${key}`;
+function groupId(group: Group, key: string) {
+  return `${group}:${key}`;
+}
 
-const groupRows = (prs: PullRequest[], group: Group) => {
+function groupRows(prs: PullRequest[], group: Group) {
   if (group === "none") {
     return [{ key: "", rows: prs }];
   }
@@ -73,9 +75,9 @@ const groupRows = (prs: PullRequest[], group: Group) => {
     key,
     rows: prs.filter((pr) => pr[group] === key),
   }));
-};
+}
 
-export const derivePrList = ({
+export function derivePrList({
   pullRequests,
   stacks,
   query,
@@ -86,7 +88,7 @@ export const derivePrList = ({
   starred,
   selection,
   desktop,
-}: PrListInput) => {
+}: PrListInput) {
   const scoped = pullRequests.filter((pr) => matchesText(pr, query));
   const visible = scoped.filter((pr) => passes(pr, filters, viewer));
 
@@ -122,14 +124,15 @@ export const derivePrList = ({
     collapsed,
     starred,
   } satisfies PrList;
-};
+}
 
-const navigableIndex = ({ order, selection }: PrList) =>
-  selection.selectedId !== null && selection.selectedId !== ""
+function navigableIndex({ order, selection }: PrList) {
+  return selection.selectedId !== null && selection.selectedId !== ""
     ? order.indexOf(selection.selectedId)
     : -1;
+}
 
-export const applySelectionAction = (list: PrList, action: SelectionAction) => {
+export function applySelectionAction(list: PrList, action: SelectionAction) {
   const { order, selection } = list;
 
   switch (action.type) {
@@ -172,24 +175,22 @@ export const applySelectionAction = (list: PrList, action: SelectionAction) => {
       return selection;
     }
   }
-};
+}
 
-const setGroupsCollapsed = (
-  list: PrList,
-  keys: string[],
-  collapse: boolean
-) => {
+function setGroupsCollapsed(list: PrList, keys: string[], collapse: boolean) {
   const { collapsed, group } = list;
   const ids = keys.map((key) => groupId(group, key));
 
   return collapse
     ? [...collapsed, ...ids.filter((added) => !collapsed.includes(added))]
     : collapsed.filter((existing) => !ids.includes(existing));
-};
+}
 
-const groupKeys = ({ groups }: PrList) => groups.map((entry) => entry.key);
+function groupKeys({ groups }: PrList) {
+  return groups.map((entry) => entry.key);
+}
 
-export const toggleGroup = (list: PrList, key: string, scope: ToggleScope) => {
+export function toggleGroup(list: PrList, key: string, scope: ToggleScope) {
   if (scope === "others") {
     const others = groupKeys(list).filter((other) => other !== key);
 
@@ -213,18 +214,20 @@ export const toggleGroup = (list: PrList, key: string, scope: ToggleScope) => {
     scope === "all" ? groupKeys(list) : [key],
     collapse
   );
-};
+}
 
-export const allGroupsCollapsed = ({ groups }: PrList) =>
-  groups.every((entry) => entry.collapsed);
+export function allGroupsCollapsed({ groups }: PrList) {
+  return groups.every((entry) => entry.collapsed);
+}
 
-export const toggleAllGroups = (list: PrList) =>
-  setGroupsCollapsed(list, groupKeys(list), !allGroupsCollapsed(list));
+export function toggleAllGroups(list: PrList) {
+  return setGroupsCollapsed(list, groupKeys(list), !allGroupsCollapsed(list));
+}
 
-export const toggleStar = ({ starred, group }: PrList, key: string) => {
+export function toggleStar({ starred, group }: PrList, key: string) {
   const id = groupId(group, key);
 
   return starred.includes(id)
     ? starred.filter((existing) => existing !== id)
     : [...starred, id];
-};
+}

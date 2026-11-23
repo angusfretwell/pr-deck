@@ -27,7 +27,7 @@ import {
 } from "@/lib/storage";
 import type { Session } from "@/types";
 
-const useFallbackPath = (owners: string[]) => {
+function useFallbackPath(owners: string[]) {
   const [lastPath] = useLastPath();
   const lastOwner = lastPath?.split("/")[1];
 
@@ -37,13 +37,13 @@ const useFallbackPath = (owners: string[]) => {
     owners.includes(lastOwner)
     ? lastPath
     : `/${owners[0]}`;
-};
+}
 
-const RootRedirect = ({ owners }: { owners: string[] }) => (
-  <Redirect to={useFallbackPath(owners)} replace />
-);
+function RootRedirect({ owners }: { owners: string[] }) {
+  return <Redirect to={useFallbackPath(owners)} replace />;
+}
 
-const OwnerNotFound = ({
+function OwnerNotFound({
   owner,
   hidden,
   owners,
@@ -51,7 +51,7 @@ const OwnerNotFound = ({
   owner: string;
   hidden: boolean;
   owners: string[];
-}) => {
+}) {
   const [, navigate] = useLocation();
   const fallbackPath = useFallbackPath(owners);
 
@@ -80,23 +80,23 @@ const OwnerNotFound = ({
       </EmptyContent>
     </Empty>
   );
-};
+}
 
-const Dashboard = ({
+function Dashboard({
   session,
   onSignOut,
 }: {
   session: Session;
   onSignOut: () => void;
-}) => {
+}) {
   const [query, setQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const openSearch = () => {
+  function openSearch() {
     setSearchOpen(true);
     searchRef.current?.focus();
-  };
+  }
 
   const [hiddenOwners, setHiddenOwners] = useHiddenOwners();
 
@@ -153,9 +153,9 @@ const Dashboard = ({
       </Route>
     </Switch>
   );
-};
+}
 
-const Workspace = ({ onSignOut }: { onSignOut: () => void }) => {
+function Workspace({ onSignOut }: { onSignOut: () => void }) {
   const session = useSession();
 
   if (session.data !== undefined) {
@@ -193,9 +193,9 @@ const Workspace = ({ onSignOut }: { onSignOut: () => void }) => {
       <Spinner className="size-5" />
     </div>
   );
-};
+}
 
-const App = () => {
+function App() {
   const queryClient = useQueryClient();
   const [token, setToken, removeToken] = useToken();
   const [authError, setAuthError] = useState<string | null>(null);
@@ -217,12 +217,12 @@ const App = () => {
     [removeToken]
   );
 
-  const signIn = (newToken: string, session: Session) => {
+  function signIn(newToken: string, session: Session) {
     clearQueryCache();
     setToken(newToken);
     queryClient.setQueryData(["session"], session);
     setAuthError(null);
-  };
+  }
 
   useEffect(
     () =>
@@ -251,6 +251,6 @@ const App = () => {
       )}
     </div>
   );
-};
+}
 
 export default App;

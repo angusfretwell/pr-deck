@@ -28,17 +28,19 @@ export const toggleVariants = cva(
   }
 );
 
-export const Toggle = ({
+export function Toggle({
   className,
   variant,
   size,
   ...props
-}: TogglePrimitive.Props & VariantProps<typeof toggleVariants>) => (
-  <TogglePrimitive
-    className={cn(toggleVariants({ className, size, variant }))}
-    data-slot="toggle"
-    {...props}
-  />
-);
+}: TogglePrimitive.Props & VariantProps<typeof toggleVariants>) {
+  return (
+    <TogglePrimitive
+      className={cn(toggleVariants({ className, size, variant }))}
+      data-slot="toggle"
+      {...props}
+    />
+  );
+}
 
 export { Toggle as TogglePrimitive } from "@base-ui/react/toggle";

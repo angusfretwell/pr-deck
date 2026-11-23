@@ -1,7 +1,8 @@
 export const PAGE_SIZE = 100;
 
-export const searchQuery = (owner: string) =>
-  `is:pr is:open archived:false user:${owner} sort:updated-desc`;
+export function searchQuery(owner: string) {
+  return `is:pr is:open archived:false user:${owner} sort:updated-desc`;
+}
 
 export const SESSION_QUERY = `
   query Session {

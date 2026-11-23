@@ -11,8 +11,8 @@ import {
   viewerReview,
 } from "./pr";
 
-const pr = (overrides: Partial<PullRequest> = {}) =>
-  ({
+function pr(overrides: Partial<PullRequest> = {}) {
+  return {
     id: "1",
     owner: "acme",
     repo: "web",
@@ -32,16 +32,18 @@ const pr = (overrides: Partial<PullRequest> = {}) =>
     reviewers: [],
     reviewRequestedFromViewer: false,
     ...overrides,
-  }) satisfies PullRequest;
+  } satisfies PullRequest;
+}
 
-const status = (overrides: Partial<PullRequest>) => {
+function status(overrides: Partial<PullRequest>) {
   const { tone, icon, label } = statusBadge(pr(overrides));
 
   return [tone, icon, label];
-};
+}
 
-const labels = (overrides: Partial<PullRequest>) =>
-  issueBadges(pr(overrides)).map((badge) => [badge.tone, badge.label]);
+function labels(overrides: Partial<PullRequest>) {
+  return issueBadges(pr(overrides)).map((badge) => [badge.tone, badge.label]);
+}
 
 describe("badge tables", () => {
   it("labels the none and skipped states", () => {
@@ -158,8 +160,9 @@ describe("issueBadges", () => {
 describe("age and isStale", () => {
   const now = Date.parse("2026-01-10T00:00:00Z");
 
-  const ago = (hours: number) =>
-    new Date(now - hours * 3_600_000).toISOString();
+  function ago(hours: number) {
+    return new Date(now - hours * 3_600_000).toISOString();
+  }
 
   it("formats age", () => {
     expect(age(ago(0.5), now)).toBe("now");

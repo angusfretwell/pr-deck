@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { loadHighlighter } from "@/lib/highlighter";
 
-export const useHighlightedCode = (value: string, language: string) => {
+export function useHighlightedCode(value: string, language: string) {
   const code = value.endsWith("\n") ? value.slice(0, -1) : value;
 
   const [loaded, setLoaded] = React.useState<{
@@ -15,13 +15,13 @@ export const useHighlightedCode = (value: string, language: string) => {
   React.useEffect(() => {
     let cancelled = false;
 
-    const load = async () => {
+    async function load() {
       const [result] = await Promise.allSettled([loadHighlighter(language)]);
 
       if (result.status === "fulfilled" && !cancelled) {
         setLoaded({ language, highlighter: result.value });
       }
-    };
+    }
 
     void load();
 
@@ -72,4 +72,4 @@ export const useHighlightedCode = (value: string, language: string) => {
 
     return [...next.lines, highlighter.highlight(tail, next.state).lines[0]];
   }, [code, highlighter, next, tail]);
-};
+}

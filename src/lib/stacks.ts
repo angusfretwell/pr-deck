@@ -12,10 +12,11 @@ export interface Cluster {
   rows: PullRequest[];
 }
 
-const branchKey = (pr: PullRequest, branch: string) =>
-  `${pr.owner}/${pr.repo}:${branch}`;
+function branchKey(pr: PullRequest, branch: string) {
+  return `${pr.owner}/${pr.repo}:${branch}`;
+}
 
-export const deriveStacks = (pullRequests: PullRequest[]) => {
+export function deriveStacks(pullRequests: PullRequest[]) {
   const byHead = new Map<string, PullRequest>();
 
   for (const pr of pullRequests) {
@@ -24,8 +25,9 @@ export const deriveStacks = (pullRequests: PullRequest[]) => {
     }
   }
 
-  const parentOf = (pr: PullRequest) =>
-    byHead.get(branchKey(pr, pr.baseBranch));
+  function parentOf(pr: PullRequest) {
+    return byHead.get(branchKey(pr, pr.baseBranch));
+  }
 
   const childOf = new Map<string, PullRequest>();
 
@@ -58,9 +60,9 @@ export const deriveStacks = (pullRequests: PullRequest[]) => {
   }
 
   return stacks;
-};
+}
 
-export const clusterByStack = (rows: PullRequest[], stacks: StackIndex) => {
+export function clusterByStack(rows: PullRequest[], stacks: StackIndex) {
   const shown = new Set(rows.map((pr) => pr.id));
   const clustered = new Set<Stack>();
   const clusters: Cluster[] = [];
@@ -80,4 +82,4 @@ export const clusterByStack = (rows: PullRequest[], stacks: StackIndex) => {
   }
 
   return clusters;
-};
+}

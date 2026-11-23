@@ -20,8 +20,9 @@ const {
 
 export { fetchSession };
 
-const retry = (failureCount: number, error: Error) =>
-  isRetryable(error) && failureCount < 1;
+function retry(failureCount: number, error: Error) {
+  return isRetryable(error) && failureCount < 1;
+}
 
 const RETRY_DELAY_MS = 1000;
 
@@ -34,7 +35,7 @@ const live = {
   retryDelay: RETRY_DELAY_MS,
 };
 
-export const useSession = () => {
+export function useSession() {
   const [token] = useToken();
 
   return useQuery({
@@ -48,12 +49,12 @@ export const useSession = () => {
     retry,
     retryDelay: RETRY_DELAY_MS,
   });
-};
+}
 
-const usePendingMergeability = (
+function usePendingMergeability(
   owner: string,
   list: PullRequestList | undefined
-) => {
+) {
   const [token] = useToken();
   const queryClient = useQueryClient();
 
@@ -82,9 +83,9 @@ const usePendingMergeability = (
     retry,
     retryDelay: RETRY_DELAY_MS,
   });
-};
+}
 
-export const usePullRequests = (owner: string) => {
+export function usePullRequests(owner: string) {
   const [token] = useToken();
   const viewer = useSession().data?.viewer.login;
   const queryClient = useQueryClient();
@@ -111,9 +112,9 @@ export const usePullRequests = (owner: string) => {
   usePendingMergeability(owner, list.data);
 
   return list;
-};
+}
 
-export const usePullRequestDetail = (id: string) => {
+export function usePullRequestDetail(id: string) {
   const [token] = useToken();
 
   return useQuery({
@@ -124,4 +125,4 @@ export const usePullRequestDetail = (id: string) => {
         : skipToken,
     ...live,
   });
-};
+}

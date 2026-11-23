@@ -3,7 +3,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { shouldPersistQuery } from "./query-cache";
 
-const queryFor = (client: QueryClient, queryKey: unknown[]) => {
+function queryFor(client: QueryClient, queryKey: unknown[]) {
   const query = client.getQueryCache().find({ queryKey, exact: true });
 
   if (query === undefined) {
@@ -11,7 +11,7 @@ const queryFor = (client: QueryClient, queryKey: unknown[]) => {
   }
 
   return query;
-};
+}
 
 describe("shouldPersistQuery", () => {
   it("persists the session and pull request lists", () => {

@@ -44,7 +44,7 @@ const ICON: Record<BadgeIconName, Icon> = {
 
 const ROUND_ICONS = new Set<BadgeIconName>(["pass", "fail", "pending"]);
 
-export const BadgePill = ({ badge }: { badge: Badge }) => {
+export function BadgePill({ badge }: { badge: Badge }) {
   const Glyph = ICON[badge.icon];
 
   return (
@@ -56,15 +56,15 @@ export const BadgePill = ({ badge }: { badge: Badge }) => {
       {badge.label}
     </BadgeUi>
   );
-};
+}
 
-export const BadgeIcon = ({
+export function BadgeIcon({
   badge,
   className,
 }: {
   badge: Badge;
   className?: string;
-}) => {
+}) {
   const Glyph = ICON[badge.icon];
 
   return (
@@ -75,4 +75,4 @@ export const BadgeIcon = ({
       />
     </span>
   );
-};
+}

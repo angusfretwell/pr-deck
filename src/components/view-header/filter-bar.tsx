@@ -18,86 +18,88 @@ interface FilterBarProps {
   onRemove: (index: number) => void;
 }
 
-const operator = (filter: Filter) => {
+function operator(filter: Filter) {
   if (filter.values.length > 1) {
     return filter.negated ? "is not any of" : "is any of";
   }
 
   return filter.negated ? "is not" : "is";
-};
+}
 
-export const FilterBar = ({
+export function FilterBar({
   filters,
   orgPrs,
   viewer,
   actions,
   onNegatedChange,
   onRemove,
-}: FilterBarProps) => (
-  <div className="bg-muted mx-2 mb-2.5 flex flex-wrap items-center gap-1.5 rounded-lg px-2 py-1.5 md:mx-4">
-    {filters.map((filter, index) => (
-      <Group
-        key={filter.key}
-        aria-label={`${PROPERTY[filter.key].name} filter`}
-        className="max-w-full *:rounded-full *:before:rounded-full"
+}: FilterBarProps) {
+  return (
+    <div className="bg-muted mx-2 mb-2.5 flex flex-wrap items-center gap-1.5 rounded-lg px-2 py-1.5 md:mx-4">
+      {filters.map((filter, index) => (
+        <Group
+          key={filter.key}
+          aria-label={`${PROPERTY[filter.key].name} filter`}
+          className="max-w-full *:rounded-full *:before:rounded-full"
+        >
+          <GroupText
+            className={cn(
+              buttonVariants({ size: "sm", variant: "outline" }),
+              "text-muted-foreground pointer-events-none"
+            )}
+          >
+            {PROPERTY[filter.key].name}
+          </GroupText>
+          <GroupSeparator />
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-muted-foreground"
+            onClick={() => {
+              onNegatedChange(filter.key, !filter.negated);
+            }}
+          >
+            {operator(filter)}
+          </Button>
+          <GroupSeparator />
+          <FilterTrigger
+            anchor={filter.key}
+            render={
+              <Button variant="outline" size="sm" className="min-w-0 shrink" />
+            }
+          >
+            <span className="truncate">
+              {filterSummary(filter, orgPrs, viewer)}
+            </span>
+          </FilterTrigger>
+          <GroupSeparator />
+          <Button
+            variant="outline"
+            size="icon-sm"
+            className="text-muted-foreground"
+            aria-label="Remove filter"
+            onClick={() => {
+              onRemove(index);
+            }}
+          >
+            <XIcon />
+          </Button>
+        </Group>
+      ))}
+      <FilterTrigger
+        anchor="add"
+        render={
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="text-muted-foreground"
+            aria-label="Add filter"
+          />
+        }
       >
-        <GroupText
-          className={cn(
-            buttonVariants({ size: "sm", variant: "outline" }),
-            "text-muted-foreground pointer-events-none"
-          )}
-        >
-          {PROPERTY[filter.key].name}
-        </GroupText>
-        <GroupSeparator />
-        <Button
-          variant="outline"
-          size="sm"
-          className="text-muted-foreground"
-          onClick={() => {
-            onNegatedChange(filter.key, !filter.negated);
-          }}
-        >
-          {operator(filter)}
-        </Button>
-        <GroupSeparator />
-        <FilterTrigger
-          anchor={filter.key}
-          render={
-            <Button variant="outline" size="sm" className="min-w-0 shrink" />
-          }
-        >
-          <span className="truncate">
-            {filterSummary(filter, orgPrs, viewer)}
-          </span>
-        </FilterTrigger>
-        <GroupSeparator />
-        <Button
-          variant="outline"
-          size="icon-sm"
-          className="text-muted-foreground"
-          aria-label="Remove filter"
-          onClick={() => {
-            onRemove(index);
-          }}
-        >
-          <XIcon />
-        </Button>
-      </Group>
-    ))}
-    <FilterTrigger
-      anchor="add"
-      render={
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className="text-muted-foreground"
-          aria-label="Add filter"
-        />
-      }
-    >
-      <PlusIcon />
-    </FilterTrigger>
-    <span className="ms-auto flex items-center gap-1.5">{actions}</span>
-  </div>
-);
+        <PlusIcon />
+      </FilterTrigger>
+      <span className="ms-auto flex items-center gap-1.5">{actions}</span>
+    </div>
+  );
+}

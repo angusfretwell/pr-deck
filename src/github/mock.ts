@@ -11,17 +11,19 @@ import type {
 
 import { PENDING_STATUS } from "./mapping";
 
-const avatar = (seed: string) =>
-  `https://api.dicebear.com/9.x/shapes/svg?seed=${seed}`;
+function avatar(seed: string) {
+  return `https://api.dicebear.com/9.x/shapes/svg?seed=${seed}`;
+}
 
-const account = (login: string, name: string) =>
-  ({
+function account(login: string, name: string) {
+  return {
     login,
     name,
     avatarUrl: avatar(login),
-  }) satisfies Account;
+  } satisfies Account;
+}
 
-const session = () => {
+function session() {
   const viewer = account("you", "You");
 
   return {
@@ -33,7 +35,7 @@ const session = () => {
       account("initech", "Initech"),
     ],
   } satisfies Session;
-};
+}
 
 const repos = ["web", "api", "mobile", "infra", "docs", "design-system"];
 const authors = ["you", "sam", "priya", "lee", "noor", "alex", "kai"];
@@ -61,7 +63,9 @@ const titles = [
   "Remove the unused feature flag for search v1",
 ];
 
-const branch = (index: number) => `feature/change-${index}`;
+function branch(index: number) {
+  return `feature/change-${index}`;
+}
 
 const STACKED_ON = new Map([
   [6, 0],
@@ -72,11 +76,12 @@ const STACKED_ON = new Map([
 
 const pollsUntilMergeable = new Map<string, number>();
 
-const settledMergeability = (index: number) =>
-  mergeStates[index % mergeStates.length];
+function settledMergeability(index: number) {
+  return mergeStates[index % mergeStates.length];
+}
 
-const pullRequests = (owner: string) =>
-  Array.from({ length: 48 }, (_, index) => {
+function pullRequests(owner: string) {
+  return Array.from({ length: 48 }, (_, index) => {
     const id = `${owner}-${index}`;
     const author = authors[index % authors.length];
     const review = reviewStates[index % reviewStates.length];
@@ -119,19 +124,22 @@ const pullRequests = (owner: string) =>
       reviewRequestedFromViewer: index % 5 === 1,
     } satisfies PullRequest;
   });
+}
 
 const paragraph =
   "<p>This change tidies up the flow and adds coverage for the edge cases we hit in production last week. It should be safe to roll out behind the existing flag.</p>";
 
-const escapeHtml = (text: string) =>
-  text
+function escapeHtml(text: string) {
+  return text
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
+}
 
-const fence = (code: string, language?: string) =>
-  `<div class="${language !== undefined && language !== "" ? `highlight highlight-source-${language}` : "snippet-clipboard-content"} notranslate position-relative overflow-auto" data-snippet-clipboard-copy-content="${escapeHtml(code)}"><pre class="notranslate"><code>${escapeHtml(code)}</code></pre></div>`;
+function fence(code: string, language?: string) {
+  return `<div class="${language !== undefined && language !== "" ? `highlight highlight-source-${language}` : "snippet-clipboard-content"} notranslate position-relative overflow-auto" data-snippet-clipboard-copy-content="${escapeHtml(code)}"><pre class="notranslate"><code>${escapeHtml(code)}</code></pre></div>`;
+}
 
 const codeSample = fence(
   `export function retry<T>(task: () => Promise<T>, attempts = 3): Promise<T> {
@@ -159,8 +167,8 @@ const plainSample = fence(
   "Error: request timed out after 1000ms\n    at fetchWithTimeout (src/lib/http.ts:42:11)"
 );
 
-const detail = () =>
-  ({
+function detail() {
+  return {
     bodyHtml: `<h2>Summary</h2>${paragraph}${codeSample}${paragraph}${diffSample}<h2>Testing</h2><ul><li>Unit tests${shellSample}</li><li>Manual check on iOS Safari</li><li>Staging deploy</li></ul><p>The old behaviour logged:</p>${plainSample}${paragraph.repeat(3)}`,
     additions: 412,
     deletions: 96,
@@ -182,25 +190,28 @@ const detail = () =>
       additions: 10 + index * 7,
       deletions: index * 2,
     })),
-  }) satisfies PullRequestDetail;
+  } satisfies PullRequestDetail;
+}
 
-const delay = async <T>(value: T) => {
+async function delay<T>(value: T) {
   const { promise, resolve } = Promise.withResolvers<T>();
   setTimeout(() => {
     resolve(value);
   }, 300);
 
   return await promise;
-};
+}
 
-export const fetchSession = async (_token: string) => await delay(session());
+export async function fetchSession(_token: string) {
+  return await delay(session());
+}
 
-export const fetchPullRequests = async (
+export async function fetchPullRequests(
   _token: string,
   owner: string,
   _viewer: string,
   onRows?: (list: PullRequestList) => void
-) => {
+) {
   const list = {
     pullRequests: pullRequests(owner),
     totalCount: 48,
@@ -218,10 +229,10 @@ export const fetchPullRequests = async (
   onRows?.(rows);
 
   return await delay(list);
-};
+}
 
-export const fetchMergeability = async (_token: string, ids: string[]) =>
-  await delay<Record<string, Mergeability>>(
+export async function fetchMergeability(_token: string, ids: string[]) {
+  return await delay<Record<string, Mergeability>>(
     Object.fromEntries(
       ids.map((id) => {
         const remaining = Math.max(0, (pollsUntilMergeable.get(id) ?? 0) - 1);
@@ -232,6 +243,8 @@ export const fetchMergeability = async (_token: string, ids: string[]) =>
       })
     )
   );
+}
 
-export const fetchPullRequestDetail = async (_token: string, _id: string) =>
-  await delay(detail());
+export async function fetchPullRequestDetail(_token: string, _id: string) {
+  return await delay(detail());
+}

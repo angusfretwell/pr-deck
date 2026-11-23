@@ -43,16 +43,17 @@ interface ViewTabsProps {
 
 const PILL = "rounded-full before:rounded-full";
 
-const translateX = (element: Element) => {
+function translateX(element: Element) {
   const [x = ""] = getComputedStyle(element).translate.split(" ");
 
   return Number(x.replace(/px$/u, "")) || 0;
-};
+}
 
-const viewportOf = (strip: HTMLElement | null) =>
-  strip?.closest("[data-slot=scroll-area-viewport]");
+function viewportOf(strip: HTMLElement | null) {
+  return strip?.closest("[data-slot=scroll-area-viewport]");
+}
 
-const centerActive = (strip: HTMLElement | null, shouldGlide: boolean) => {
+function centerActive(strip: HTMLElement | null, shouldGlide: boolean) {
   const viewport = viewportOf(strip);
 
   if (!strip || !viewport) {
@@ -75,9 +76,9 @@ const centerActive = (strip: HTMLElement | null, shouldGlide: boolean) => {
   strip.getBoundingClientRect();
   strip.style.transition = "";
   strip.style.translate = "";
-};
+}
 
-const Count = ({ children }: { children: number | undefined }) => {
+function Count({ children }: { children: number | undefined }) {
   const [loadedOnMount] = useReducer(
     (state: boolean) => state,
     children !== undefined
@@ -98,7 +99,7 @@ const Count = ({ children }: { children: number | undefined }) => {
       <span className="min-w-0 overflow-hidden ps-1.5">{children}</span>
     </span>
   );
-};
+}
 
 interface ViewLinkProps {
   href: string;
@@ -109,77 +110,81 @@ interface ViewLinkProps {
   onDoubleClick?: () => void;
 }
 
-const ViewLink = ({
+function ViewLink({
   href,
   active,
   name,
   count,
   className,
   onDoubleClick,
-}: ViewLinkProps) => (
-  <Button
-    variant="outline"
-    size="sm"
-    className={cn(
-      PILL,
-      "aria-[current=page]:bg-input/64 dark:aria-[current=page]:bg-input aria-[current=page]:shadow-none",
-      className
-    )}
-    render={<Link href={href} aria-current={active ? "page" : undefined} />}
-    onDoubleClick={onDoubleClick}
-  >
-    <span className="flex min-w-0 items-baseline gap-1.5">
-      <span className="max-w-50 truncate" title={name}>
-        {name}
+}: ViewLinkProps) {
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      className={cn(
+        PILL,
+        "aria-[current=page]:bg-input/64 dark:aria-[current=page]:bg-input aria-[current=page]:shadow-none",
+        className
+      )}
+      render={<Link href={href} aria-current={active ? "page" : undefined} />}
+      onDoubleClick={onDoubleClick}
+    >
+      <span className="flex min-w-0 items-baseline gap-1.5">
+        <span className="max-w-50 truncate" title={name}>
+          {name}
+        </span>
+        <Count>{count}</Count>
       </span>
-      <Count>{count}</Count>
-    </span>
-  </Button>
-);
+    </Button>
+  );
+}
 
-const DeleteViewButton = ({
+function DeleteViewButton({
   name,
   onConfirm,
 }: {
   name: string;
   onConfirm: () => void;
-}) => (
-  <AlertDialog>
-    <Hint label="Delete view">
-      <AlertDialogTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            className={cn(PILL, "absolute end-1 top-1/2 -translate-y-1/2")}
-            aria-label="Delete view"
-          />
-        }
-      >
-        <XIcon />
-      </AlertDialogTrigger>
-    </Hint>
-    <AlertDialogPopup>
-      <AlertDialogHeader>
-        <AlertDialogTitle>Delete “{name}”?</AlertDialogTitle>
-        <AlertDialogDescription>
-          This view and its filters will be removed.
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogClose render={<Button variant="ghost" />}>
-          Cancel
-        </AlertDialogClose>
-        <AlertDialogClose
-          render={<Button variant="destructive" />}
-          onClick={onConfirm}
+}) {
+  return (
+    <AlertDialog>
+      <Hint label="Delete view">
+        <AlertDialogTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              className={cn(PILL, "absolute end-1 top-1/2 -translate-y-1/2")}
+              aria-label="Delete view"
+            />
+          }
         >
-          Delete
-        </AlertDialogClose>
-      </AlertDialogFooter>
-    </AlertDialogPopup>
-  </AlertDialog>
-);
+          <XIcon />
+        </AlertDialogTrigger>
+      </Hint>
+      <AlertDialogPopup>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete “{name}”?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This view and its filters will be removed.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogClose render={<Button variant="ghost" />}>
+            Cancel
+          </AlertDialogClose>
+          <AlertDialogClose
+            render={<Button variant="destructive" />}
+            onClick={onConfirm}
+          >
+            Delete
+          </AlertDialogClose>
+        </AlertDialogFooter>
+      </AlertDialogPopup>
+    </AlertDialog>
+  );
+}
 
 interface RenameInputProps {
   name: string;
@@ -187,7 +192,7 @@ interface RenameInputProps {
   onCommit: (name: string) => void;
 }
 
-const RenameInput = ({ name, count, onCommit }: RenameInputProps) => {
+function RenameInput({ name, count, onCommit }: RenameInputProps) {
   const [draft, setDraft] = useState(name);
 
   return (
@@ -223,9 +228,9 @@ const RenameInput = ({ name, count, onCommit }: RenameInputProps) => {
       )}
     </InputGroup>
   );
-};
+}
 
-export const ViewTabs = ({
+export function ViewTabs({
   views,
   viewCounts,
   allOpenCount,
@@ -236,7 +241,7 @@ export const ViewTabs = ({
   onRenamingViewChange,
   onRenameView,
   onDeleteView,
-}: ViewTabsProps) => {
+}: ViewTabsProps) {
   const nav = useRef<HTMLElement>(null);
   const desktop = useDesktop();
   const glide = useRef<AnimationPlaybackControls>(null);
@@ -368,4 +373,4 @@ export const ViewTabs = ({
       </motion.nav>
     </ScrollArea>
   );
-};
+}

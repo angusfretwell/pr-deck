@@ -15,15 +15,17 @@ import type { Account, PullRequest, Session } from "@/types";
 const VIEWER = "sam-k";
 const OWNER = "northwind";
 
-const identicon = (login: string) =>
-  `https://github.com/identicons/${login}.png`;
+function identicon(login: string) {
+  return `https://github.com/identicons/${login}.png`;
+}
 
-const account = (login: string, name: string) =>
-  ({
+function account(login: string, name: string) {
+  return {
     login,
     name,
     avatarUrl: identicon(login),
-  }) satisfies Account;
+  } satisfies Account;
+}
 
 const SESSION: Session = {
   viewer: account(VIEWER, "Sam Kowalczyk"),
@@ -186,7 +188,7 @@ const { groups: GROUPS } = derivePrList({
   desktop: true,
 });
 
-export const SetupPreview = ({ className }: { className?: string }) => {
+export function SetupPreview({ className }: { className?: string }) {
   const searchRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -262,4 +264,4 @@ export const SetupPreview = ({ className }: { className?: string }) => {
       </div>
     </div>
   );
-};
+}

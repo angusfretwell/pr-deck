@@ -32,14 +32,17 @@ const aliases = {
   zsh: "bash",
 } satisfies Record<string, keyof typeof languages>;
 
-const isLanguage = (name: string): name is keyof typeof languages =>
-  name in languages;
+function isLanguage(name: string): name is keyof typeof languages {
+  return name in languages;
+}
 
-const isAlias = (name: string): name is keyof typeof aliases => name in aliases;
+function isAlias(name: string): name is keyof typeof aliases {
+  return name in aliases;
+}
 
 let highlighter: Promise<HighlighterCore> | undefined;
 
-const getHighlighter = async () => {
+async function getHighlighter() {
   highlighter ??= Promise.all([
     import("shiki/core"),
     import("shiki/engine/javascript"),
@@ -56,9 +59,9 @@ const getHighlighter = async () => {
   );
 
   return await highlighter;
-};
+}
 
-const getLanguage = (language: string) => {
+function getLanguage(language: string) {
   const name = language.toLowerCase();
 
   if (name === "ansi") {
@@ -74,9 +77,9 @@ const getLanguage = (language: string) => {
   }
 
   return null;
-};
+}
 
-export const loadHighlighter = async (language: string) => {
+export async function loadHighlighter(language: string) {
   const lang = getLanguage(language);
 
   if (!lang) {
@@ -91,18 +94,19 @@ export const loadHighlighter = async (language: string) => {
 
   return {
     highlight(code: string, state?: GrammarState) {
-      const tokenize = (text: string) =>
-        shiki.codeToTokens(text, {
-          lang,
+      function tokenize(text: string, grammar: NonNullable<typeof lang>) {
+        return shiki.codeToTokens(text, {
+          lang: grammar,
           themes: { light: "github-light", dark: "github-dark" },
           defaultColor: false,
           grammarState: state,
         }).tokens;
+      }
 
       const tokens =
         lang === "ansi"
-          ? code.split("\n").flatMap((line) => tokenize(line))
-          : tokenize(code);
+          ? code.split("\n").flatMap((line) => tokenize(line, lang))
+          : tokenize(code, lang);
 
       return {
         lines: tokens.map((line) =>
@@ -120,4 +124,4 @@ export const loadHighlighter = async (language: string) => {
       };
     },
   };
-};
+}

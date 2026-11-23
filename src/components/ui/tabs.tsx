@@ -18,18 +18,20 @@ type TabsSize = SegmentedControlSize;
 const TabsListContext: React.Context<TabsSize> =
   React.createContext<TabsSize>("default");
 
-export const Tabs = ({ className, ...props }: TabsPrimitive.Root.Props) => (
-  <TabsPrimitive.Root
-    className={cn(
-      "flex flex-col gap-2 data-[orientation=vertical]:flex-row",
-      className
-    )}
-    data-slot="tabs"
-    {...props}
-  />
-);
+export function Tabs({ className, ...props }: TabsPrimitive.Root.Props) {
+  return (
+    <TabsPrimitive.Root
+      className={cn(
+        "flex flex-col gap-2 data-[orientation=vertical]:flex-row",
+        className
+      )}
+      data-slot="tabs"
+      {...props}
+    />
+  );
+}
 
-export const TabsList = ({
+export function TabsList({
   variant = "default",
   size = "default",
   className,
@@ -38,40 +40,44 @@ export const TabsList = ({
 }: TabsPrimitive.List.Props & {
   size?: TabsSize;
   variant?: TabsVariant;
-}) => (
-  <TabsPrimitive.List
-    className={cn(
-      "text-muted-foreground relative z-0 flex w-fit items-center justify-center gap-x-0.5",
-      "data-[orientation=vertical]:flex-col",
-      variant === "default"
-        ? "bg-muted text-muted-foreground/72 rounded-lg p-0.5"
-        : "*:data-[slot=tabs-tab]:hover:bg-accent data-[orientation=horizontal]:py-1 data-[orientation=vertical]:px-1",
-      className
-    )}
-    data-size={size}
-    data-slot="tabs-list"
-    {...props}
-  >
-    <TabsListContext.Provider value={size}>{children}</TabsListContext.Provider>
-    <TabsPrimitive.Indicator
+}) {
+  return (
+    <TabsPrimitive.List
       className={cn(
-        "absolute bottom-0 left-0 h-(--active-tab-height) w-(--active-tab-width) translate-x-(--active-tab-left) -translate-y-(--active-tab-bottom) transition-[width,translate] duration-200 ease-in-out motion-reduce:transition-none",
-        variant === "underline"
-          ? "bg-primary z-10 data-[orientation=horizontal]:h-0.5 data-[orientation=horizontal]:translate-y-px data-[orientation=vertical]:w-0.5 data-[orientation=vertical]:-translate-x-px"
-          : cn("-z-1", segmentedControlIndicatorSurfaceClassName)
+        "text-muted-foreground relative z-0 flex w-fit items-center justify-center gap-x-0.5",
+        "data-[orientation=vertical]:flex-col",
+        variant === "default"
+          ? "bg-muted text-muted-foreground/72 rounded-lg p-0.5"
+          : "*:data-[slot=tabs-tab]:hover:bg-accent data-[orientation=horizontal]:py-1 data-[orientation=vertical]:px-1",
+        className
       )}
-      data-slot="tab-indicator"
-    />
-  </TabsPrimitive.List>
-);
+      data-size={size}
+      data-slot="tabs-list"
+      {...props}
+    >
+      <TabsListContext.Provider value={size}>
+        {children}
+      </TabsListContext.Provider>
+      <TabsPrimitive.Indicator
+        className={cn(
+          "absolute bottom-0 left-0 h-(--active-tab-height) w-(--active-tab-width) translate-x-(--active-tab-left) -translate-y-(--active-tab-bottom) transition-[width,translate] duration-200 ease-in-out motion-reduce:transition-none",
+          variant === "underline"
+            ? "bg-primary z-10 data-[orientation=horizontal]:h-0.5 data-[orientation=horizontal]:translate-y-px data-[orientation=vertical]:w-0.5 data-[orientation=vertical]:-translate-x-px"
+            : cn("-z-1", segmentedControlIndicatorSurfaceClassName)
+        )}
+        data-slot="tab-indicator"
+      />
+    </TabsPrimitive.List>
+  );
+}
 
-export const TabsTab = ({
+export function TabsTab({
   className,
   size,
   ...props
 }: TabsPrimitive.Tab.Props & {
   size?: TabsSize;
-}) => {
+}) {
   const contextSize: TabsSize = React.useContext(TabsListContext);
   const resolvedSize: TabsSize = size ?? contextSize;
 
@@ -88,18 +94,17 @@ export const TabsTab = ({
       {...props}
     />
   );
-};
+}
 
-export const TabsPanel = ({
-  className,
-  ...props
-}: TabsPrimitive.Panel.Props) => (
-  <TabsPrimitive.Panel
-    className={cn("flex-1 outline-none", className)}
-    data-slot="tabs-content"
-    {...props}
-  />
-);
+export function TabsPanel({ className, ...props }: TabsPrimitive.Panel.Props) {
+  return (
+    <TabsPrimitive.Panel
+      className={cn("flex-1 outline-none", className)}
+      data-slot="tabs-content"
+      {...props}
+    />
+  );
+}
 
 export { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 

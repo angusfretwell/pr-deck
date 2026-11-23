@@ -3,11 +3,12 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { errorMessage, isAuthError, isRetryable } from "./api";
 
-const httpError = (status: number) =>
-  Object.assign(new Error("HTTP error"), { status });
+function httpError(status: number) {
+  return Object.assign(new Error("HTTP error"), { status });
+}
 
-const graphqlError = (type: string, message = type) =>
-  new GraphqlResponseError(
+function graphqlError(type: string, message = type) {
+  return new GraphqlResponseError(
     { method: "POST", url: "/graphql" },
     {},
     {
@@ -23,6 +24,7 @@ const graphqlError = (type: string, message = type) =>
       ],
     }
   );
+}
 
 describe("isAuthError", () => {
   it("matches only an HTTP 401", () => {

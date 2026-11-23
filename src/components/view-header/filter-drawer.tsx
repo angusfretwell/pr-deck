@@ -64,7 +64,7 @@ interface PropertyPaneProps extends FilterDrawerContentProps {
   propertyKey: PropertyKey;
 }
 
-const PropertyPane = ({
+function PropertyPane({
   nested = false,
   propertyKey,
   orgPrs,
@@ -74,7 +74,7 @@ const PropertyPane = ({
   onToggle,
   onNegatedChange,
   onClear,
-}: PropertyPaneProps) => {
+}: PropertyPaneProps) {
   const property = PROPERTY[propertyKey];
   const filter = filters.find((candidate) => candidate.key === propertyKey);
 
@@ -96,13 +96,13 @@ const PropertyPane = ({
     orgPrs.map((pr) => [pr.author, pr.authorAvatarUrl])
   );
 
-  const changeNegated = (next: boolean) => {
+  function changeNegated(next: boolean) {
     setPendingNegated(next);
 
     if (filter) {
       onNegatedChange(propertyKey, next);
     }
-  };
+  }
 
   return (
     <>
@@ -205,9 +205,9 @@ const PropertyPane = ({
       </DrawerFooter>
     </>
   );
-};
+}
 
-const PropertyList = (props: FilterDrawerContentProps) => {
+function PropertyList(props: FilterDrawerContentProps) {
   const { filters, scopedPrs, orgPrs, viewer, onClearAll } = props;
   const count = scopedPrs.filter((pr) => passes(pr, filters, viewer)).length;
 
@@ -262,36 +262,38 @@ const PropertyList = (props: FilterDrawerContentProps) => {
       </DrawerFooter>
     </>
   );
-};
+}
 
-export const FilterDrawer = ({
+export function FilterDrawer({
   handle,
   triggerId,
   onOpenChange,
   ...content
-}: FilterDrawerProps) => (
-  <Drawer
-    handle={handle}
-    open={triggerId !== null}
-    triggerId={triggerId}
-    onOpenChange={(open, { trigger }) => {
-      onOpenChange(open, trigger);
-    }}
-  >
-    {({ payload: anchor }) => {
-      if (anchor === undefined) {
-        return null;
-      }
+}: FilterDrawerProps) {
+  return (
+    <Drawer
+      handle={handle}
+      open={triggerId !== null}
+      triggerId={triggerId}
+      onOpenChange={(open, { trigger }) => {
+        onOpenChange(open, trigger);
+      }}
+    >
+      {({ payload: anchor }) => {
+        if (anchor === undefined) {
+          return null;
+        }
 
-      return (
-        <DrawerPopup showBar>
-          {anchor === "header" || anchor === "add" ? (
-            <PropertyList {...content} />
-          ) : (
-            <PropertyPane key={anchor} propertyKey={anchor} {...content} />
-          )}
-        </DrawerPopup>
-      );
-    }}
-  </Drawer>
-);
+        return (
+          <DrawerPopup showBar>
+            {anchor === "header" || anchor === "add" ? (
+              <PropertyList {...content} />
+            ) : (
+              <PropertyPane key={anchor} propertyKey={anchor} {...content} />
+            )}
+          </DrawerPopup>
+        );
+      }}
+    </Drawer>
+  );
+}

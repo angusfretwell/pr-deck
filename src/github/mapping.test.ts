@@ -23,21 +23,24 @@ import type {
 
 const context = { viewer: "me", viewerTeams: ["core"] };
 
-const actor = (login: string) => ({
-  login,
-  avatarUrl: `https://avatars/${login}`,
-});
+function actor(login: string) {
+  return {
+    login,
+    avatarUrl: `https://avatars/${login}`,
+  };
+}
 
-const review = (login: string, state: RawReview["state"]) =>
-  ({
+function review(login: string, state: RawReview["state"]) {
+  return {
     state,
     author: actor(login),
-  }) satisfies RawReview;
+  } satisfies RawReview;
+}
 
 type RawPullRequest = RawPullRequestRow & RawPullRequestStatus;
 
-const rawPullRequest = (overrides: Partial<RawPullRequest> = {}) =>
-  ({
+function rawPullRequest(overrides: Partial<RawPullRequest> = {}) {
+  return {
     __typename: "PullRequest",
     id: "PR_1",
     number: 7,
@@ -59,20 +62,23 @@ const rawPullRequest = (overrides: Partial<RawPullRequest> = {}) =>
     latestOpinionatedReviews: { nodes: [] },
     reviewRequests: { nodes: [] },
     ...overrides,
-  }) satisfies RawPullRequest;
+  } satisfies RawPullRequest;
+}
 
-const map = (overrides: Partial<RawPullRequest>) => {
+function map(overrides: Partial<RawPullRequest>) {
   const raw = rawPullRequest(overrides);
   const { statusPending: _, ...row } = toPullRequestRow(raw);
 
   return { ...row, ...toPullRequestStatus(raw, context) };
-};
+}
 
-const withRollup = (state: StatusState | null) => ({
-  commits: {
-    nodes: [{ commit: { statusCheckRollup: state ? { state } : null } }],
-  },
-});
+function withRollup(state: StatusState | null) {
+  return {
+    commits: {
+      nodes: [{ commit: { statusCheckRollup: state ? { state } : null } }],
+    },
+  };
+}
 
 describe("toPullRequest", () => {
   it("maps the basic fields", () => {
@@ -226,15 +232,17 @@ describe("overall review", () => {
   });
 });
 
-const requests = (
+function requests(
   ...requestedReviewers: RawReviewRequest["requestedReviewer"][]
-) => ({
-  reviewRequests: {
-    nodes: requestedReviewers.map((requestedReviewer) => ({
-      requestedReviewer,
-    })),
-  },
-});
+) {
+  return {
+    reviewRequests: {
+      nodes: requestedReviewers.map((requestedReviewer) => ({
+        requestedReviewer,
+      })),
+    },
+  };
+}
 
 describe("reviewRequestedFromViewer", () => {
   it("is true for a direct request", () => {
@@ -303,13 +311,13 @@ describe("toSession", () => {
   });
 });
 
-const checkRun = (
+function checkRun(
   status: CheckStatusState,
   conclusion: CheckConclusionState | null,
   startedAt: string | null = null,
   completedAt: string | null = null
-) =>
-  toCheck({
+) {
+  return toCheck({
     __typename: "CheckRun",
     name: "build",
     status,
@@ -319,6 +327,7 @@ const checkRun = (
     detailsUrl: "https://ci/build",
     isRequired: true,
   });
+}
 
 describe("toCheck", () => {
   it.each([
@@ -514,8 +523,9 @@ describe("toPullRequestRow", () => {
   });
 });
 
-const pendingRow = (id: string, title = "Add things") =>
-  toPullRequestRow(rawPullRequest({ id, title }));
+function pendingRow(id: string, title = "Add things") {
+  return toPullRequestRow(rawPullRequest({ id, title }));
+}
 
 describe("withRows", () => {
   it("keeps the known status of pull requests still in the list", () => {

@@ -30,6 +30,9 @@ export default defineConfig({
       { name: "vite-plus", specifier: "vite-plus/oxlint-plugin" },
     ],
     options: { typeAware: true },
+    rules: {
+      "eslint/func-style": ["error", "declaration"],
+    },
   },
   test: {
     include: ["src/**/*.test.ts"],

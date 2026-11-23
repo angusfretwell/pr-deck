@@ -69,7 +69,7 @@ const CHECK_STATE_ORDER: Record<Check["state"], number> = {
   skipped: 3,
 };
 
-const DiffBar = ({ file }: { file: FileChange }) => {
+function DiffBar({ file }: { file: FileChange }) {
   const added = Math.round(
     (file.additions / (file.additions + file.deletions || 1)) * DIFF_SQUARES
   );
@@ -87,9 +87,9 @@ const DiffBar = ({ file }: { file: FileChange }) => {
       ))}
     </span>
   );
-};
+}
 
-const duration = (check: Check) => {
+function duration(check: Check) {
   if (check.state === "pending") {
     return "running";
   }
@@ -106,83 +106,91 @@ const duration = (check: Check) => {
   }
 
   return seconds ? `${minutes}m ${seconds}s` : `${minutes}m`;
-};
+}
 
-const updated = (updatedAt: string) => {
+function updated(updatedAt: string) {
   const ago = age(updatedAt);
 
   return ago === "now" ? "just now" : `${ago} ago`;
-};
+}
 
-const Section = ({
+function Section({
   title,
   children,
 }: {
   title: ReactNode;
   children: ReactNode;
-}) => (
-  <section className="flex flex-col gap-2">
-    <h3 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-      {title}
-    </h3>
-    {children}
-  </section>
-);
+}) {
+  return (
+    <section className="flex flex-col gap-2">
+      <h3 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
 
-const Lines = ({ children }: { children: ReactNode }) => (
-  <div className="bg-card divide-y rounded-lg border">{children}</div>
-);
+function Lines({ children }: { children: ReactNode }) {
+  return <div className="bg-card divide-y rounded-lg border">{children}</div>;
+}
 
-const Line = ({ children }: { children: ReactNode }) => (
-  <div className="flex items-center gap-2 px-3 py-1.75">{children}</div>
-);
+function Line({ children }: { children: ReactNode }) {
+  return <div className="flex items-center gap-2 px-3 py-1.75">{children}</div>;
+}
 
-const ShowMore = ({
+function ShowMore({
   children,
   onClick,
 }: {
   children: ReactNode;
   onClick: () => void;
-}) => (
-  <div className="px-1.5 py-1">
-    <Button variant="ghost" size="sm" onClick={onClick}>
-      <ChevronDownIcon />
-      {children}
-    </Button>
-  </div>
-);
-
-const SkeletonLines = () => (
-  <Lines>
-    {["w-1/2", "w-2/3", "w-2/5"].map((width) => (
-      <Line key={width}>
-        <span className="flex h-lh w-full items-center">
-          <Skeleton className={cn("h-4.5", width)} />
-        </span>
-      </Line>
-    ))}
-  </Lines>
-);
-
-const LoadError = ({ query }: { query: UseQueryResult<PullRequestDetail> }) => (
-  <Alert variant="error">
-    <AlertIcon />
-    <AlertTitle>Couldn&apos;t load details</AlertTitle>
-    <AlertDescription>{errorMessage(query.error)}</AlertDescription>
-    <AlertAction>
-      <Button
-        size="xs"
-        variant="outline"
-        loading={query.isFetching}
-        onClick={() => {
-          void query.refetch();
-        }}
-      >
-        Try again
+}) {
+  return (
+    <div className="px-1.5 py-1">
+      <Button variant="ghost" size="sm" onClick={onClick}>
+        <ChevronDownIcon />
+        {children}
       </Button>
-    </AlertAction>
-  </Alert>
-);
+    </div>
+  );
+}
+
+function SkeletonLines() {
+  return (
+    <Lines>
+      {["w-1/2", "w-2/3", "w-2/5"].map((width) => (
+        <Line key={width}>
+          <span className="flex h-lh w-full items-center">
+            <Skeleton className={cn("h-4.5", width)} />
+          </span>
+        </Line>
+      ))}
+    </Lines>
+  );
+}
+
+function LoadError({ query }: { query: UseQueryResult<PullRequestDetail> }) {
+  return (
+    <Alert variant="error">
+      <AlertIcon />
+      <AlertTitle>Couldn&apos;t load details</AlertTitle>
+      <AlertDescription>{errorMessage(query.error)}</AlertDescription>
+      <AlertAction>
+        <Button
+          size="xs"
+          variant="outline"
+          loading={query.isFetching}
+          onClick={() => {
+            void query.refetch();
+          }}
+        >
+          Try again
+        </Button>
+      </AlertAction>
+    </Alert>
+  );
+}
 
 interface DetailProps {
   query: UseQueryResult<PullRequestDetail>;
@@ -190,10 +198,11 @@ interface DetailProps {
   children: (detail: PullRequestDetail) => ReactElement;
 }
 
-const Detail = ({ query, skeleton, children }: DetailProps) =>
-  query.data ? children(query.data) : skeleton;
+function Detail({ query, skeleton, children }: DetailProps) {
+  return query.data ? children(query.data) : skeleton;
+}
 
-const FencedCode = ({ code, language }: { code: string; language: string }) => {
+function FencedCode({ code, language }: { code: string; language: string }) {
   const lines = useHighlightedCode(code, language);
 
   return (
@@ -208,12 +217,13 @@ const FencedCode = ({ code, language }: { code: string; language: string }) => {
       </CodeBlockContent>
     </CodeBlock>
   );
-};
+}
 
 const GITHUB_LANGUAGE = /\bhighlight-(?:source|text)-(?<language>\S+)/u;
 
-const isDOMNode = (node: { type: string }): node is DOMNode =>
-  node.type !== "cdata" && node.type !== "root";
+function isDOMNode(node: { type: string }): node is DOMNode {
+  return node.type !== "cdata" && node.type !== "root";
+}
 
 const descriptionOptions: HTMLReactParserOptions = {
   replace(node) {
@@ -256,7 +266,7 @@ const descriptionOptions: HTMLReactParserOptions = {
   },
 };
 
-const Description = ({ html }: { html: string }) => {
+function Description({ html }: { html: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const { height = 0 } = useResizeObserver({ ref });
   const [expanded, setExpanded] = useState(false);
@@ -294,9 +304,9 @@ const Description = ({ html }: { html: string }) => {
       )}
     </div>
   );
-};
+}
 
-const CheckList = ({ checks }: { checks: Check[] }) => {
+function CheckList({ checks }: { checks: Check[] }) {
   const [expanded, setExpanded] = useState(false);
 
   const sorted = checks.toSorted(
@@ -346,28 +356,32 @@ const CheckList = ({ checks }: { checks: Check[] }) => {
       )}
     </Lines>
   );
-};
+}
 
-const LineCounts = ({
+function LineCounts({
   additions,
   deletions,
 }: {
   additions: number;
   deletions: number;
-}) => (
-  <>
-    <span className="text-success-foreground">
-      +{additions.toLocaleString()}
-    </span>{" "}
-    <span className="text-destructive-foreground">
-      −{deletions.toLocaleString()}
-    </span>
-  </>
-);
+}) {
+  return (
+    <>
+      <span className="text-success-foreground">
+        +{additions.toLocaleString()}
+      </span>{" "}
+      <span className="text-destructive-foreground">
+        −{deletions.toLocaleString()}
+      </span>
+    </>
+  );
+}
 
-const linesChanged = (file: FileChange) => file.additions + file.deletions;
+function linesChanged(file: FileChange) {
+  return file.additions + file.deletions;
+}
 
-const FilePath = ({ path }: { path: string }) => {
+function FilePath({ path }: { path: string }) {
   const split = path.lastIndexOf("/") + 1;
 
   return (
@@ -379,15 +393,15 @@ const FilePath = ({ path }: { path: string }) => {
       <span className="max-w-full shrink-0 truncate">{path.slice(split)}</span>
     </span>
   );
-};
+}
 
-const FileList = ({
+function FileList({
   files,
   changedFiles,
 }: {
   files: FileChange[];
   changedFiles: number;
-}) => {
+}) {
   const [expanded, setExpanded] = useState(false);
   const sorted = files.toSorted((a, b) => linesChanged(b) - linesChanged(a));
   const shown = expanded ? sorted : sorted.slice(0, PREVIEWED_FILES);
@@ -427,16 +441,18 @@ const FileList = ({
       )}
     </Lines>
   );
-};
+}
 
-const PreviewHeading = ({ pr }: { pr: PullRequest }) => (
-  <>
-    <span className="truncate">{pr.repo}</span>
-    <span className="text-muted-foreground/72 font-medium">#{pr.number}</span>
-  </>
-);
+function PreviewHeading({ pr }: { pr: PullRequest }) {
+  return (
+    <>
+      <span className="truncate">{pr.repo}</span>
+      <span className="text-muted-foreground/72 font-medium">#{pr.number}</span>
+    </>
+  );
+}
 
-const PreviewBody = ({
+function PreviewBody({
   pr,
   viewer,
   className,
@@ -444,9 +460,12 @@ const PreviewBody = ({
   pr: PullRequest;
   viewer: string;
   className?: string;
-}) => {
+}) {
   const query = usePullRequestDetail(pr.id);
-  const you = (login: string) => (login === viewer ? " (you)" : "");
+
+  function you(login: string) {
+    return login === viewer ? " (you)" : "";
+  }
 
   return (
     <div className={cn("flex max-w-190 flex-col gap-5 pt-1.5", className)}>
@@ -558,17 +577,17 @@ const PreviewBody = ({
       )}
     </div>
   );
-};
+}
 
-const ScrollToTop = ({ target }: { target: RefObject<HTMLElement | null> }) => {
+function ScrollToTop({ target }: { target: RefObject<HTMLElement | null> }) {
   useEffect(() => {
     target.current?.scrollTo({ top: 0 });
   }, [target]);
 
   return null;
-};
+}
 
-export const Preview = ({ pr, viewer, onClose }: PreviewProps) => {
+export function Preview({ pr, viewer, onClose }: PreviewProps) {
   const ref = useRef<HTMLElement>(null);
 
   return (
@@ -599,7 +618,7 @@ export const Preview = ({ pr, viewer, onClose }: PreviewProps) => {
       />
     </aside>
   );
-};
+}
 
 export interface PreviewDrawerProps {
   pr: PullRequest | undefined;
@@ -608,33 +627,35 @@ export interface PreviewDrawerProps {
   onClose: () => void;
 }
 
-export const PreviewDrawer = ({
+export function PreviewDrawer({
   pr,
   open,
   viewer,
   onClose,
-}: PreviewDrawerProps) => (
-  <Drawer
-    open={open && pr !== undefined}
-    onOpenChange={(next) => {
-      if (!next) {
-        onClose();
-      }
-    }}
-  >
-    <DrawerPopup
-      showBar
-      finalFocus={(closeType) => closeType === "keyboard"}
-      className="h-[calc(100dvh-max(--spacing(2),env(safe-area-inset-top))---spacing(8))] [--peek:0px] [--stack-step:0] data-nested-drawer-open:h-[calc(100dvh-max(--spacing(2),env(safe-area-inset-top))---spacing(8))]"
+}: PreviewDrawerProps) {
+  return (
+    <Drawer
+      open={open && pr !== undefined}
+      onOpenChange={(next) => {
+        if (!next) {
+          onClose();
+        }
+      }}
     >
-      {pr && (
-        <DrawerPanel className="flex flex-col gap-5">
-          <DrawerTitle className="flex min-w-0 gap-2 text-base leading-normal">
-            <PreviewHeading pr={pr} />
-          </DrawerTitle>
-          <PreviewBody key={pr.id} pr={pr} viewer={viewer} />
-        </DrawerPanel>
-      )}
-    </DrawerPopup>
-  </Drawer>
-);
+      <DrawerPopup
+        showBar
+        finalFocus={(closeType) => closeType === "keyboard"}
+        className="h-[calc(100dvh-max(--spacing(2),env(safe-area-inset-top))---spacing(8))] [--peek:0px] [--stack-step:0] data-nested-drawer-open:h-[calc(100dvh-max(--spacing(2),env(safe-area-inset-top))---spacing(8))]"
+      >
+        {pr && (
+          <DrawerPanel className="flex flex-col gap-5">
+            <DrawerTitle className="flex min-w-0 gap-2 text-base leading-normal">
+              <PreviewHeading pr={pr} />
+            </DrawerTitle>
+            <PreviewBody key={pr.id} pr={pr} viewer={viewer} />
+          </DrawerPanel>
+        )}
+      </DrawerPopup>
+    </Drawer>
+  );
+}

@@ -5,15 +5,21 @@ import type { Group, OpenIn, View } from "@/types";
 
 export const TOKEN_KEY = "pr-deck:token";
 
-export const useToken = () => useLocalStorage<string | null>(TOKEN_KEY, null);
+export function useToken() {
+  return useLocalStorage<string | null>(TOKEN_KEY, null);
+}
 
-export const useStoredViews = () =>
-  useLocalStorage<Record<string, View[]>>("pr-deck:views", {});
+export function useStoredViews() {
+  return useLocalStorage<Record<string, View[]>>("pr-deck:views", {});
+}
 
-export const useGroup = () => useLocalStorage<Group>("pr-deck:group", "repo");
+export function useGroup() {
+  return useLocalStorage<Group>("pr-deck:group", "repo");
+}
 
-export const useLastPath = () =>
-  useLocalStorage<string | null>("pr-deck:last-path", null);
+export function useLastPath() {
+  return useLocalStorage<string | null>("pr-deck:last-path", null);
+}
 
 export const THEMES: { value: TernaryDarkMode; label: string }[] = [
   { value: "system", label: "System" },
@@ -21,18 +27,21 @@ export const THEMES: { value: TernaryDarkMode; label: string }[] = [
   { value: "dark", label: "Dark" },
 ];
 
-export const useColorMode = () =>
-  useTernaryDarkMode({ localStorageKey: "pr-deck:color-mode" });
+export function useColorMode() {
+  return useTernaryDarkMode({ localStorageKey: "pr-deck:color-mode" });
+}
 
-export const useHideDrafts = () =>
-  useLocalStorage("pr-deck:hide-drafts", false);
+export function useHideDrafts() {
+  return useLocalStorage("pr-deck:hide-drafts", false);
+}
 
-export const useHiddenOwners = () =>
-  useLocalStorage<string[]>("pr-deck:hidden-owners", []);
+export function useHiddenOwners() {
+  return useLocalStorage<string[]>("pr-deck:hidden-owners", []);
+}
 
 type GroupsByOwner = Record<string, string[]>;
 
-export const parseGroupsByOwner = (stored: string) => {
+export function parseGroupsByOwner(stored: string) {
   const parsed: unknown = JSON.parse(stored);
 
   const groupsByOwner: GroupsByOwner =
@@ -41,27 +50,30 @@ export const parseGroupsByOwner = (stored: string) => {
       : {};
 
   return groupsByOwner;
-};
+}
 
-const useGroupsByOwner = (key: string, owner: string) => {
+function useGroupsByOwner(key: string, owner: string) {
   const [byOwner, setByOwner] = useLocalStorage<GroupsByOwner>(
     key,
     {},
     { deserializer: parseGroupsByOwner }
   );
 
-  const setGroups = (groups: string[]) => {
+  function setGroups(groups: string[]) {
     setByOwner((prev) => ({ ...prev, [owner]: groups }));
-  };
+  }
 
   return [byOwner[owner] ?? [], setGroups] as const;
-};
+}
 
-export const useCollapsedGroups = (owner: string) =>
-  useGroupsByOwner("pr-deck:collapsed-groups", owner);
+export function useCollapsedGroups(owner: string) {
+  return useGroupsByOwner("pr-deck:collapsed-groups", owner);
+}
 
-export const useStarredGroups = (owner: string) =>
-  useGroupsByOwner("pr-deck:starred-groups", owner);
+export function useStarredGroups(owner: string) {
+  return useGroupsByOwner("pr-deck:starred-groups", owner);
+}
 
-export const useOpenIn = () =>
-  useLocalStorage<OpenIn>("pr-deck:open-in", "github");
+export function useOpenIn() {
+  return useLocalStorage<OpenIn>("pr-deck:open-in", "github");
+}

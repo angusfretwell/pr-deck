@@ -41,14 +41,15 @@ export interface ViewHeaderProps {
   viewer: string;
 }
 
-const anchorsFor = (current: Filter[]) =>
-  [
+function anchorsFor(current: Filter[]) {
+  return [
     "header",
     "add",
     ...current.map((filter) => filter.key),
   ] satisfies MenuAnchor[];
+}
 
-export const ViewHeader = ({
+export function ViewHeader({
   children,
   filters,
   filtersChanged,
@@ -61,14 +62,17 @@ export const ViewHeader = ({
   orgPrs,
   scopedPrs,
   viewer,
-}: ViewHeaderProps) => {
+}: ViewHeaderProps) {
   const desktop = useDesktop();
   const popoverHandle = useMemo(() => createPopoverHandle<MenuAnchor>(), []);
   const drawerHandle = useMemo(() => createDrawerHandle<MenuAnchor>(), []);
   const triggerIdPrefix = useId();
-  const triggerId = (anchor: MenuAnchor) => `${triggerIdPrefix}${anchor}`;
 
-  const changeFilterMenu = (open: boolean, trigger: Element | undefined) => {
+  function triggerId(anchor: MenuAnchor) {
+    return `${triggerIdPrefix}${anchor}`;
+  }
+
+  function changeFilterMenu(open: boolean, trigger: Element | undefined) {
     if (!open) {
       onFilterMenuChange(null);
 
@@ -82,13 +86,13 @@ export const ViewHeader = ({
     if (anchor) {
       onFilterMenuChange(anchor);
     }
-  };
+  }
 
   const barVisible = filtersChanged
     ? filterMenu?.deferBar !== true
     : filterMenu !== null && filterMenu.anchor !== "header";
 
-  const changeFilters = (next: Filter[]) => {
+  function changeFilters(next: Filter[]) {
     onFiltersChange(next);
 
     const anchorRemoved =
@@ -97,28 +101,24 @@ export const ViewHeader = ({
     if (anchorRemoved) {
       onFilterMenuChange(null);
     }
-  };
+  }
 
-  const toggleFilterValue = (
-    key: PropertyKey,
-    value: string,
-    negated = false
-  ) => {
+  function toggleFilterValue(key: PropertyKey, value: string, negated = false) {
     changeFilters(toggleValue(filters, key, value, negated));
-  };
+  }
 
-  const removeFilter = (index: number) => {
+  function removeFilter(index: number) {
     onFiltersChange(filters.filter((_, i) => i !== index));
     onFilterMenuChange(null);
-  };
+  }
 
-  const setFilterNegated = (key: PropertyKey, negated: boolean) => {
+  function setFilterNegated(key: PropertyKey, negated: boolean) {
     onFiltersChange(
       filters.map((filter) =>
         filter.key === key ? { ...filter, negated } : filter
       )
     );
-  };
+  }
 
   const actions =
     filtersChanged &&
@@ -198,22 +198,24 @@ export const ViewHeader = ({
       )}
     </div>
   );
-};
+}
 
-export const FilterButton = () => (
-  <Hint label="Filter">
-    <FilterTrigger
-      anchor="header"
-      render={
-        <Button
-          variant="outline"
-          size="icon-sm"
-          className="rounded-full before:rounded-full max-md:ms-auto"
-          aria-label="Filter"
-        />
-      }
-    >
-      <FilterIcon />
-    </FilterTrigger>
-  </Hint>
-);
+export function FilterButton() {
+  return (
+    <Hint label="Filter">
+      <FilterTrigger
+        anchor="header"
+        render={
+          <Button
+            variant="outline"
+            size="icon-sm"
+            className="rounded-full before:rounded-full max-md:ms-auto"
+            aria-label="Filter"
+          />
+        }
+      >
+        <FilterIcon />
+      </FilterTrigger>
+    </Hint>
+  );
+}

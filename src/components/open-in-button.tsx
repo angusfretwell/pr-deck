@@ -33,16 +33,17 @@ const TARGETS: Record<
   },
 };
 
-const isOpenIn = (value: string): value is OpenIn =>
-  Object.hasOwn(TARGETS, value);
+function isOpenIn(value: string): value is OpenIn {
+  return Object.hasOwn(TARGETS, value);
+}
 
-export const OpenInButton = ({
+export function OpenInButton({
   url,
   className,
 }: {
   url: string;
   className?: string;
-}) => {
+}) {
   const [openIn, setOpenIn] = useOpenIn();
   const { label, Icon, href } = TARGETS[openIn] ?? TARGETS.github;
   const groupRef = useRef<HTMLFieldSetElement>(null);
@@ -101,4 +102,4 @@ export const OpenInButton = ({
       </ResponsiveMenu>
     </Group>
   );
-};
+}

@@ -42,39 +42,44 @@ interface NeighbourPaneProps {
   children: ReactNode;
 }
 
-const NeighbourPane = ({
+function NeighbourPane({
   paneRef,
   opacity,
   className,
   contentClassName,
   children,
-}: NeighbourPaneProps) => (
-  <motion.div
-    inert
-    aria-hidden
-    className={cn("absolute inset-y-0 w-full will-change-[opacity]", className)}
-    style={{ opacity }}
-  >
-    <div ref={paneRef} className="absolute inset-x-0 h-0 overflow-clip">
-      <div
-        className={cn(
-          contentClassName,
-          "min-h-[calc(100dvh-var(--pinned-height))]"
-        )}
-      >
-        {children}
+}: NeighbourPaneProps) {
+  return (
+    <motion.div
+      inert
+      aria-hidden
+      className={cn(
+        "absolute inset-y-0 w-full will-change-[opacity]",
+        className
+      )}
+      style={{ opacity }}
+    >
+      <div ref={paneRef} className="absolute inset-x-0 h-0 overflow-clip">
+        <div
+          className={cn(
+            contentClassName,
+            "min-h-[calc(100dvh-var(--pinned-height))]"
+          )}
+        >
+          {children}
+        </div>
       </div>
-    </div>
-  </motion.div>
-);
+    </motion.div>
+  );
+}
 
-export const ViewSwipe = ({
+export function ViewSwipe({
   previous,
   next,
   topInset,
   className,
   children,
-}: ViewSwipeProps) => {
+}: ViewSwipeProps) {
   const [, navigate] = useLocation();
   const reducedMotion = useReducedMotion();
   const x = useMotionValue(0);
@@ -88,17 +93,19 @@ export const ViewSwipe = ({
   const nextPane = useRef<HTMLDivElement>(null);
   const dragged = useRef(false);
 
-  const panes = () => [previousPane.current, nextPane.current];
+  function panes() {
+    return [previousPane.current, nextPane.current];
+  }
 
-  const settle = () => {
+  function settle() {
     track.current?.style.removeProperty("will-change");
 
     for (const pane of panes()) {
       pane?.style.removeProperty("height");
     }
-  };
+  }
 
-  const land = (href: string, pane: HTMLElement) => {
+  function land(href: string, pane: HTMLElement) {
     const trackElement = track.current;
 
     if (trackElement === null) {
@@ -116,9 +123,9 @@ export const ViewSwipe = ({
     });
     settle();
     scrollBy(0, scrollShift);
-  };
+  }
 
-  const onDirectionLock = (axis: "x" | "y") => {
+  function onDirectionLock(axis: "x" | "y") {
     const trackElement = track.current;
 
     if (axis !== "x" || trackElement === null) {
@@ -139,12 +146,12 @@ export const ViewSwipe = ({
         `${Math.max(screen.height, innerHeight)}px`
       );
     }
-  };
+  }
 
-  const onDragEnd = (
+  function onDragEnd(
     event: PointerEvent | MouseEvent | TouchEvent,
     { offset, velocity }: PanInfo
-  ) => {
+  ) {
     const position = x.get();
 
     const horizontal =
@@ -181,7 +188,7 @@ export const ViewSwipe = ({
         land(target.href, pane);
       },
     });
-  };
+  }
 
   const enabled = previous !== null || next !== null;
 
@@ -235,4 +242,4 @@ export const ViewSwipe = ({
       )}
     </motion.div>
   );
-};
+}
