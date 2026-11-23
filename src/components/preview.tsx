@@ -1,18 +1,33 @@
 import { AlertIcon, ChevronDownIcon, GitPullRequestDraftIcon, XIcon } from "@primer/octicons-react";
 import type { UseQueryResult } from "@tanstack/react-query";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import parse, {
+  attributesToProps,
+  type DOMNode,
+  domToReact,
+  Element,
+  type HTMLReactParserOptions,
+} from "html-react-parser";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useResizeObserver } from "usehooks-ts";
 import { OpenInButton } from "@/components/open-in-button";
 import { BadgeIcon, BadgePill } from "@/components/status-badge";
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  CodeBlock,
+  CodeBlockActions,
+  CodeBlockContent,
+  CodeBlockCopyButton,
+  CodeBlockLine,
+} from "@/components/ui/code-block";
 import { Drawer, DrawerPanel, DrawerPopup, DrawerTitle } from "@/components/ui/drawer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { errorMessage } from "@/github/api";
 import { usePullRequestDetail } from "@/github/hooks";
 import { age, CHECK_BADGE, CONFLICT_BADGE, REVIEW_BADGE } from "@/lib/pr";
+import { useHighlightedCode } from "@/lib/use-highlighted-code";
 import { cn } from "@/lib/utils";
 import type { Check, FileChange, PullRequest, PullRequestDetail } from "@/types";
 
@@ -136,25 +151,57 @@ function Detail({ query, skeleton, children }: DetailProps) {
   return query.data ? children(query.data) : skeleton;
 }
 
+function FencedCode({ code, language }: { code: string; language: string }) {
+  const lines = useHighlightedCode(code, language);
+  return (
+    <CodeBlock size="sm" className="[li>&]:mt-2">
+      <CodeBlockActions>
+        <CodeBlockCopyButton value={code} />
+      </CodeBlockActions>
+      <CodeBlockContent>
+        {lines.map((line, index) => (
+          <CodeBlockLine key={index}>{line}</CodeBlockLine>
+        ))}
+      </CodeBlockContent>
+    </CodeBlock>
+  );
+}
+
+const GITHUB_LANGUAGE = /\bhighlight-(?:source|text)-(\S+)/;
+
+const descriptionOptions: HTMLReactParserOptions = {
+  replace(node) {
+    if (!(node instanceof Element)) return;
+    const code = node.attribs["data-snippet-clipboard-copy-content"];
+    if (code !== undefined) {
+      const language = node.attribs.class?.match(GITHUB_LANGUAGE)?.[1] ?? "";
+      return <FencedCode code={code} language={language} />;
+    }
+    if (node.name === "table") {
+      return (
+        <div className="typeset-scroll">
+          <table {...attributesToProps(node.attribs)}>
+            {domToReact(node.children as DOMNode[], descriptionOptions)}
+          </table>
+        </div>
+      );
+    }
+    if (node.name === "a" && node.attribs.href) {
+      return (
+        <a {...attributesToProps(node.attribs)} target="_blank" rel="noopener noreferrer">
+          {domToReact(node.children as DOMNode[], descriptionOptions)}
+        </a>
+      );
+    }
+  },
+};
+
 function Description({ html }: { html: string }) {
   const ref = useRef<HTMLDivElement>(null!);
   const { height = 0 } = useResizeObserver({ ref });
   const [expanded, setExpanded] = useState(false);
   const collapsed = !expanded && height > DESCRIPTION_MAX_HEIGHT * 1.2;
-
-  useEffect(() => {
-    ref.current.querySelectorAll("table").forEach((table) => {
-      if (table.parentElement?.classList.contains("typeset-scroll")) return;
-      const wrapper = document.createElement("div");
-      wrapper.className = "typeset-scroll";
-      table.replaceWith(wrapper);
-      wrapper.append(table);
-    });
-    ref.current.querySelectorAll("a[href]").forEach((link) => {
-      link.setAttribute("target", "_blank");
-      link.setAttribute("rel", "noopener noreferrer");
-    });
-  }, [html]);
+  const content = useMemo(() => parse(html, descriptionOptions), [html]);
 
   return (
     <div className="flex flex-col gap-2">
@@ -168,8 +215,9 @@ function Description({ html }: { html: string }) {
         <div
           ref={ref}
           className="typeset [--typeset-flow:1em] [--typeset-leading:1.6] [--typeset-size:var(--text-sm)]"
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
+        >
+          {content}
+        </div>
       </div>
       {collapsed && (
         <Button
