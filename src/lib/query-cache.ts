@@ -33,3 +33,9 @@ export function clearQueryCache() {
   queryClient.clear();
   void persister.removeClient();
 }
+
+export function resetQueryCache() {
+  void persister.removeClient();
+  void queryClient.invalidateQueries({ queryKey: ["session"] });
+  void queryClient.resetQueries({ predicate: (query) => query.queryKey[0] !== "session" });
+}

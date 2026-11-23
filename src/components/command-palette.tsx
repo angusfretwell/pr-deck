@@ -11,6 +11,7 @@ import {
   PlusIcon,
   RowsIcon,
   SearchIcon,
+  SyncIcon,
   UnfoldIcon,
 } from "@primer/octicons-react";
 import { Fragment, useState, type ReactNode } from "react";
@@ -35,6 +36,7 @@ import {
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { facets, PROPERTIES, toggleValue } from "@/lib/filters";
 import { GROUPS } from "@/lib/pr-list";
+import { resetQueryCache } from "@/lib/query-cache";
 import { THEMES, useColorMode } from "@/lib/storage";
 import { ALL_OPEN_NAME, type Views, type ViewsChange } from "@/lib/views";
 import type { Account, Group, PullRequest } from "@/types";
@@ -254,6 +256,18 @@ function CommandPaletteList({
     { value: "Filters", items: [...filterActions, ...filterValues] },
     { value: "Display", items: displayItems },
     { value: "Accounts", items: accountItems },
+    {
+      value: "App",
+      items: [
+        {
+          id: "cache:clear",
+          keywords: "clear cache reload refresh refetch data",
+          icon: <SyncIcon />,
+          label: "Clear cache",
+          run: resetQueryCache,
+        },
+      ],
+    },
   ]
     .map((section) => ({
       ...section,
