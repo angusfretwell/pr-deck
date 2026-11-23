@@ -20,7 +20,11 @@ npm install @base-ui/react
 ## Canonical imports
 
 ```tsx
-import { ToggleGroup, ToggleGroupItem, ToggleGroupSeparator } from "@/components/ui/toggle-group";
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+  ToggleGroupSeparator,
+} from "@/components/ui/toggle-group"
 ```
 
 ## Minimal pattern
@@ -84,10 +88,10 @@ Use the dedicated separator rather than a generic border: the group removes adjo
 Controlled toggle group:
 
 ```tsx
-import { useState } from "react";
+import { useState } from "react"
 
 function ControlledToggleGroup() {
-  const [value, setValue] = useState<string[]>(["bold"]);
+  const [value, setValue] = useState<string[]>(["bold"])
 
   return (
     <ToggleGroup value={value} onValueChange={setValue}>
@@ -95,7 +99,7 @@ function ControlledToggleGroup() {
       <ToggleGroupItem value="italic">Italic</ToggleGroupItem>
       <ToggleGroupItem value="underline">Underline</ToggleGroupItem>
     </ToggleGroup>
-  );
+  )
 }
 ```
 
