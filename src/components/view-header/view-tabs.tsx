@@ -177,10 +177,12 @@ function ViewLink({ href, active, name, count, className, onDoubleClick }: ViewL
       render={<Link href={href} aria-current={active ? "page" : undefined} />}
       onDoubleClick={onDoubleClick}
     >
-      <span className="max-w-50 truncate" title={name}>
-        {name}
+      <span className="flex min-w-0 items-baseline gap-1.5">
+        <span className="max-w-50 truncate" title={name}>
+          {name}
+        </span>
+        <Count>{count}</Count>
       </span>
-      <Count>{count}</Count>
     </Button>
   );
 }

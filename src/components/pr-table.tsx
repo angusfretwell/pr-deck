@@ -204,8 +204,12 @@ function GroupHeading({ group, name, rows }: { group: Group; name: string; rows:
       {group === "author" && rows[0] && (
         <UserAvatar login={name} avatarUrl={rows[0].authorAvatarUrl} />
       )}
-      <span className="truncate">{name}</span>
-      <span className="text-muted-foreground/72 tabular-nums">{rows.length}</span>
+      <span className="flex min-w-0 items-baseline gap-2">
+        <span className="truncate">{name}</span>
+        <span className="text-sm text-muted-foreground tabular-nums sm:text-xs">
+          {rows.length}
+        </span>
+      </span>
     </>
   );
 }
