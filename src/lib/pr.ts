@@ -4,11 +4,9 @@ export type Tone = "ok" | "bad" | "severe" | "warn" | "mute";
 export type BadgeIconName =
   | "pass"
   | "fail"
-  | "failOutline"
   | "pending"
   | "ring"
   | "open"
-  | "check"
   | "review"
   | "chat"
   | "alert";
@@ -41,7 +39,7 @@ export const REVIEW_BADGE: Record<ReviewState, Badge> = {
   none: { tone: "mute", icon: "ring", label: "No reviews" },
   comment: { tone: "mute", icon: "chat", label: "Commented" },
   changes: { tone: "bad", icon: "review", label: "Changes requested" },
-  approved: { tone: "ok", icon: "check", label: "Approved" },
+  approved: { tone: "ok", icon: "pass", label: "Approved" },
 };
 
 export const CONFLICT_BADGE: Badge = { tone: "severe", icon: "alert", label: "Conflicts" };
@@ -55,7 +53,7 @@ export function viewerReview(pr: PullRequest, viewer: string): ViewerReviewState
 
 export function issueBadges(pr: PullRequest): Badge[] {
   const badges: Badge[] = [];
-  if (pr.ci === "fail") badges.push({ ...FAIL, icon: "failOutline", label: "Checks" });
+  if (pr.ci === "fail") badges.push({ ...FAIL, label: "Checks" });
   if (pr.ci === "pending") badges.push({ ...PENDING, label: "Checks" });
   if (pr.mergeability === "conflict") badges.push(CONFLICT_BADGE);
   if (pr.review === "changes" || pr.review === "approved") badges.push(REVIEW_BADGE[pr.review]);

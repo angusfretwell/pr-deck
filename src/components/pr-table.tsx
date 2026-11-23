@@ -277,7 +277,7 @@ function StackBadge({ stack }: { stack: Stack }) {
     <Badge
       variant="outline"
       className={cn(
-        "ms-1 bg-transparent tabular-nums dark:bg-transparent",
+        "ms-1 bg-transparent font-[450] tabular-nums dark:bg-transparent",
         ready ? "border-success/40 text-success-foreground" : "text-muted-foreground",
       )}
     >
@@ -319,7 +319,7 @@ const PrRow = memo(function PrRow({
         selected ? "bg-info-muted" : "hover:bg-accent active:bg-accent",
       )}
     >
-      <span className="flex min-w-0 items-center gap-1.5 font-medium">
+      <span className="flex min-w-0 items-center gap-1.5 font-[450]">
         {nested && <span className="w-5 shrink-0" />}
         {pr.isDraft ? (
           <GitPullRequestDraftIcon

@@ -332,8 +332,8 @@ function PreviewBody({
           )}
           {pr.mergeability === "conflict" && <BadgePill badge={CONFLICT_BADGE} />}
           {pr.isDraft && (
-            <Badge variant="secondary">
-              <GitPullRequestDraftIcon />
+            <Badge variant="secondary" className="font-[450]">
+              <GitPullRequestDraftIcon className="-ms-0.5" />
               Draft
             </Badge>
           )}

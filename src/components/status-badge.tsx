@@ -1,14 +1,12 @@
 import {
-  AlertIcon,
+  AlertFillIcon,
   CheckCircleFillIcon,
-  CheckIcon,
   CircleIcon,
   CommentIcon,
   DotFillIcon,
   CodeReviewIcon,
   SkipIcon,
   XCircleFillIcon,
-  XCircleIcon,
   type Icon,
 } from "@primer/octicons-react";
 import { Badge as BadgeUi, type BadgeProps } from "@/components/ui/badge";
@@ -34,21 +32,21 @@ const PILL_VARIANT: Record<Tone, BadgeProps["variant"]> = {
 const ICON: Record<BadgeIconName, Icon> = {
   pass: CheckCircleFillIcon,
   fail: XCircleFillIcon,
-  failOutline: XCircleIcon,
   pending: DotFillIcon,
   ring: SkipIcon,
   open: CircleIcon,
-  check: CheckIcon,
   review: CodeReviewIcon,
   chat: CommentIcon,
-  alert: AlertIcon,
+  alert: AlertFillIcon,
 };
+
+const ROUND_ICONS = new Set<BadgeIconName>(["pass", "fail", "pending"]);
 
 export function BadgePill({ badge }: { badge: Badge }) {
   const Glyph = ICON[badge.icon];
   return (
-    <BadgeUi variant={PILL_VARIANT[badge.tone]}>
-      <Glyph aria-hidden />
+    <BadgeUi variant={PILL_VARIANT[badge.tone]} className="font-[450]">
+      <Glyph aria-hidden className={ROUND_ICONS.has(badge.icon) ? "-ms-1" : "-ms-0.5"} />
       {badge.label}
     </BadgeUi>
   );
