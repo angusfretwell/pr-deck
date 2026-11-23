@@ -55,24 +55,28 @@ export function ViewTabs({
   const viewport = () => nav.current!.closest("[data-slot=scroll-area-viewport]")!;
   const scrolledViewId = useRef(activeViewId);
 
-  const countsKey = [allOpenCount, ...views.map((view) => viewCounts[view.id])].join();
-  useEffect(() => {
+  const centerActive = (glide: boolean) => {
     const strip = nav.current;
     const viewport = strip?.closest("[data-slot=scroll-area-viewport]");
     if (!strip || !viewport) return;
-    const switched = scrolledViewId.current !== activeViewId;
-    scrolledViewId.current = activeViewId;
     const from = viewport.scrollLeft - (parseFloat(getComputedStyle(strip).translate) || 0);
     strip
       .querySelector('[aria-current="page"]')
       ?.scrollIntoView({ inline: "center", block: "nearest" });
     const shift = viewport.scrollLeft - from;
-    if (!switched || !shift) return;
+    if (!glide || !shift) return;
     strip.style.transition = "none";
     strip.style.translate = `${shift}px`;
     strip.getBoundingClientRect();
     strip.style.transition = "";
     strip.style.translate = "";
+  };
+
+  const countsKey = [allOpenCount, ...views.map((view) => viewCounts[view.id])].join();
+  useEffect(() => {
+    const switched = scrolledViewId.current !== activeViewId;
+    scrolledViewId.current = activeViewId;
+    centerActive(switched);
   }, [activeViewId, views.length, countsKey]);
 
   return (
@@ -105,6 +109,9 @@ export function ViewTabs({
         }}
         onClickCapture={(event) => {
           if (panned.current) event.stopPropagation();
+        }}
+        onTransitionEnd={(event) => {
+          if (event.propertyName === "grid-template-columns") centerActive(true);
         }}
       >
         <ViewLink
@@ -214,10 +221,17 @@ function DeleteViewButton({ name, onConfirm }: { name: string; onConfirm: () => 
 }
 
 function Count({ children }: { children: number | undefined }) {
+  const [loadedOnMount] = useState(children !== undefined);
   if (children === undefined) return null;
   return (
-    <span className="text-sm leading-none text-muted-foreground tabular-nums sm:text-xs">
-      {children}
+    <span
+      className={cn(
+        "-ms-1.5 grid grid-cols-[1fr] text-sm leading-none text-muted-foreground tabular-nums sm:text-xs",
+        !loadedOnMount &&
+          "transition-[grid-template-columns,opacity] ease-snappy [transition-delay:0ms,100ms] [transition-duration:150ms,100ms] starting:grid-cols-[0fr] starting:opacity-0 motion-reduce:transition-opacity",
+      )}
+    >
+      <span className="min-w-0 overflow-hidden ps-1.5">{children}</span>
     </span>
   );
 }
