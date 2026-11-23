@@ -3,6 +3,8 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { persistOptions, queryClient, refetchRestoredQueries } from "@/lib/query-cache";
+import "@fontsource-variable/inter";
+import "@fontsource-variable/google-sans-code";
 import "./index.css";
 import App from "./app.tsx";
 import { TOKEN_KEY } from "@/lib/storage";
