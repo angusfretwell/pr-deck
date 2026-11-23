@@ -135,6 +135,7 @@ const { groups: GROUPS } = derivePrList({
   viewer: VIEWER,
   group: "repo",
   collapsed: [],
+  starred: [],
   selection: NO_SELECTION,
   desktop: true,
 });
@@ -211,6 +212,7 @@ export function SetupPreview({ className }: { className?: string }) {
           now={now}
           onShowAll={noop}
           onToggleGroup={noop}
+          onToggleStar={noop}
         />
       </div>
     </div>

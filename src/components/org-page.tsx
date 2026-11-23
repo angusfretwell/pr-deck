@@ -33,11 +33,18 @@ import {
   NO_SELECTION,
   toggleAllGroups,
   toggleGroup,
+  toggleStar,
   type PrList,
   type SelectionAction,
 } from "@/lib/pr-list";
 import { deriveStacks } from "@/lib/stacks";
-import { useCollapsedGroups, useGroup, useHideDrafts, useLastPath } from "@/lib/storage";
+import {
+  useCollapsedGroups,
+  useGroup,
+  useHideDrafts,
+  useLastPath,
+  useStarredGroups,
+} from "@/lib/storage";
 import { useDesktop } from "@/lib/use-desktop";
 import { useViews } from "@/lib/use-views";
 import { cn } from "@/lib/utils";
@@ -88,6 +95,7 @@ function OrgPage({
   const [group, setGroup] = useGroup();
   const [hideDraftsPreference, setHideDrafts] = useHideDrafts();
   const [collapsedGroups, setCollapsedGroups] = useCollapsedGroups(owner);
+  const [starredGroups, setStarredGroups] = useStarredGroups(owner);
   const { filters, filtersChanged } = views;
   const [filterMenu, setFilterMenu] = useState<FilterMenuState | null>(null);
   const changeFilterMenu = (anchor: MenuAnchor | null) =>
@@ -127,6 +135,7 @@ function OrgPage({
     viewer,
     group,
     collapsed: collapsedGroups,
+    starred: starredGroups,
     desktop,
   };
   const list = derivePrList({ ...listInput, filters, selection });
@@ -162,6 +171,7 @@ function OrgPage({
         onShowAll={showAll}
         onClearSearch={() => onQueryChange("")}
         onToggleGroup={(key, all) => setCollapsedGroups(toggleGroup(list, key, all))}
+        onToggleStar={(key) => setStarredGroups(toggleStar(list, key))}
       />
     );
 

@@ -7,6 +7,7 @@ import {
   NO_SELECTION,
   toggleAllGroups,
   toggleGroup,
+  toggleStar,
   type PrListInput,
   type Selection,
   type SelectionAction,
@@ -50,6 +51,7 @@ const list = (overrides: Partial<PrListInput> = {}) =>
     viewer: "me",
     group: "repo",
     collapsed: [],
+    starred: [],
     selection: NO_SELECTION,
     desktop: true,
     ...overrides,
@@ -120,6 +122,16 @@ describe("pipeline", () => {
     expect(order).toEqual(["2", "4"]);
   });
 
+  it("moves starred groups above the rest, keeping each set in name order", () => {
+    const { groups, order } = list({ starred: ["repo:web", "repo:docs", "author:alice"] });
+    expect(groups.map((group) => [group.key, group.starred])).toEqual([
+      ["docs", true],
+      ["web", true],
+      ["api", false],
+    ]);
+    expect(order).toEqual(["4", "1", "3", "2"]);
+  });
+
   it("ignores groups collapsed under another grouping", () => {
     expect(list({ collapsed: ["author:web"] }).groups.every((group) => !group.collapsed)).toBe(
       true,
@@ -145,6 +157,14 @@ describe("toggleGroup", () => {
   it("expands every group at once when the toggled group is collapsed", () => {
     const collapsed = ["repo:api", "author:bob", "repo:web"];
     expect(toggleGroup(list({ collapsed }), "web", true)).toEqual(["author:bob"]);
+  });
+});
+
+describe("toggleStar", () => {
+  it("stars and unstars a group under the current grouping, leaving other entries alone", () => {
+    const starred = toggleStar(list({ starred: ["author:bob"] }), "web");
+    expect(starred).toEqual(["author:bob", "repo:web"]);
+    expect(toggleStar(list({ starred }), "web")).toEqual(["author:bob"]);
   });
 });
 

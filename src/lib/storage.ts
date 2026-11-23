@@ -16,23 +16,27 @@ export const useColorMode = () => useTernaryDarkMode({ localStorageKey: "pr-deck
 export const useHideDrafts = () => useLocalStorage("pr-deck:hide-drafts", false);
 export const useHiddenOwners = () => useLocalStorage<string[]>("pr-deck:hidden-owners", []);
 
-type CollapsedGroupsByOwner = Record<string, string[]>;
+type GroupsByOwner = Record<string, string[]>;
 
-export function parseCollapsedGroups(stored: string): CollapsedGroupsByOwner {
+export function parseGroupsByOwner(stored: string): GroupsByOwner {
   const parsed: unknown = JSON.parse(stored);
   return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
-    ? (parsed as CollapsedGroupsByOwner)
+    ? (parsed as GroupsByOwner)
     : {};
 }
 
-export function useCollapsedGroups(owner: string) {
-  const [byOwner, setByOwner] = useLocalStorage<CollapsedGroupsByOwner>(
-    "pr-deck:collapsed-groups",
+function useGroupsByOwner(key: string, owner: string) {
+  const [byOwner, setByOwner] = useLocalStorage<GroupsByOwner>(
+    key,
     {},
-    { deserializer: parseCollapsedGroups },
+    { deserializer: parseGroupsByOwner },
   );
-  const setCollapsed = (collapsed: string[]) =>
-    setByOwner((prev) => ({ ...prev, [owner]: collapsed }));
-  return [byOwner[owner] ?? [], setCollapsed] as const;
+  const setGroups = (groups: string[]) => setByOwner((prev) => ({ ...prev, [owner]: groups }));
+  return [byOwner[owner] ?? [], setGroups] as const;
 }
+
+export const useCollapsedGroups = (owner: string) =>
+  useGroupsByOwner("pr-deck:collapsed-groups", owner);
+export const useStarredGroups = (owner: string) =>
+  useGroupsByOwner("pr-deck:starred-groups", owner);
 export const useOpenIn = () => useLocalStorage<OpenIn>("pr-deck:open-in", "github");

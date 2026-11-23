@@ -6,7 +6,10 @@ import {
   SearchIcon,
   StackCheckIcon,
   StackIcon,
+  StarFillIcon,
+  StarIcon,
 } from "@primer/octicons-react";
+import { motion, useReducedMotion } from "motion/react";
 import { memo, useEffect, useRef, type CSSProperties } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { BadgeIcon, BadgePill } from "@/components/status-badge";
@@ -33,6 +36,7 @@ export interface PrTableProps {
   onShowAll: () => void;
   onClearSearch: () => void;
   onToggleGroup: (key: string, all: boolean) => void;
+  onToggleStar: (key: string) => void;
 }
 
 const shownColumns = (group: Group, summary: boolean) => ({
@@ -52,6 +56,7 @@ export function PrTable({
   onShowAll,
   onClearSearch,
   onToggleGroup,
+  onToggleStar,
 }: PrTableProps) {
   const ref = useRef<HTMLDivElement>(null);
   const summary = useMediaQuery("(max-width: 639px)") || compact;
@@ -93,7 +98,7 @@ export function PrTable({
       className={cn("@container cursor-default px-2", group !== "none" && "pt-1")}
       style={{ "--columns": columns } as CSSProperties}
     >
-      {groups.map(({ key, rows, clusters, collapsed }) => (
+      {groups.map(({ key, rows, clusters, collapsed, starred }) => (
         <Collapsible
           key={key}
           open={!collapsed}
@@ -110,15 +115,16 @@ export function PrTable({
                 <GroupHeading group={group} name={key} rows={rows} />
               </div>
               <div className="sticky top-[calc(var(--pinned-height,0px)+--spacing(2))] z-10 w-0">
-                <div className="w-[100cqw] bg-background shadow-[0_-8px_0_var(--background)]">
+                <div className="group/header relative w-[100cqw] bg-background shadow-[0_-8px_0_var(--background)]">
                   <CollapsibleTrigger
                     className={cn(
                       GROUP_HEADER,
-                      "w-full outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      "w-full pe-10 outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     )}
                   >
                     <GroupHeading group={group} name={key} rows={rows} />
                   </CollapsibleTrigger>
+                  <StarButton name={key} starred={starred} onToggle={() => onToggleStar(key)} />
                 </div>
               </div>
             </>
@@ -141,6 +147,44 @@ export function PrTable({
         </Collapsible>
       ))}
     </div>
+  );
+}
+
+function StarButton({
+  name,
+  starred,
+  onToggle,
+}: {
+  name: string;
+  starred: boolean;
+  onToggle: () => void;
+}) {
+  const reducedMotion = useReducedMotion();
+  const pop = starred && !reducedMotion;
+  return (
+    <Button
+      variant="ghost"
+      size="icon-xs"
+      aria-label={`Star ${name}`}
+      aria-pressed={starred}
+      onClick={onToggle}
+      className={cn(
+        "absolute inset-y-0 end-1 my-auto hover:bg-transparent",
+        starred
+          ? "text-yellow-500 dark:text-yellow-300"
+          : "text-muted-foreground opacity-0 transition-opacity duration-150 ease-out group-hover/header:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-60",
+      )}
+    >
+      <motion.span
+        key={String(starred)}
+        initial={pop ? { scale: 0.6 } : false}
+        animate={{ scale: 1 }}
+        transition={{ type: "spring", duration: 0.3, bounce: 0.4 }}
+        className="inline-flex"
+      >
+        {starred ? <StarFillIcon /> : <StarIcon />}
+      </motion.span>
+    </Button>
   );
 }
 
