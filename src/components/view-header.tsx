@@ -1,11 +1,11 @@
 import { FilterIcon } from "@primer/octicons-react";
-import { useId, useState } from "react";
+import { useId, useMemo } from "react";
 import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsiblePanel } from "@/components/ui/collapsible";
-import { DrawerCreateHandle } from "@/components/ui/drawer";
-import { PopoverCreateHandle } from "@/components/ui/popover";
+import { DrawerCreateHandle as createDrawerHandle } from "@/components/ui/drawer";
+import { PopoverCreateHandle as createPopoverHandle } from "@/components/ui/popover";
 import { toggleValue } from "@/lib/filters";
 import { useDesktop } from "@/lib/use-desktop";
 import type { Filter, PropertyKey, PullRequest } from "@/types";
@@ -41,7 +41,14 @@ export interface ViewHeaderProps {
   viewer: string;
 }
 
-export function ViewHeader({
+const anchorsFor = (current: Filter[]) =>
+  [
+    "header",
+    "add",
+    ...current.map((filter) => filter.key),
+  ] satisfies MenuAnchor[];
+
+export const ViewHeader = ({
   children,
   filters,
   filtersChanged,
@@ -54,18 +61,12 @@ export function ViewHeader({
   orgPrs,
   scopedPrs,
   viewer,
-}: ViewHeaderProps) {
+}: ViewHeaderProps) => {
   const desktop = useDesktop();
-  const [popoverHandle] = useState(() => PopoverCreateHandle<MenuAnchor>());
-  const [drawerHandle] = useState(() => DrawerCreateHandle<MenuAnchor>());
+  const popoverHandle = useMemo(() => createPopoverHandle<MenuAnchor>(), []);
+  const drawerHandle = useMemo(() => createDrawerHandle<MenuAnchor>(), []);
   const triggerIdPrefix = useId();
   const triggerId = (anchor: MenuAnchor) => `${triggerIdPrefix}${anchor}`;
-
-  const anchorsFor = (current: Filter[]): MenuAnchor[] => [
-    "header",
-    "add",
-    ...current.map((filter) => filter.key),
-  ];
 
   const changeFilterMenu = (open: boolean, trigger: Element | undefined) => {
     if (!open) {
@@ -84,7 +85,7 @@ export function ViewHeader({
   };
 
   const barVisible = filtersChanged
-    ? !filterMenu?.deferBar
+    ? filterMenu?.deferBar !== true
     : filterMenu !== null && filterMenu.anchor !== "header";
 
   const changeFilters = (next: Filter[]) => {
@@ -197,24 +198,22 @@ export function ViewHeader({
       )}
     </div>
   );
-}
+};
 
-export function FilterButton() {
-  return (
-    <Hint label="Filter">
-      <FilterTrigger
-        anchor="header"
-        render={
-          <Button
-            variant="outline"
-            size="icon-sm"
-            className="rounded-full before:rounded-full max-md:ms-auto"
-            aria-label="Filter"
-          />
-        }
-      >
-        <FilterIcon />
-      </FilterTrigger>
-    </Hint>
-  );
-}
+export const FilterButton = () => (
+  <Hint label="Filter">
+    <FilterTrigger
+      anchor="header"
+      render={
+        <Button
+          variant="outline"
+          size="icon-sm"
+          className="rounded-full before:rounded-full max-md:ms-auto"
+          aria-label="Filter"
+        />
+      }
+    >
+      <FilterIcon />
+    </FilterTrigger>
+  </Hint>
+);

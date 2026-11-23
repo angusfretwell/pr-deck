@@ -6,7 +6,7 @@ import {
 import { useHotkeys } from "@tanstack/react-hotkeys";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, Dispatch, SetStateAction } from "react";
 import { useEventCallback, useInterval, useResizeObserver } from "usehooks-ts";
 import { Redirect, useLocation } from "wouter";
 
@@ -43,7 +43,7 @@ import {
   toggleGroup,
   toggleStar,
 } from "@/lib/pr-list";
-import type { PrList, SelectionAction } from "@/lib/pr-list";
+import type { PrList, Selection, SelectionAction } from "@/lib/pr-list";
 import { deriveStacks } from "@/lib/stacks";
 import {
   useCollapsedGroups,
@@ -72,187 +72,167 @@ interface OrgRouteProps extends SearchProps {
   viewSlug: string | null;
 }
 
-export function OrgRoute({ owner, viewSlug, ...pageProps }: OrgRouteProps) {
-  const state = useViews(owner, viewSlug);
+const SKELETON_WIDTHS = ["w-80", "w-64", "w-96"];
 
-  if (!state) {
+const TruncationNote = ({ list }: { list: PullRequestList }) => {
+  if (list.totalCount <= list.pullRequests.length) {
     return null;
   }
 
-  const { views, commit } = state;
-
-  if (views.redirectTo) {
-    return <Redirect to={views.redirectTo} replace />;
-  }
-
-  return <OrgPage owner={owner} views={views} commit={commit} {...pageProps} />;
-}
-
-interface OrgPageProps extends SearchProps {
-  owner: string;
-  owners: Account[];
-  views: Views;
-  commit: (change: ViewsChange) => void;
-}
-
-function OrgPage({
-  owner,
-  owners,
-  views,
-  commit,
-  viewer,
-  query,
-  onQueryChange,
-  onOpenSearch,
-}: OrgPageProps) {
-  const [location] = useLocation();
-  const [, setLastPath] = useLastPath();
-  const [group, setGroup] = useGroup();
-  const [hideDraftsPreference, setHideDrafts] = useHideDrafts();
-  const [collapsedGroups, setCollapsedGroups] = useCollapsedGroups(owner);
-  const [starredGroups, setStarredGroups] = useStarredGroups(owner);
-  const { filters, filtersChanged } = views;
-  const [filterMenu, setFilterMenu] = useState<FilterMenuState | null>(null);
-
-  const changeFilterMenu = (anchor: MenuAnchor | null) => {
-    setFilterMenu(
-      anchor && { anchor, deferBar: anchor === "header" && !filtersChanged }
-    );
-  };
-
-  const [displayMenuOpen, setDisplayMenuOpen] = useState(false);
-  const [paletteOpen, setPaletteOpen] = useState(false);
-  const [selection, setSelection] = useState(NO_SELECTION);
-  const viewId = views.active?.id ?? null;
-  const [shownViewId, setShownViewId] = useState(viewId);
-
-  if (shownViewId !== viewId) {
-    setShownViewId(viewId);
-    setSelection(NO_SELECTION);
-    setFilterMenu(null);
-  }
-
-  const desktop = useDesktop();
-  const viewHeaderRef = useRef<HTMLDivElement>(null!);
-
-  const { height: viewHeaderHeight = 0 } = useResizeObserver({
-    ref: viewHeaderRef,
-    box: "border-box",
-  });
-
-  const pullRequests = usePullRequests(owner);
-  const deferredQuery = useDeferredValue(query);
-  const [now, setNow] = useState(Date.now);
-  useInterval(() => {
-    setNow(Date.now());
-  }, 60_000);
-
-  const hideDrafts = desktop && hideDraftsPreference;
-  const allPrs = pullRequests.data?.pullRequests ?? [];
-
-  const stacks = useMemo(
-    () => deriveStacks(pullRequests.data?.pullRequests ?? []),
-    [pullRequests.data]
+  return (
+    <div className="px-2 pt-3 md:px-4">
+      <Alert variant="info">
+        <InfoIcon />
+        <AlertDescription>
+          Showing the {list.pullRequests.length} most recently updated of{" "}
+          {list.totalCount} open pull requests.
+        </AlertDescription>
+      </Alert>
+    </div>
   );
+};
 
-  const orgPrs = hideDrafts ? allPrs.filter((pr) => !pr.isDraft) : allPrs;
-
-  const listInput = {
-    pullRequests: orgPrs,
-    stacks,
-    query: deferredQuery,
-    viewer,
-    group,
-    collapsed: collapsedGroups,
-    starred: starredGroups,
-    desktop,
-  };
-
-  const list = derivePrList({ ...listInput, filters, selection });
-
-  const act = (action: SelectionAction) => {
-    setSelection(applySelectionAction(list, action));
-  };
-
-  const select = useEventCallback((id: string) => {
-    act({ type: "select", id });
-  });
-
-  const groupsCollapsed = allGroupsCollapsed(list);
-
-  const toggleAll =
-    group !== "none" && list.groups.length > 0
-      ? () => {
-          setCollapsedGroups(toggleAllGroups(list));
-        }
-      : undefined;
-
-  useEffect(() => {
-    setLastPath(location);
-  }, [location, setLastPath]);
-
-  const viewCounts = pullRequests.data
-    ? countByView(views.list, orgPrs, viewer)
-    : {};
-
-  const showAll = () => {
-    commit(views.showAll());
-    onQueryChange("");
-  };
-
-  const prTable = (
-    { groups, statusPending }: PrList,
-    selectedId: string | null
-  ) =>
-    statusPending ? (
-      <LoadingRows />
-    ) : (
-      <PrTable
-        groups={groups}
-        group={group}
-        compact={!!list.previewed}
-        selectedId={selectedId}
-        onSelect={select}
-        now={now}
-        query={deferredQuery}
-        onShowAll={showAll}
-        onClearSearch={() => {
-          onQueryChange("");
+const NoPullRequests = ({
+  owner,
+  result,
+}: {
+  owner: string;
+  result: UseQueryResult<PullRequestList>;
+}) => (
+  <Empty>
+    <EmptyHeader className="animate-rise motion-reduce:animate-none">
+      <EmptyMedia variant="icon">
+        <GitPullRequestIcon />
+      </EmptyMedia>
+      <EmptyTitle>No open pull requests</EmptyTitle>
+      <EmptyDescription>{owner} is all clear.</EmptyDescription>
+    </EmptyHeader>
+    <EmptyContent>
+      <Button
+        size="sm"
+        variant="outline"
+        loading={result.isFetching}
+        onClick={() => {
+          void result.refetch();
         }}
-        onToggleGroup={(key, scope) => {
-          setCollapsedGroups(toggleGroup(list, key, scope));
+      >
+        Refresh
+      </Button>
+    </EmptyContent>
+  </Empty>
+);
+
+const LoadError = ({ result }: { result: UseQueryResult<PullRequestList> }) => (
+  <Empty>
+    <EmptyHeader>
+      <EmptyMedia variant="icon">
+        <AlertIcon />
+      </EmptyMedia>
+      <EmptyTitle>Couldn&apos;t load pull requests</EmptyTitle>
+      <EmptyDescription>{errorMessage(result.error)}</EmptyDescription>
+    </EmptyHeader>
+    <EmptyContent>
+      <Button
+        size="sm"
+        variant="outline"
+        loading={result.isFetching}
+        onClick={() => {
+          void result.refetch();
         }}
-        onToggleStar={(key) => {
-          setStarredGroups(toggleStar(list, key));
-        }}
+      >
+        Try again
+      </Button>
+    </EmptyContent>
+  </Empty>
+);
+
+const LoadingRows = () => (
+  <div
+    className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden px-2"
+    aria-busy="true"
+  >
+    {Array.from({ length: 12 }, (_, index) => (
+      <div key={index} className="flex h-10 items-center gap-3 px-2 sm:h-9">
+        <Skeleton className="size-4 rounded-full" />
+        <Skeleton className="h-3 w-24" />
+        <Skeleton
+          className={cn("h-3", SKELETON_WIDTHS[index % SKELETON_WIDTHS.length])}
+        />
+        <span className="grow" />
+        <Skeleton className="h-3 w-10" />
+      </div>
+    ))}
+  </div>
+);
+
+const LoadErrorOrLoading = ({
+  result,
+}: {
+  result: UseQueryResult<PullRequestList>;
+}) => (result.isError ? <LoadError result={result} /> : <LoadingRows />);
+
+interface ListPreviewProps {
+  desktop: boolean;
+  list: PrList;
+  open: boolean;
+  viewer: string;
+  onClose: () => void;
+}
+
+const ListPreview = ({
+  desktop,
+  list,
+  open,
+  viewer,
+  onClose,
+}: ListPreviewProps) => {
+  if (!desktop) {
+    return (
+      <PreviewDrawer
+        pr={list.selected}
+        open={open}
+        viewer={viewer}
+        onClose={onClose}
       />
     );
+  }
 
-  const viewIds = [null, ...views.list.map((view) => view.id)];
+  if (list.previewed === undefined) {
+    return null;
+  }
 
-  const neighbour = (offset: 1 | -1): SwipeNeighbour | null => {
-    if (desktop || allPrs.length === 0) {
-      return null;
-    }
+  return <Preview pr={list.previewed} viewer={viewer} onClose={onClose} />;
+};
 
-    const id = viewIds[viewIds.indexOf(viewId) + offset];
+interface ListHotkeysInput {
+  list: PrList;
+  selection: Selection;
+  desktop: boolean;
+  hideDrafts: boolean;
+  filterMenu: FilterMenuState | null;
+  displayMenuOpen: boolean;
+  paletteOpen: boolean;
+  setPaletteOpen: Dispatch<SetStateAction<boolean>>;
+  onOpenSearch: () => void;
+  changeFilterMenu: (anchor: MenuAnchor | null) => void;
+  setHideDrafts: (hideDrafts: boolean) => void;
+  act: (action: SelectionAction) => void;
+}
 
-    if (id === undefined) {
-      return null;
-    }
-
-    const neighbourFilters =
-      views.list.find((view) => view.id === id)?.filters ?? [];
-
-    const neighbourList = derivePrList({
-      ...listInput,
-      filters: neighbourFilters,
-      selection: NO_SELECTION,
-    });
-
-    return { href: views.hrefFor(id), content: prTable(neighbourList, null) };
-  };
-
+const useListHotkeys = ({
+  list,
+  selection,
+  desktop,
+  hideDrafts,
+  filterMenu,
+  displayMenuOpen,
+  paletteOpen,
+  setPaletteOpen,
+  onOpenSearch,
+  changeFilterMenu,
+  setHideDrafts,
+  act,
+}: ListHotkeysInput) => {
   const idle = !filterMenu && !displayMenuOpen && !paletteOpen;
   const hasRows = list.order.length > 0;
   const navigable = list.order.includes(selection.selectedId ?? "");
@@ -336,20 +316,211 @@ function OrgPage({
       },
       {
         hotkey: "O",
-        callback: () =>
-          list.selected && window.open(list.selected.url, "_blank", "noopener"),
+        callback: () => {
+          if (list.selected) {
+            window.open(list.selected.url, "_blank", "noopener");
+          }
+        },
         options: { enabled: idle && !!list.selected, preventDefault: false },
       },
     ],
     { ignoreDefaultPrevented: true }
   );
+};
+
+interface OrgPageProps extends SearchProps {
+  owner: string;
+  owners: Account[];
+  views: Views;
+  commit: (change: ViewsChange) => void;
+}
+
+const OrgPage = ({
+  owner,
+  owners,
+  views,
+  commit,
+  viewer,
+  query,
+  onQueryChange,
+  onOpenSearch,
+}: OrgPageProps) => {
+  const [location] = useLocation();
+  const [, setLastPath] = useLastPath();
+  const [group, setGroup] = useGroup();
+  const [hideDraftsPreference, setHideDrafts] = useHideDrafts();
+  const [collapsedGroups, setCollapsedGroups] = useCollapsedGroups(owner);
+  const [starredGroups, setStarredGroups] = useStarredGroups(owner);
+  const { filters, filtersChanged } = views;
+  const [filterMenu, setFilterMenu] = useState<FilterMenuState | null>(null);
+
+  const changeFilterMenu = (anchor: MenuAnchor | null) => {
+    setFilterMenu(
+      anchor && { anchor, deferBar: anchor === "header" && !filtersChanged }
+    );
+  };
+
+  const [displayMenuOpen, setDisplayMenuOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [selection, setSelection] = useState(NO_SELECTION);
+  const viewId = views.active?.id ?? null;
+  const [shownViewId, setShownViewId] = useState(viewId);
+
+  if (shownViewId !== viewId) {
+    setShownViewId(viewId);
+    setSelection(NO_SELECTION);
+    setFilterMenu(null);
+  }
+
+  const desktop = useDesktop();
+  const viewHeaderRef = useRef<HTMLDivElement>(null);
+
+  const { height: viewHeaderHeight = 0 } = useResizeObserver({
+    ref: viewHeaderRef,
+    box: "border-box",
+  });
+
+  const pullRequests = usePullRequests(owner);
+  const deferredQuery = useDeferredValue(query);
+  const [now, setNow] = useState(Date.now);
+  useInterval(() => {
+    setNow(Date.now());
+  }, 60_000);
+
+  const hideDrafts = desktop && hideDraftsPreference;
+  const allPrs = pullRequests.data?.pullRequests ?? [];
+
+  const stacks = useMemo(
+    () => deriveStacks(pullRequests.data?.pullRequests ?? []),
+    [pullRequests.data]
+  );
+
+  const orgPrs = hideDrafts ? allPrs.filter((pr) => !pr.isDraft) : allPrs;
+
+  const listInput = {
+    pullRequests: orgPrs,
+    stacks,
+    query: deferredQuery,
+    viewer,
+    group,
+    collapsed: collapsedGroups,
+    starred: starredGroups,
+    desktop,
+  };
+
+  const list = derivePrList({ ...listInput, filters, selection });
+
+  const act = (action: SelectionAction) => {
+    setSelection(applySelectionAction(list, action));
+  };
+
+  const select = useEventCallback((id: string) => {
+    act({ type: "select", id });
+  });
+
+  const groupsCollapsed = allGroupsCollapsed(list);
+
+  const toggleAll =
+    group !== "none" && list.groups.length > 0
+      ? () => {
+          setCollapsedGroups(toggleAllGroups(list));
+        }
+      : undefined;
+
+  useEffect(() => {
+    setLastPath(location);
+  }, [location, setLastPath]);
+
+  const allOpenCount = pullRequests.data && orgPrs.length;
+
+  const viewCounts = pullRequests.data
+    ? countByView(views.list, orgPrs, viewer)
+    : {};
+
+  const showAll = () => {
+    commit(views.showAll());
+    onQueryChange("");
+  };
+
+  const prTable = (
+    { groups, statusPending }: PrList,
+    selectedId: string | null
+  ) =>
+    statusPending ? (
+      <LoadingRows />
+    ) : (
+      <PrTable
+        groups={groups}
+        group={group}
+        compact={!!list.previewed}
+        selectedId={selectedId}
+        onSelect={select}
+        now={now}
+        query={deferredQuery}
+        onShowAll={showAll}
+        onClearSearch={() => {
+          onQueryChange("");
+        }}
+        onToggleGroup={(key, scope) => {
+          setCollapsedGroups(toggleGroup(list, key, scope));
+        }}
+        onToggleStar={(key) => {
+          setStarredGroups(toggleStar(list, key));
+        }}
+      />
+    );
+
+  const viewIds = [null, ...views.list.map((view) => view.id)];
+
+  const neighbour = (offset: 1 | -1) => {
+    if (desktop || allPrs.length === 0) {
+      return null;
+    }
+
+    const id = viewIds[viewIds.indexOf(viewId) + offset];
+
+    if (id === undefined) {
+      return null;
+    }
+
+    const neighbourFilters =
+      views.list.find((view) => view.id === id)?.filters ?? [];
+
+    const neighbourList = derivePrList({
+      ...listInput,
+      filters: neighbourFilters,
+      selection: NO_SELECTION,
+    });
+
+    return {
+      href: views.hrefFor(id),
+      content: prTable(neighbourList, null),
+    } satisfies SwipeNeighbour;
+  };
+
+  useListHotkeys({
+    list,
+    selection,
+    desktop,
+    hideDrafts,
+    filterMenu,
+    displayMenuOpen,
+    paletteOpen,
+    setPaletteOpen,
+    onOpenSearch,
+    changeFilterMenu,
+    setHideDrafts,
+    act,
+  });
+
+  const style: CSSProperties & Record<"--view-header-height", string> = {
+    "--view-header-height": `${viewHeaderHeight}px`,
+  };
 
   return (
     <div
       className="flex min-h-0 flex-1 flex-col [--pinned-height:0px] max-md:[--pinned-height:calc(--spacing(12.5)+var(--view-header-height))]"
-      style={
-        { "--view-header-height": `${viewHeaderHeight}px` } as CSSProperties
-      }
+      style={style}
     >
       <div className="max-md:h-(--view-header-height)">
         <div
@@ -384,8 +555,8 @@ function OrgPage({
             <ViewTabs
               views={views.list}
               viewCounts={viewCounts}
-              allOpenCount={pullRequests.data && orgPrs.length}
-              activeViewId={views.active?.id ?? null}
+              allOpenCount={allOpenCount}
+              activeViewId={viewId}
               deletableViewId={views.deletableViewId}
               renamingViewId={views.session.renamingViewId}
               viewHref={views.hrefFor}
@@ -427,7 +598,7 @@ function OrgPage({
             previous={neighbour(-1)}
             next={neighbour(1)}
             topInset={() =>
-              viewHeaderRef.current.getBoundingClientRect().bottom
+              viewHeaderRef.current?.getBoundingClientRect().bottom ?? 0
             }
             className="flex flex-1 flex-col pb-[calc(--spacing(4)+env(safe-area-inset-bottom))] md:min-h-0 md:overflow-y-auto md:overscroll-contain"
           >
@@ -438,31 +609,18 @@ function OrgPage({
             )}
             <TruncationNote list={pullRequests.data} />
           </ViewSwipe>
-          {desktop ? (
-            list.previewed && (
-              <Preview
-                pr={list.previewed}
-                viewer={viewer}
-                onClose={() => {
-                  act({ type: "closePreview" });
-                }}
-              />
-            )
-          ) : (
-            <PreviewDrawer
-              pr={list.selected}
-              open={selection.previewOpen}
-              viewer={viewer}
-              onClose={() => {
-                act({ type: "closePreview" });
-              }}
-            />
-          )}
+          <ListPreview
+            desktop={desktop}
+            list={list}
+            open={selection.previewOpen}
+            viewer={viewer}
+            onClose={() => {
+              act({ type: "closePreview" });
+            }}
+          />
         </div>
-      ) : pullRequests.isError ? (
-        <LoadError result={pullRequests} />
       ) : (
-        <LoadingRows />
+        <LoadErrorOrLoading result={pullRequests} />
       )}
       <CommandPalette
         open={paletteOpen}
@@ -472,7 +630,7 @@ function OrgPage({
         views={views}
         onViewsChange={commit}
         viewCounts={viewCounts}
-        allOpenCount={pullRequests.data && orgPrs.length}
+        allOpenCount={allOpenCount}
         orgPrs={orgPrs}
         scopedPrs={list.scoped}
         viewer={viewer}
@@ -489,100 +647,20 @@ function OrgPage({
       />
     </div>
   );
-}
+};
 
-function TruncationNote({ list }: { list: PullRequestList }) {
-  if (list.totalCount <= list.pullRequests.length) {
+export const OrgRoute = ({ owner, viewSlug, ...pageProps }: OrgRouteProps) => {
+  const state = useViews(owner, viewSlug);
+
+  if (!state) {
     return null;
   }
 
-  return (
-    <div className="px-2 pt-3 md:px-4">
-      <Alert variant="info">
-        <InfoIcon />
-        <AlertDescription>
-          Showing the {list.pullRequests.length} most recently updated of{" "}
-          {list.totalCount} open pull requests.
-        </AlertDescription>
-      </Alert>
-    </div>
-  );
-}
+  const { views, commit } = state;
 
-function NoPullRequests({
-  owner,
-  result,
-}: {
-  owner: string;
-  result: UseQueryResult<PullRequestList>;
-}) {
-  return (
-    <Empty>
-      <EmptyHeader className="animate-rise motion-reduce:animate-none">
-        <EmptyMedia variant="icon">
-          <GitPullRequestIcon />
-        </EmptyMedia>
-        <EmptyTitle>No open pull requests</EmptyTitle>
-        <EmptyDescription>{owner} is all clear.</EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent>
-        <Button
-          size="sm"
-          variant="outline"
-          loading={result.isFetching}
-          onClick={async () => await result.refetch()}
-        >
-          Refresh
-        </Button>
-      </EmptyContent>
-    </Empty>
-  );
-}
+  if (views.redirectTo !== null) {
+    return <Redirect to={views.redirectTo} replace />;
+  }
 
-function LoadError({ result }: { result: UseQueryResult<PullRequestList> }) {
-  return (
-    <Empty>
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <AlertIcon />
-        </EmptyMedia>
-        <EmptyTitle>Couldn't load pull requests</EmptyTitle>
-        <EmptyDescription>{errorMessage(result.error)}</EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent>
-        <Button
-          size="sm"
-          variant="outline"
-          loading={result.isFetching}
-          onClick={async () => await result.refetch()}
-        >
-          Try again
-        </Button>
-      </EmptyContent>
-    </Empty>
-  );
-}
-
-function LoadingRows() {
-  return (
-    <div
-      className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden px-2"
-      aria-busy="true"
-    >
-      {Array.from({ length: 12 }, (_, index) => (
-        <div key={index} className="flex h-10 items-center gap-3 px-2 sm:h-9">
-          <Skeleton className="size-4 rounded-full" />
-          <Skeleton className="h-3 w-24" />
-          <Skeleton
-            className={cn(
-              "h-3",
-              index % 3 === 0 ? "w-80" : index % 3 === 1 ? "w-64" : "w-96"
-            )}
-          />
-          <span className="grow" />
-          <Skeleton className="h-3 w-10" />
-        </div>
-      ))}
-    </div>
-  );
-}
+  return <OrgPage owner={owner} views={views} commit={commit} {...pageProps} />;
+};

@@ -14,13 +14,14 @@ import { PENDING_STATUS } from "./mapping";
 const avatar = (seed: string) =>
   `https://api.dicebear.com/9.x/shapes/svg?seed=${seed}`;
 
-const account = (login: string, name: string): Account => ({
-  login,
-  name,
-  avatarUrl: avatar(login),
-});
+const account = (login: string, name: string) =>
+  ({
+    login,
+    name,
+    avatarUrl: avatar(login),
+  }) satisfies Account;
 
-function session(): Session {
+const session = () => {
   const viewer = account("you", "You");
 
   return {
@@ -31,8 +32,8 @@ function session(): Session {
       account("globex", "Globex"),
       account("initech", "Initech"),
     ],
-  };
-}
+  } satisfies Session;
+};
 
 const repos = ["web", "api", "mobile", "infra", "docs", "design-system"];
 const authors = ["you", "sam", "priya", "lee", "noor", "alex", "kai"];
@@ -61,18 +62,25 @@ const titles = [
 ];
 
 const branch = (index: number) => `feature/change-${index}`;
-const STACKED_ON: Record<number, number> = { 6: 0, 12: 6, 18: 12, 7: 1 };
+
+const STACKED_ON = new Map([
+  [6, 0],
+  [12, 6],
+  [18, 12],
+  [7, 1],
+]);
 
 const pollsUntilMergeable = new Map<string, number>();
 
 const settledMergeability = (index: number) =>
   mergeStates[index % mergeStates.length];
 
-function pullRequests(owner: string): PullRequest[] {
-  return Array.from({ length: 48 }, (_, index) => {
+const pullRequests = (owner: string) =>
+  Array.from({ length: 48 }, (_, index) => {
     const id = `${owner}-${index}`;
     const author = authors[index % authors.length];
     const review = reviewStates[index % reviewStates.length];
+    const stackedOn = STACKED_ON.get(index);
 
     if (index % 7 === 2 && !pollsUntilMergeable.has(id)) {
       pollsUntilMergeable.set(id, index < 24 ? 1 : 2);
@@ -89,13 +97,14 @@ function pullRequests(owner: string): PullRequest[] {
       authorAvatarUrl: avatar(author),
       isDraft: index % 9 === 4,
       branch: branch(index),
-      baseBranch: index in STACKED_ON ? branch(STACKED_ON[index]) : "main",
+      baseBranch: stackedOn === undefined ? "main" : branch(stackedOn),
       isCrossRepository: false,
       updatedAt: new Date(Date.now() - index * 47 * 60_000).toISOString(),
       ci: ciStates[index % ciStates.length],
-      mergeability: pollsUntilMergeable.get(id)
-        ? "unknown"
-        : settledMergeability(index),
+      mergeability:
+        (pollsUntilMergeable.get(id) ?? 0) === 0
+          ? settledMergeability(index)
+          : "unknown",
       review,
       reviewers:
         review === "none"
@@ -108,9 +117,8 @@ function pullRequests(owner: string): PullRequest[] {
               },
             ],
       reviewRequestedFromViewer: index % 5 === 1,
-    };
+    } satisfies PullRequest;
   });
-}
 
 const paragraph =
   "<p>This change tidies up the flow and adds coverage for the edge cases we hit in production last week. It should be safe to roll out behind the existing flag.</p>";
@@ -123,7 +131,7 @@ const escapeHtml = (text: string) =>
     .replaceAll('"', "&quot;");
 
 const fence = (code: string, language?: string) =>
-  `<div class="${language ? `highlight highlight-source-${language}` : "snippet-clipboard-content"} notranslate position-relative overflow-auto" data-snippet-clipboard-copy-content="${escapeHtml(code)}"><pre class="notranslate"><code>${escapeHtml(code)}</code></pre></div>`;
+  `<div class="${language !== undefined && language !== "" ? `highlight highlight-source-${language}` : "snippet-clipboard-content"} notranslate position-relative overflow-auto" data-snippet-clipboard-copy-content="${escapeHtml(code)}"><pre class="notranslate"><code>${escapeHtml(code)}</code></pre></div>`;
 
 const codeSample = fence(
   `export function retry<T>(task: () => Promise<T>, attempts = 3): Promise<T> {
@@ -151,59 +159,66 @@ const plainSample = fence(
   "Error: request timed out after 1000ms\n    at fetchWithTimeout (src/lib/http.ts:42:11)"
 );
 
-const detail = (): PullRequestDetail => ({
-  bodyHtml: `<h2>Summary</h2>${paragraph}${codeSample}${paragraph}${diffSample}<h2>Testing</h2><ul><li>Unit tests${shellSample}</li><li>Manual check on iOS Safari</li><li>Staging deploy</li></ul><p>The old behaviour logged:</p>${plainSample}${paragraph.repeat(3)}`,
-  additions: 412,
-  deletions: 96,
-  changedFiles: 14,
-  checks: [
-    { name: "build", state: "pass", seconds: 84, url: null, required: true },
-    { name: "test", state: "fail", seconds: 212, url: null, required: true },
-    { name: "lint", state: "pass", seconds: 31, url: null, required: false },
-    {
-      name: "deploy-preview",
-      state: "pending",
-      seconds: null,
-      url: null,
-      required: false,
-    },
-  ],
-  files: Array.from({ length: 14 }, (_, index) => ({
-    path: `src/features/module-${index}/index.ts`,
-    additions: 10 + index * 7,
-    deletions: index * 2,
-  })),
-});
+const detail = () =>
+  ({
+    bodyHtml: `<h2>Summary</h2>${paragraph}${codeSample}${paragraph}${diffSample}<h2>Testing</h2><ul><li>Unit tests${shellSample}</li><li>Manual check on iOS Safari</li><li>Staging deploy</li></ul><p>The old behaviour logged:</p>${plainSample}${paragraph.repeat(3)}`,
+    additions: 412,
+    deletions: 96,
+    changedFiles: 14,
+    checks: [
+      { name: "build", state: "pass", seconds: 84, url: null, required: true },
+      { name: "test", state: "fail", seconds: 212, url: null, required: true },
+      { name: "lint", state: "pass", seconds: 31, url: null, required: false },
+      {
+        name: "deploy-preview",
+        state: "pending",
+        seconds: null,
+        url: null,
+        required: false,
+      },
+    ],
+    files: Array.from({ length: 14 }, (_, index) => ({
+      path: `src/features/module-${index}/index.ts`,
+      additions: 10 + index * 7,
+      deletions: index * 2,
+    })),
+  }) satisfies PullRequestDetail;
 
-const delay = async <T>(value: T) =>
-  await new Promise<T>((resolve) =>
-    setTimeout(() => {
-      resolve(value);
-    }, 300)
-  );
+const delay = async <T>(value: T) => {
+  const { promise, resolve } = Promise.withResolvers<T>();
+  setTimeout(() => {
+    resolve(value);
+  }, 300);
+
+  return await promise;
+};
 
 export const fetchSession = async (_token: string) => await delay(session());
 
-export async function fetchPullRequests(
+export const fetchPullRequests = async (
   _token: string,
   owner: string,
   _viewer: string,
-  onRows: (list: PullRequestList) => void = () => {}
-): Promise<PullRequestList> {
-  const list = { pullRequests: pullRequests(owner), totalCount: 48 };
-  onRows(
-    await delay({
-      ...list,
-      pullRequests: list.pullRequests.map((pr) => ({
-        ...pr,
-        ...PENDING_STATUS,
-        statusPending: true as const,
-      })),
-    })
-  );
+  onRows?: (list: PullRequestList) => void
+) => {
+  const list = {
+    pullRequests: pullRequests(owner),
+    totalCount: 48,
+  } satisfies PullRequestList;
+
+  const rows = await delay({
+    ...list,
+    pullRequests: list.pullRequests.map((pr) => ({
+      ...pr,
+      ...PENDING_STATUS,
+      statusPending: true as const,
+    })),
+  });
+
+  onRows?.(rows);
 
   return await delay(list);
-}
+};
 
 export const fetchMergeability = async (_token: string, ids: string[]) =>
   await delay<Record<string, Mergeability>>(

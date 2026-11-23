@@ -1,6 +1,6 @@
 import { EyeIcon, KeyIcon, MarkGithubIcon } from "@primer/octicons-react";
 import { useState } from "react";
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 
 import { SetupPreview } from "@/components/setup-preview";
 import { Button } from "@/components/ui/button";
@@ -34,13 +34,36 @@ interface SetupScreenProps {
   onSignIn: (token: string, session: Session) => void;
 }
 
-export function SetupScreen({ initialError, onSignIn }: SetupScreenProps) {
+const Logo = () => (
+  <svg viewBox="0 0 32 32" aria-hidden className="size-6">
+    <rect width="32" height="32" rx="7" className="fill-foreground" />
+    <rect
+      x="7"
+      y="7"
+      width="18"
+      height="10.5"
+      rx="2.5"
+      className="fill-background"
+    />
+    <g
+      fill="none"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+      className="stroke-background"
+    >
+      <path d="M10 21.3h12" opacity=".6" />
+      <path d="M13 25h6" opacity=".3" />
+    </g>
+  </svg>
+);
+
+export const SetupScreen = ({ initialError, onSignIn }: SetupScreenProps) => {
   const [token, setToken] = useState("");
   const [error, setError] = useState(initialError);
   const [pending, setPending] = useState(false);
   const [failures, setFailures] = useState(0);
 
-  const submit = async (event: FormEvent) => {
+  const submit = async (event: SubmitEvent) => {
     event.preventDefault();
     const trimmed = token.trim();
     setPending(true);
@@ -66,7 +89,12 @@ export function SetupScreen({ initialError, onSignIn }: SetupScreenProps) {
           <h1 className="text-2xl font-semibold tracking-tight text-balance">
             Every open pull request across your orgs, on one screen.
           </h1>
-          <form className="flex flex-col gap-3" onSubmit={submit}>
+          <form
+            className="flex flex-col gap-3"
+            onSubmit={(event) => {
+              void submit(event);
+            }}
+          >
             <Field invalid={error !== null}>
               <FieldLabel>Personal access token</FieldLabel>
               <Input
@@ -102,7 +130,9 @@ export function SetupScreen({ initialError, onSignIn }: SetupScreenProps) {
                 </a>
               </FieldDescription>
               <div className="min-h-4">
-                {error && <FieldError match>{error}</FieldError>}
+                {error !== null && error !== "" && (
+                  <FieldError match>{error}</FieldError>
+                )}
               </div>
             </Field>
             <Button
@@ -131,7 +161,7 @@ export function SetupScreen({ initialError, onSignIn }: SetupScreenProps) {
             className="hover:text-foreground inline-flex items-center gap-1.5 transition-colors duration-150 ease-out"
             href={REPO_URL}
             target="_blank"
-            rel="noopener"
+            rel="noreferrer"
           >
             <MarkGithubIcon className="size-3.5" />
             Source on GitHub
@@ -145,29 +175,4 @@ export function SetupScreen({ initialError, onSignIn }: SetupScreenProps) {
       </section>
     </main>
   );
-}
-
-function Logo() {
-  return (
-    <svg viewBox="0 0 32 32" aria-hidden className="size-6">
-      <rect width="32" height="32" rx="7" className="fill-foreground" />
-      <rect
-        x="7"
-        y="7"
-        width="18"
-        height="10.5"
-        rx="2.5"
-        className="fill-background"
-      />
-      <g
-        fill="none"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        className="stroke-background"
-      >
-        <path d="M10 21.3h12" opacity=".6" />
-        <path d="M13 25h6" opacity=".3" />
-      </g>
-    </svg>
-  );
-}
+};

@@ -3,8 +3,15 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { shouldPersistQuery } from "./query-cache";
 
-const queryFor = (client: QueryClient, queryKey: unknown[]) =>
-  client.getQueryCache().find({ queryKey, exact: true })!;
+const queryFor = (client: QueryClient, queryKey: unknown[]) => {
+  const query = client.getQueryCache().find({ queryKey, exact: true });
+
+  if (query === undefined) {
+    throw new Error(`No cached query for ${JSON.stringify(queryKey)}`);
+  }
+
+  return query;
+};
 
 describe("shouldPersistQuery", () => {
   it("persists the session and pull request lists", () => {
@@ -35,9 +42,11 @@ describe("shouldPersistQuery", () => {
     expect(shouldPersistQuery(queryFor(client, ["session"]))).toBe(false);
 
     await client
-      .fetchQuery({
+      .query({
         queryKey: ["pull-requests", "acme"],
-        queryFn: async () => { throw new Error(); },
+        queryFn: () => {
+          throw new Error("Fetch failed");
+        },
       })
       .catch(() => {});
     expect(

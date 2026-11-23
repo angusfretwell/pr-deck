@@ -1,5 +1,3 @@
 import { useMediaQuery } from "usehooks-ts";
 
-export function useDesktop() {
-  return useMediaQuery("(min-width: 768px)");
-}
+export const useDesktop = () => useMediaQuery("(min-width: 768px)");

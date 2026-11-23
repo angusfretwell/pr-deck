@@ -8,27 +8,28 @@ const pr = (
   branch: string,
   baseBranch = "main",
   overrides: Partial<PullRequest> = {}
-): PullRequest => ({
-  id,
-  owner: "acme",
-  repo: "web",
-  number: Number(id),
-  title: `Title ${id}`,
-  url: `https://github.com/acme/web/pull/${id}`,
-  author: "alice",
-  authorAvatarUrl: "",
-  isDraft: false,
-  branch,
-  baseBranch,
-  isCrossRepository: false,
-  updatedAt: "2026-01-01T00:00:00Z",
-  ci: "pass",
-  mergeability: "clean",
-  review: "none",
-  reviewers: [],
-  reviewRequestedFromViewer: false,
-  ...overrides,
-});
+) =>
+  ({
+    id,
+    owner: "acme",
+    repo: "web",
+    number: Number(id),
+    title: `Title ${id}`,
+    url: `https://github.com/acme/web/pull/${id}`,
+    author: "alice",
+    authorAvatarUrl: "",
+    isDraft: false,
+    branch,
+    baseBranch,
+    isCrossRepository: false,
+    updatedAt: "2026-01-01T00:00:00Z",
+    ci: "pass",
+    mergeability: "clean",
+    review: "none",
+    reviewers: [],
+    reviewRequestedFromViewer: false,
+    ...overrides,
+  }) satisfies PullRequest;
 
 const layerIds = (prs: PullRequest[], id: string) =>
   deriveStacks(prs)

@@ -15,12 +15,14 @@ export interface Cluster {
 const branchKey = (pr: PullRequest, branch: string) =>
   `${pr.owner}/${pr.repo}:${branch}`;
 
-export function deriveStacks(pullRequests: PullRequest[]): StackIndex {
-  const byHead = new Map(
-    pullRequests
-      .filter((pr) => !pr.isCrossRepository)
-      .map((pr) => [branchKey(pr, pr.branch), pr])
-  );
+export const deriveStacks = (pullRequests: PullRequest[]) => {
+  const byHead = new Map<string, PullRequest>();
+
+  for (const pr of pullRequests) {
+    if (!pr.isCrossRepository) {
+      byHead.set(branchKey(pr, pr.branch), pr);
+    }
+  }
 
   const parentOf = (pr: PullRequest) =>
     byHead.get(branchKey(pr, pr.baseBranch));
@@ -56,12 +58,9 @@ export function deriveStacks(pullRequests: PullRequest[]): StackIndex {
   }
 
   return stacks;
-}
+};
 
-export function clusterByStack(
-  rows: PullRequest[],
-  stacks: StackIndex
-): Cluster[] {
+export const clusterByStack = (rows: PullRequest[], stacks: StackIndex) => {
   const shown = new Set(rows.map((pr) => pr.id));
   const clustered = new Set<Stack>();
   const clusters: Cluster[] = [];
@@ -81,4 +80,4 @@ export function clusterByStack(
   }
 
   return clusters;
-}
+};

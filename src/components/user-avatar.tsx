@@ -7,14 +7,16 @@ interface UserAvatarProps {
   className?: string;
 }
 
-export function UserAvatar({ login, avatarUrl, className }: UserAvatarProps) {
-  return (
-    <Avatar
-      className={cn("[--avatar-size:--spacing(4.5)]", className)}
-      title={login}
-    >
-      <AvatarImage src={avatarUrl} alt={login} />
-      <AvatarFallback>{login[0]?.toUpperCase()}</AvatarFallback>
-    </Avatar>
-  );
-}
+export const UserAvatar = ({
+  login,
+  avatarUrl,
+  className,
+}: UserAvatarProps) => (
+  <Avatar
+    className={cn("[--avatar-size:--spacing(4.5)]", className)}
+    title={login}
+  >
+    <AvatarImage src={avatarUrl} alt={login} />
+    <AvatarFallback>{login[0]?.toUpperCase()}</AvatarFallback>
+  </Avatar>
+);

@@ -27,109 +27,68 @@ import {
 } from "@/lib/storage";
 import type { Session } from "@/types";
 
-export default function App() {
-  const queryClient = useQueryClient();
-  const [token, setToken, removeToken] = useToken();
-  const [authError, setAuthError] = useState<string | null>(null);
-  const { isDarkMode } = useColorMode();
+const useFallbackPath = (owners: string[]) => {
+  const [lastPath] = useLastPath();
+  const lastOwner = lastPath?.split("/")[1];
 
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", isDarkMode);
-    document
-      .querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", isDarkMode ? "#161616" : "#ffffff");
-  }, [isDarkMode]);
+  return lastPath !== null &&
+    lastOwner !== undefined &&
+    lastOwner !== "" &&
+    owners.includes(lastOwner)
+    ? lastPath
+    : `/${owners[0]}`;
+};
 
-  const signOut = useCallback(
-    (message: string | null) => {
-      setAuthError(message);
-      removeToken();
-      clearQueryCache();
-    },
-    [removeToken]
-  );
+const RootRedirect = ({ owners }: { owners: string[] }) => (
+  <Redirect to={useFallbackPath(owners)} replace />
+);
 
-  const signIn = (newToken: string, session: Session) => {
-    clearQueryCache();
-    setToken(newToken);
-    queryClient.setQueryData(["session"], session);
-    setAuthError(null);
-  };
-
-  useEffect(
-    () =>
-      queryClient.getQueryCache().subscribe((event) => {
-        if (
-          event.type === "updated" &&
-          event.action.type === "error" &&
-          isAuthError(event.action.error)
-        ) {
-          signOut(errorMessage(event.action.error));
-        }
-      }),
-    [queryClient, signOut]
-  );
+const OwnerNotFound = ({
+  owner,
+  hidden,
+  owners,
+}: {
+  owner: string;
+  hidden: boolean;
+  owners: string[];
+}) => {
+  const [, navigate] = useLocation();
+  const fallbackPath = useFallbackPath(owners);
 
   return (
-    <div className="flex min-h-dvh flex-col pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)] md:h-dvh">
-      {token ? (
-        <Workspace
-          onSignOut={() => {
-            signOut(null);
+    <Empty>
+      <EmptyHeader>
+        <EmptyTitle>
+          {hidden ? `${owner} is hidden` : `No access to ${owner}`}
+        </EmptyTitle>
+        <EmptyDescription>
+          {hidden
+            ? "You hid this account from the account menu. Show it again there to see its pull requests."
+            : "It isn't one of your accounts or organisations, or your token can't see it."}
+        </EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            navigate(fallbackPath, { replace: true });
           }}
-        />
-      ) : (
-        <SetupScreen initialError={authError} onSignIn={signIn} />
-      )}
-    </div>
+        >
+          Back to {fallbackPath.split("/")[1]}
+        </Button>
+      </EmptyContent>
+    </Empty>
   );
-}
+};
 
-function Workspace({ onSignOut }: { onSignOut: () => void }) {
-  const session = useSession();
-
-  if (session.data) {
-    return <Dashboard session={session.data} onSignOut={onSignOut} />;
-  }
-
-  if (session.isError && !isAuthError(session.error)) {
-    return (
-      <Empty>
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <CloudOfflineIcon />
-          </EmptyMedia>
-          <EmptyTitle>Couldn't reach GitHub</EmptyTitle>
-          <EmptyDescription>{errorMessage(session.error)}</EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Button
-            size="sm"
-            variant="outline"
-            loading={session.isFetching}
-            onClick={async () => await session.refetch()}
-          >
-            Try again
-          </Button>
-        </EmptyContent>
-      </Empty>
-    );
-  }
-
-  return (
-    <div className="text-muted-foreground grid flex-1 place-items-center">
-      <Spinner className="size-5" />
-    </div>
-  );
-}
-
-function Dashboard({
+const Dashboard = ({
   session,
   onSignOut,
 }: {
   session: Session;
   onSignOut: () => void;
-}) {
+}) => {
   const [query, setQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -194,56 +153,104 @@ function Dashboard({
       </Route>
     </Switch>
   );
-}
+};
 
-function useFallbackPath(owners: string[]) {
-  const [lastPath] = useLastPath();
-  const lastOwner = lastPath?.split("/")[1];
+const Workspace = ({ onSignOut }: { onSignOut: () => void }) => {
+  const session = useSession();
 
-  return lastPath && lastOwner && owners.includes(lastOwner)
-    ? lastPath
-    : `/${owners[0]}`;
-}
+  if (session.data !== undefined) {
+    return <Dashboard session={session.data} onSignOut={onSignOut} />;
+  }
 
-function RootRedirect({ owners }: { owners: string[] }) {
-  return <Redirect to={useFallbackPath(owners)} replace />;
-}
-
-function OwnerNotFound({
-  owner,
-  hidden,
-  owners,
-}: {
-  owner: string;
-  hidden: boolean;
-  owners: string[];
-}) {
-  const [, navigate] = useLocation();
-  const fallbackPath = useFallbackPath(owners);
+  if (session.isError && !isAuthError(session.error)) {
+    return (
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <CloudOfflineIcon />
+          </EmptyMedia>
+          <EmptyTitle>Couldn&apos;t reach GitHub</EmptyTitle>
+          <EmptyDescription>{errorMessage(session.error)}</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button
+            size="sm"
+            variant="outline"
+            loading={session.isFetching}
+            onClick={() => {
+              void session.refetch();
+            }}
+          >
+            Try again
+          </Button>
+        </EmptyContent>
+      </Empty>
+    );
+  }
 
   return (
-    <Empty>
-      <EmptyHeader>
-        <EmptyTitle>
-          {hidden ? `${owner} is hidden` : `No access to ${owner}`}
-        </EmptyTitle>
-        <EmptyDescription>
-          {hidden
-            ? "You hid this account from the account menu. Show it again there to see its pull requests."
-            : "It isn't one of your accounts or organisations, or your token can't see it."}
-        </EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            navigate(fallbackPath, { replace: true });
-          }}
-        >
-          Back to {fallbackPath.split("/")[1]}
-        </Button>
-      </EmptyContent>
-    </Empty>
+    <div className="text-muted-foreground grid flex-1 place-items-center">
+      <Spinner className="size-5" />
+    </div>
   );
-}
+};
+
+const App = () => {
+  const queryClient = useQueryClient();
+  const [token, setToken, removeToken] = useToken();
+  const [authError, setAuthError] = useState<string | null>(null);
+  const { isDarkMode } = useColorMode();
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDarkMode);
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", isDarkMode ? "#161616" : "#ffffff");
+  }, [isDarkMode]);
+
+  const signOut = useCallback(
+    (message: string | null) => {
+      setAuthError(message);
+      removeToken();
+      clearQueryCache();
+    },
+    [removeToken]
+  );
+
+  const signIn = (newToken: string, session: Session) => {
+    clearQueryCache();
+    setToken(newToken);
+    queryClient.setQueryData(["session"], session);
+    setAuthError(null);
+  };
+
+  useEffect(
+    () =>
+      queryClient.getQueryCache().subscribe((event) => {
+        if (
+          event.type === "updated" &&
+          event.action.type === "error" &&
+          isAuthError(event.action.error)
+        ) {
+          signOut(errorMessage(event.action.error));
+        }
+      }),
+    [queryClient, signOut]
+  );
+
+  return (
+    <div className="flex min-h-dvh flex-col pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)] md:h-dvh">
+      {token !== null && token !== "" ? (
+        <Workspace
+          onSignOut={() => {
+            signOut(null);
+          }}
+        />
+      ) : (
+        <SetupScreen initialError={authError} onSignIn={signIn} />
+      )}
+    </div>
+  );
+};
+
+export default App;

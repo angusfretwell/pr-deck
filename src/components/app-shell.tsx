@@ -50,7 +50,7 @@ interface AppShellProps {
   onSignOut: () => void;
 }
 
-export function AppShell({
+export const AppShell = ({
   session,
   enabledOwners,
   hiddenOwners,
@@ -62,7 +62,7 @@ export function AppShell({
   searchVisible,
   onSearchBlur,
   onSignOut,
-}: AppShellProps) {
+}: AppShellProps) => {
   const [, navigate] = useLocation();
   const [searchTapped, setSearchTapped] = useState(false);
   const searching = searchVisible || searchTapped;
@@ -221,4 +221,4 @@ export function AppShell({
       </header>
     </div>
   );
-}
+};

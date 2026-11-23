@@ -6,7 +6,6 @@ import type {
   PullRequestDetail,
   PullRequestList,
   PullRequestStatus,
-  Session,
 } from "@/types";
 
 import type {
@@ -45,35 +44,41 @@ import {
 
 type Client = typeof graphql;
 
-const createClient = (token: string): Client =>
+const createClient = (token: string) =>
   graphql.defaults({ headers: { authorization: `bearer ${token}` } });
 
-function assertOwnerFound(
+const assertOwnerFound = (
   { repositoryOwner }: PullRequestsQuery,
   owner: string
-) {
+) => {
   if (!repositoryOwner) {
     throw new Error(`GitHub account "${owner}" was not found.`);
   }
-}
+};
 
-export async function fetchSession(token: string): Promise<Session> {
+const isSessionResponseError = (
+  cause: unknown
+): cause is GraphqlResponseError<
+  { viewer?: SessionQuery["viewer"] | null } | null | undefined
+> => cause instanceof GraphqlResponseError;
+
+export const fetchSession = async (token: string) => {
   try {
     return toSession(await createClient(token)<SessionQuery>(SESSION_QUERY));
   } catch (error) {
-    if (error instanceof GraphqlResponseError && error.data?.viewer) {
-      return toSession(error.data);
+    if (isSessionResponseError(error) && error.data?.viewer) {
+      return toSession({ viewer: error.data.viewer });
     }
 
     throw error;
   }
-}
+};
 
-async function fetchViewerTeams(
+const fetchViewerTeams = async (
   client: Client,
   owner: string,
   viewer: string
-): Promise<string[]> {
+) => {
   if (owner === viewer) {
     return [];
   }
@@ -95,36 +100,31 @@ async function fetchViewerTeams(
   } catch {
     return [];
   }
-}
+};
 
 const STATUS_BATCH_SIZE = 10;
 const MAX_STATUS_REQUESTS = 20;
 
-function chunk<T>(items: T[], size: number): T[][] {
-  return Array.from({ length: Math.ceil(items.length / size) }, (_, index) =>
+const chunk = <T>(items: T[], size: number) =>
+  Array.from({ length: Math.ceil(items.length / size) }, (_, index) =>
     items.slice(index * size, (index + 1) * size)
   );
-}
 
-async function fetchRows(
+const fetchRows = async (
   client: Client,
   owner: string,
-  onRows: (list: PullRequestList) => void
-): Promise<PullRequestList> {
+  onRows?: (list: PullRequestList) => void
+) => {
   const rows = new Map<string, PullRequest>();
   let totalCount = 0;
-  let after: string | null = null;
 
-  do {
-    const response: PullRequestsQuery = await client<PullRequestsQuery>(
-      PULL_REQUESTS_QUERY,
-      {
-        owner,
-        search: searchQuery(owner),
-        first: PAGE_SIZE,
-        after,
-      } satisfies PullRequestsQueryVariables
-    );
+  const fetchPage = async (after: string | null) => {
+    const response = await client<PullRequestsQuery>(PULL_REQUESTS_QUERY, {
+      owner,
+      search: searchQuery(owner),
+      first: PAGE_SIZE,
+      after,
+    } satisfies PullRequestsQueryVariables);
 
     assertOwnerFound(response, owner);
     totalCount = response.search.issueCount;
@@ -135,30 +135,39 @@ async function fetchRows(
       }
     }
 
-    onRows({ pullRequests: [...rows.values()], totalCount });
-    after = response.search.pageInfo.hasNextPage
-      ? response.search.pageInfo.endCursor
-      : null;
-  } while (after);
+    onRows?.({ pullRequests: [...rows.values()], totalCount });
 
-  return { pullRequests: [...rows.values()], totalCount };
-}
+    const { hasNextPage, endCursor } = response.search.pageInfo;
 
-async function fetchStatuses(
+    if (hasNextPage && endCursor !== null && endCursor !== "") {
+      await fetchPage(endCursor);
+    }
+  };
+
+  await fetchPage(null);
+
+  return {
+    pullRequests: [...rows.values()],
+    totalCount,
+  } satisfies PullRequestList;
+};
+
+const fetchStatuses = async (
   client: Client,
   ids: string[],
   context: ReviewContext
-): Promise<Map<string, PullRequestStatus>> {
+) => {
   const size = Math.max(
     STATUS_BATCH_SIZE,
     Math.ceil(ids.length / MAX_STATUS_REQUESTS)
   );
 
   const responses = await Promise.all(
-    chunk(ids, size).map(async (batch) =>
-      await client<PullRequestStatusQuery>(PULL_REQUEST_STATUS_QUERY, {
-        ids: batch,
-      } satisfies PullRequestStatusQueryVariables)
+    chunk(ids, size).map(
+      async (batch) =>
+        await client<PullRequestStatusQuery>(PULL_REQUEST_STATUS_QUERY, {
+          ids: batch,
+        } satisfies PullRequestStatusQueryVariables)
     )
   );
 
@@ -171,14 +180,14 @@ async function fetchStatuses(
   }
 
   return statuses;
-}
+};
 
-export async function fetchPullRequests(
+export const fetchPullRequests = async (
   token: string,
   owner: string,
   viewer: string,
-  onRows: (list: PullRequestList) => void = () => {}
-): Promise<PullRequestList> {
+  onRows?: (list: PullRequestList) => void
+) => {
   const client = createClient(token);
 
   const [viewerTeams, rows] = await Promise.all([
@@ -199,22 +208,20 @@ export async function fetchPullRequests(
 
       return status ? [withStatus(pr, status)] : [];
     }),
-  };
-}
+  } satisfies PullRequestList;
+};
 
 const MAX_NODE_IDS = 100;
 
-export async function fetchMergeability(
-  token: string,
-  ids: string[]
-): Promise<Record<string, Mergeability>> {
+export const fetchMergeability = async (token: string, ids: string[]) => {
   const client = createClient(token);
 
   const responses = await Promise.all(
-    chunk(ids, MAX_NODE_IDS).map(async (batch) =>
-      await client<MergeabilityQuery>(MERGEABILITY_QUERY, {
-        ids: batch,
-      } satisfies MergeabilityQueryVariables)
+    chunk(ids, MAX_NODE_IDS).map(
+      async (batch) =>
+        await client<MergeabilityQuery>(MERGEABILITY_QUERY, {
+          ids: batch,
+        } satisfies MergeabilityQueryVariables)
     )
   );
 
@@ -227,12 +234,9 @@ export async function fetchMergeability(
   }
 
   return states;
-}
+};
 
-export async function fetchPullRequestDetail(
-  token: string,
-  id: string
-): Promise<PullRequestDetail> {
+export const fetchPullRequestDetail = async (token: string, id: string) => {
   const { node } = await createClient(token)<PullRequestDetailQuery>(
     PULL_REQUEST_DETAIL_QUERY,
     {
@@ -244,36 +248,35 @@ export async function fetchPullRequestDetail(
     throw new Error("Pull request was not found.");
   }
 
-  return toPullRequestDetail(node);
-}
+  return toPullRequestDetail(node) satisfies PullRequestDetail;
+};
 
-function httpStatus(error: unknown): number | undefined {
-  if (typeof error !== "object" || error === null || !("status" in error)) {
-    return undefined;
-  }
+const hasHttpStatus = (cause: unknown): cause is { status: number } =>
+  typeof cause === "object" &&
+  cause !== null &&
+  "status" in cause &&
+  typeof cause.status === "number";
 
-  return typeof error.status === "number" ? error.status : undefined;
-}
+const httpStatus = (cause: unknown) =>
+  hasHttpStatus(cause) ? cause.status : undefined;
 
-export function isAuthError(error: unknown): boolean {
-  return httpStatus(error) === 401;
-}
+export const isAuthError = (cause: unknown) => httpStatus(cause) === 401;
 
-export function isRetryable(error: unknown): boolean {
-  const status = httpStatus(error);
+export const isRetryable = (cause: unknown) => {
+  const status = httpStatus(cause);
 
   if (status === 401 || status === 403 || status === 429) {
     return false;
   }
 
   return !(
-    error instanceof GraphqlResponseError &&
-    error.errors?.some((entry) => entry.type === "RATE_LIMITED")
+    cause instanceof GraphqlResponseError &&
+    cause.errors?.some((entry) => entry.type === "RATE_LIMITED") === true
   );
-}
+};
 
-export function errorMessage(error: unknown): string {
-  const status = httpStatus(error);
+export const errorMessage = (cause: unknown) => {
+  const status = httpStatus(cause);
 
   if (status === 401) {
     return "Your GitHub token is invalid or has expired.";
@@ -287,13 +290,13 @@ export function errorMessage(error: unknown): string {
     return `GitHub did not respond in time (HTTP ${status}). Try again shortly.`;
   }
 
-  if (error instanceof GraphqlResponseError) {
-    return [...new Set(error.errors?.map((entry) => entry.message))].join(" ");
+  if (cause instanceof GraphqlResponseError) {
+    return [...new Set(cause.errors?.map((entry) => entry.message))].join(" ");
   }
 
-  if (error instanceof Error) {
-    return error.message;
+  if (cause instanceof Error) {
+    return cause.message;
   }
 
   return "Something went wrong talking to GitHub.";
-}
+};

@@ -6,39 +6,42 @@ import type { ViewsChange, ViewsSession } from "./views";
 
 const OWNER = "acme";
 
-const pr = (overrides: Partial<PullRequest> = {}): PullRequest => ({
-  id: "1",
-  owner: OWNER,
-  repo: "web",
-  number: 1,
-  title: "Title",
-  url: "https://github.com/acme/web/pull/1",
-  author: "alice",
-  authorAvatarUrl: "",
-  isDraft: false,
-  branch: "feature",
-  baseBranch: "main",
-  isCrossRepository: false,
-  updatedAt: "2026-01-01T00:00:00Z",
-  ci: "pass",
-  mergeability: "clean",
-  review: "none",
-  reviewers: [],
-  reviewRequestedFromViewer: false,
-  ...overrides,
-});
+const pr = (overrides: Partial<PullRequest> = {}) =>
+  ({
+    id: "1",
+    owner: OWNER,
+    repo: "web",
+    number: 1,
+    title: "Title",
+    url: "https://github.com/acme/web/pull/1",
+    author: "alice",
+    authorAvatarUrl: "",
+    isDraft: false,
+    branch: "feature",
+    baseBranch: "main",
+    isCrossRepository: false,
+    updatedAt: "2026-01-01T00:00:00Z",
+    ci: "pass",
+    mergeability: "clean",
+    review: "none",
+    reviewers: [],
+    reviewRequestedFromViewer: false,
+    ...overrides,
+  }) satisfies PullRequest;
 
-const is = (key: Filter["key"], ...values: string[]): Filter => ({
-  key,
-  values,
-  negated: false,
-});
+const is = (key: Filter["key"], ...values: string[]) =>
+  ({
+    key,
+    values,
+    negated: false,
+  }) satisfies Filter;
 
-const view = (id: string, name: string, filters: Filter[] = []): View => ({
-  id,
-  name,
-  filters,
-});
+const view = (id: string, name: string, filters: Filter[] = []) =>
+  ({
+    id,
+    name,
+    filters,
+  }) satisfies View;
 
 const STORED = [
   view("1", "Mine"),
@@ -75,7 +78,7 @@ describe("seeding", () => {
       "Ready to merge",
     ]);
     expect(new Set(seeded.map((v) => v.id)).size).toBe(3);
-    expect(seeded.every((v) => v.isDefault)).toBe(true);
+    expect(seeded.every((v) => v.isDefault === true)).toBe(true);
   });
 
   it("keeps stored views as they are, including an empty collection", () => {
@@ -87,7 +90,7 @@ describe("seeding", () => {
   it("marks unmarked views that still match a default", () => {
     const legacy = seeded.map((v) => ({ ...v, isDefault: undefined }));
     const stored = [...legacy, view("x", "Custom")];
-    expect(open(null, stored).list.map((v) => !!v.isDefault)).toEqual([
+    expect(open(null, stored).list.map((v) => v.isDefault === true)).toEqual([
       true,
       true,
       true,
@@ -111,7 +114,9 @@ describe("countByView", () => {
   const seeded = seed();
 
   const count = (name: string, ...prs: PullRequest[]) =>
-    countByView(seeded, prs, "me")[seeded.find((v) => v.name === name)!.id];
+    countByView(seeded, prs, "me")[
+      seeded.find((v) => v.name === name)?.id ?? ""
+    ];
 
   it("Mine counts the viewer's PRs", () => {
     expect(count("Mine", pr({ author: "me" }), pr({ author: "bob" }))).toBe(1);
@@ -271,7 +276,7 @@ describe("save as new", () => {
   it("appends a view with the draft, opens it and starts renaming it", () => {
     const edited = follow(open("mine").setFilters(draft), "mine");
     const change = edited.saveAsNew();
-    const created = change.views[2];
+    const { 2: created } = change.views;
     expect(change.views.slice(0, 2)).toEqual(STORED);
     expect(created).toMatchObject({ name: "New view", filters: draft });
     expect(created.isDefault).toBeUndefined();

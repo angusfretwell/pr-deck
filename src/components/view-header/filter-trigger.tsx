@@ -13,7 +13,7 @@ interface FilterTriggerProps {
   children: ReactNode;
 }
 
-export function FilterTrigger({ anchor, ...props }: FilterTriggerProps) {
+export const FilterTrigger = ({ anchor, ...props }: FilterTriggerProps) => {
   const context = use(FilterTriggerContext);
 
   if (!context) {
@@ -37,4 +37,4 @@ export function FilterTrigger({ anchor, ...props }: FilterTriggerProps) {
       id={id}
     />
   );
-}
+};

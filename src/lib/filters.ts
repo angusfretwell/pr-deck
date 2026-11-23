@@ -24,10 +24,10 @@ const fromBadges = (badges: Record<string, { label: string }>) =>
   }));
 
 const distinct = (values: string[]) =>
-  [...new Set(values)].sort().map((value) => ({ value, label: value }));
+  [...new Set(values)].toSorted().map((value) => ({ value, label: value }));
 
-export const PROPERTIES: Property[] = [
-  {
+export const PROPERTY: Record<PropertyKey, Property> = {
+  author: {
     key: "author",
     name: "Author",
     noun: "authors",
@@ -39,7 +39,7 @@ export const PROPERTIES: Property[] = [
     ],
     valueOf: (pr, viewer) => (pr.author === viewer ? VIEWER_VALUE : pr.author),
   },
-  {
+  ci: {
     key: "ci",
     fromStatus: true,
     name: "CI",
@@ -47,7 +47,7 @@ export const PROPERTIES: Property[] = [
     options: () => fromBadges(CI_BADGE),
     valueOf: (pr) => pr.ci,
   },
-  {
+  conflicts: {
     key: "conflicts",
     fromStatus: true,
     name: "Merge conflicts",
@@ -59,7 +59,7 @@ export const PROPERTIES: Property[] = [
     ],
     valueOf: (pr) => pr.mergeability,
   },
-  {
+  review: {
     key: "review",
     fromStatus: true,
     name: "Review",
@@ -67,7 +67,7 @@ export const PROPERTIES: Property[] = [
     options: () => fromBadges(REVIEW_BADGE),
     valueOf: (pr) => pr.review,
   },
-  {
+  myReview: {
     key: "myReview",
     fromStatus: true,
     name: "My review",
@@ -78,18 +78,16 @@ export const PROPERTIES: Property[] = [
     ],
     valueOf: viewerReview,
   },
-  {
+  repo: {
     key: "repo",
     name: "Repository",
     noun: "repositories",
     options: (prs) => distinct(prs.map((pr) => pr.repo)),
     valueOf: (pr) => pr.repo,
   },
-];
+};
 
-export const PROPERTY = Object.fromEntries(
-  PROPERTIES.map((property) => [property.key, property])
-) as Record<PropertyKey, Property>;
+export const PROPERTIES = Object.values(PROPERTY);
 
 export const passes = (pr: PullRequest, filters: Filter[], viewer: string) =>
   filters.every(
@@ -108,13 +106,13 @@ export interface Facet {
   count: number;
 }
 
-export function facets(
+export const facets = (
   property: Property,
   filters: Filter[],
   scopedPrs: PullRequest[],
   orgPrs: PullRequest[],
   viewer: string
-): Facet[] {
+) => {
   const others = filters.filter((filter) => filter.key !== property.key);
 
   const selected =
@@ -122,20 +120,23 @@ export function facets(
 
   const candidates = scopedPrs.filter((pr) => passes(pr, others, viewer));
 
-  return property.options(orgPrs, viewer).map((option) => ({
-    option,
-    checked: selected.includes(option.value),
-    count: candidates.filter(
-      (pr) => property.valueOf(pr, viewer) === option.value
-    ).length,
-  }));
-}
+  return property.options(orgPrs, viewer).map(
+    (option) =>
+      ({
+        option,
+        checked: selected.includes(option.value),
+        count: candidates.filter(
+          (pr) => property.valueOf(pr, viewer) === option.value
+        ).length,
+      }) satisfies Facet
+  );
+};
 
-export function filterSummary(
+export const filterSummary = (
   filter: Filter,
   orgPrs: PullRequest[],
   viewer: string
-) {
+) => {
   const property = PROPERTY[filter.key];
   const options = property.options(orgPrs, viewer);
 
@@ -146,9 +147,9 @@ export function filterSummary(
   return labels.length > 2
     ? `${labels.length} ${property.noun}`
     : labels.join(", ");
-}
+};
 
-export function matchesText(pr: PullRequest, query: string) {
+export const matchesText = (pr: PullRequest, query: string) => {
   const needle = query.trim().toLowerCase();
 
   return (
@@ -157,14 +158,14 @@ export function matchesText(pr: PullRequest, query: string) {
       .toLowerCase()
       .includes(needle)
   );
-}
+};
 
-export function toggleValue(
+export const toggleValue = (
   filters: Filter[],
   key: PropertyKey,
   value: string,
   negated = false
-): Filter[] {
+) => {
   const existing = filters.find((filter) => filter.key === key);
 
   if (!existing) {
@@ -182,13 +183,13 @@ export function toggleValue(
   return filters.map((filter) =>
     filter === existing ? { ...filter, values } : filter
   );
-}
+};
 
 const signature = (filters: Filter[]) =>
   JSON.stringify(
     filters
-      .map((filter) => [filter.key, filter.negated, [...filter.values].sort()])
-      .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)))
+      .map((filter) => [filter.key, filter.negated, filter.values.toSorted()])
+      .toSorted((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)))
   );
 
 export const sameFilters = (a: Filter[], b: Filter[]) =>

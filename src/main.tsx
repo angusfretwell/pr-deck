@@ -16,11 +16,19 @@ import { TOKEN_KEY } from "@/lib/storage";
 
 import App from "./app.tsx";
 
-if (import.meta.env.VITE_MOCK) {
+const mockFlag: unknown = import.meta.env.VITE_MOCK;
+
+if (mockFlag !== undefined && mockFlag !== "") {
   localStorage.setItem(TOKEN_KEY, JSON.stringify("mock"));
 }
 
-createRoot(document.querySelector("#root")!).render(
+const rootElement = document.querySelector("#root");
+
+if (rootElement === null) {
+  throw new Error("Missing #root element");
+}
+
+createRoot(rootElement).render(
   <StrictMode>
     <PersistQueryClientProvider
       client={queryClient}

@@ -1,13 +1,7 @@
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { UseQueryResult } from "@tanstack/react-query";
 
 import { useToken } from "@/lib/storage";
-import type {
-  Mergeability,
-  PullRequestDetail,
-  PullRequestList,
-  Session,
-} from "@/types";
+import type { Mergeability, PullRequestList } from "@/types";
 
 import * as realApi from "./api";
 import { isRetryable } from "./api";
@@ -15,12 +9,14 @@ import { withMergeability, withRows } from "./mapping";
 import * as mockApi from "./mock";
 import { mergeabilityPollInterval } from "./polling";
 
+const mockFlag: unknown = import.meta.env.VITE_MOCK;
+
 const {
   fetchMergeability,
   fetchPullRequestDetail,
   fetchPullRequests,
   fetchSession,
-} = import.meta.env.VITE_MOCK ? mockApi : realApi;
+} = mockFlag !== undefined && mockFlag !== "" ? mockApi : realApi;
 
 export { fetchSession };
 
@@ -38,22 +34,57 @@ const live = {
   retryDelay: RETRY_DELAY_MS,
 };
 
-export function useSession(): UseQueryResult<Session> {
+export const useSession = () => {
   const [token] = useToken();
 
   return useQuery({
     queryKey: ["session"],
-    queryFn: token ? async () => await fetchSession(token) : skipToken,
+    queryFn:
+      token !== null && token !== ""
+        ? async () => await fetchSession(token)
+        : skipToken,
     staleTime: Infinity,
     gcTime: Infinity,
     retry,
     retryDelay: RETRY_DELAY_MS,
   });
-}
+};
 
-export function usePullRequests(
-  owner: string
-): UseQueryResult<PullRequestList> {
+const usePendingMergeability = (
+  owner: string,
+  list: PullRequestList | undefined
+) => {
+  const [token] = useToken();
+  const queryClient = useQueryClient();
+
+  const ids =
+    list?.pullRequests
+      .filter((pr) => pr.mergeability === "unknown" && !pr.statusPending)
+      .map((pr) => pr.id) ?? [];
+
+  useQuery<Record<string, Mergeability>>({
+    queryKey: ["mergeability", owner, ids],
+    queryFn:
+      token !== null && token !== "" && ids.length > 0
+        ? async () => {
+            const states = await fetchMergeability(token, ids);
+            queryClient.setQueryData<PullRequestList>(
+              ["pull-requests", owner],
+              (current) => current && withMergeability(current, states)
+            );
+
+            return states;
+          }
+        : skipToken,
+    initialData: {},
+    staleTime: Infinity,
+    refetchInterval: ({ state }) => mergeabilityPollInterval(state),
+    retry,
+    retryDelay: RETRY_DELAY_MS,
+  });
+};
+
+export const usePullRequests = (owner: string) => {
   const [token] = useToken();
   const viewer = useSession().data?.viewer.login;
   const queryClient = useQueryClient();
@@ -62,7 +93,7 @@ export function usePullRequests(
   const list = useQuery({
     queryKey,
     queryFn:
-      token && viewer
+      token !== null && token !== "" && viewer !== undefined && viewer !== ""
         ? async ({ signal }) =>
             await fetchPullRequests(token, owner, viewer, (rows) => {
               if (signal.aborted) {
@@ -80,50 +111,17 @@ export function usePullRequests(
   usePendingMergeability(owner, list.data);
 
   return list;
-}
+};
 
-function usePendingMergeability(
-  owner: string,
-  list: PullRequestList | undefined
-) {
-  const [token] = useToken();
-  const queryClient = useQueryClient();
-
-  const ids =
-    list?.pullRequests
-      .filter((pr) => pr.mergeability === "unknown" && !pr.statusPending)
-      .map((pr) => pr.id) ?? [];
-
-  useQuery<Record<string, Mergeability>>({
-    queryKey: ["mergeability", owner, ids],
-    queryFn:
-      token && ids.length > 0
-        ? async () => {
-            const states = await fetchMergeability(token, ids);
-            queryClient.setQueryData<PullRequestList>(
-              ["pull-requests", owner],
-              (current) => current && withMergeability(current, states)
-            );
-
-            return states;
-          }
-        : skipToken,
-    initialData: {},
-    staleTime: Infinity,
-    refetchInterval: ({ state }) => mergeabilityPollInterval(state),
-    retry,
-    retryDelay: RETRY_DELAY_MS,
-  });
-}
-
-export function usePullRequestDetail(
-  id: string
-): UseQueryResult<PullRequestDetail> {
+export const usePullRequestDetail = (id: string) => {
   const [token] = useToken();
 
   return useQuery({
     queryKey: ["pull-request-detail", id],
-    queryFn: token ? async () => await fetchPullRequestDetail(token, id) : skipToken,
+    queryFn:
+      token !== null && token !== ""
+        ? async () => await fetchPullRequestDetail(token, id)
+        : skipToken,
     ...live,
   });
-}
+};

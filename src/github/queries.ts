@@ -3,7 +3,7 @@ export const PAGE_SIZE = 100;
 export const searchQuery = (owner: string) =>
   `is:pr is:open archived:false user:${owner} sort:updated-desc`;
 
-export const SESSION_QUERY = /* GraphQL */ `
+export const SESSION_QUERY = `
   query Session {
     viewer {
       login
@@ -20,7 +20,7 @@ export const SESSION_QUERY = /* GraphQL */ `
   }
 `;
 
-export const PULL_REQUESTS_QUERY = /* GraphQL */ `
+export const PULL_REQUESTS_QUERY = `
   query PullRequests(
     $owner: String!
     $search: String!
@@ -64,7 +64,7 @@ export const PULL_REQUESTS_QUERY = /* GraphQL */ `
   }
 `;
 
-export const PULL_REQUEST_STATUS_QUERY = /* GraphQL */ `
+export const PULL_REQUEST_STATUS_QUERY = `
   query PullRequestStatus($ids: [ID!]!) {
     nodes(ids: $ids) {
       __typename
@@ -120,7 +120,7 @@ export const PULL_REQUEST_STATUS_QUERY = /* GraphQL */ `
   }
 `;
 
-export const MERGEABILITY_QUERY = /* GraphQL */ `
+export const MERGEABILITY_QUERY = `
   query Mergeability($ids: [ID!]!) {
     nodes(ids: $ids) {
       __typename
@@ -132,7 +132,7 @@ export const MERGEABILITY_QUERY = /* GraphQL */ `
   }
 `;
 
-export const VIEWER_TEAMS_QUERY = /* GraphQL */ `
+export const VIEWER_TEAMS_QUERY = `
   query ViewerTeams($owner: String!, $viewer: String!) {
     repositoryOwner(login: $owner) {
       __typename
@@ -147,7 +147,7 @@ export const VIEWER_TEAMS_QUERY = /* GraphQL */ `
   }
 `;
 
-export const PULL_REQUEST_DETAIL_QUERY = /* GraphQL */ `
+export const PULL_REQUEST_DETAIL_QUERY = `
   query PullRequestDetail($id: ID!) {
     node(id: $id) {
       __typename

@@ -51,21 +51,16 @@ export const CONFLICT_BADGE: Badge = {
 
 export type ViewerReviewState = ReviewState | "requested";
 
-export function viewerReview(
-  pr: PullRequest,
-  viewer: string
-): ViewerReviewState {
+export const viewerReview = (pr: PullRequest, viewer: string) => {
   if (pr.reviewRequestedFromViewer) {
     return "requested";
   }
 
-  return (
-    pr.reviewers.find((reviewer) => reviewer.login === viewer)?.verdict ??
-    "none"
-  );
-}
+  return (pr.reviewers.find((reviewer) => reviewer.login === viewer)?.verdict ??
+    "none") satisfies ViewerReviewState;
+};
 
-export function issueBadges(pr: PullRequest): Badge[] {
+export const issueBadges = (pr: PullRequest) => {
   const badges: Badge[] = [];
 
   if (pr.ci === "fail") {
@@ -85,9 +80,9 @@ export function issueBadges(pr: PullRequest): Badge[] {
   }
 
   return badges;
-}
+};
 
-export function statusBadge(pr: PullRequest): Badge {
+export const statusBadge = (pr: PullRequest) => {
   const blockers = [
     pr.ci === "fail" && "Checks failing",
     pr.mergeability === "conflict" && "Conflicts",
@@ -102,11 +97,11 @@ export function statusBadge(pr: PullRequest): Badge {
           : "bad",
       icon: "fail",
       label: blockers.join(", "),
-    };
+    } satisfies Badge;
   }
 
   if (pr.ci === "pending") {
-    return { ...PENDING, label: "Checks running" };
+    return { ...PENDING, label: "Checks running" } satisfies Badge;
   }
 
   if (
@@ -114,11 +109,19 @@ export function statusBadge(pr: PullRequest): Badge {
     pr.ci === "pass" &&
     pr.mergeability === "clean"
   ) {
-    return { tone: "ok", icon: "pass", label: "Ready to merge" };
+    return {
+      tone: "ok",
+      icon: "pass",
+      label: "Ready to merge",
+    } satisfies Badge;
   }
 
-  return { tone: "mute", icon: "open", label: "Awaiting review" };
-}
+  return {
+    tone: "mute",
+    icon: "open",
+    label: "Awaiting review",
+  } satisfies Badge;
+};
 
 const HOUR_MS = 3_600_000;
 const STALE_AFTER_HOURS = 120;
@@ -126,7 +129,7 @@ const STALE_AFTER_HOURS = 120;
 const hoursSince = (updatedAt: string, now: number) =>
   Math.max(0, (now - Date.parse(updatedAt)) / HOUR_MS);
 
-export function age(updatedAt: string, now = Date.now()) {
+export const age = (updatedAt: string, now = Date.now()) => {
   const hours = Math.floor(hoursSince(updatedAt, now));
 
   if (hours < 1) {
@@ -138,7 +141,7 @@ export function age(updatedAt: string, now = Date.now()) {
   }
 
   return `${Math.round(hours / 24)}d`;
-}
+};
 
 export const isStale = (updatedAt: string, now = Date.now()) =>
   hoursSince(updatedAt, now) > STALE_AFTER_HOURS;

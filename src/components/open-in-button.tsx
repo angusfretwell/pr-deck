@@ -33,22 +33,31 @@ const TARGETS: Record<
   },
 };
 
-export function OpenInButton({
+const isOpenIn = (value: string): value is OpenIn =>
+  Object.hasOwn(TARGETS, value);
+
+export const OpenInButton = ({
   url,
   className,
 }: {
   url: string;
   className?: string;
-}) {
+}) => {
   const [openIn, setOpenIn] = useOpenIn();
   const { label, Icon, href } = TARGETS[openIn] ?? TARGETS.github;
-  const groupRef = useRef<HTMLDivElement>(null);
+  const groupRef = useRef<HTMLFieldSetElement>(null);
 
   return (
     <Group ref={groupRef} aria-label="Open pull request" className={className}>
       <Button
-        aria-label={`Open in ${label}`}
-        render={<a href={href(url)} target="_blank" rel="noopener" />}
+        render={
+          <a
+            href={href(url)}
+            target="_blank"
+            rel="noopener"
+            aria-label={`Open in ${label}`}
+          />
+        }
       >
         <Icon />
         Open
@@ -67,27 +76,29 @@ export function OpenInButton({
         >
           <ResponsiveMenuGroup>
             <ResponsiveMenuGroupLabel>Open in</ResponsiveMenuGroupLabel>
-            {(Object.keys(TARGETS) as OpenIn[]).map((target) => {
-              const { label, Icon, href } = TARGETS[target];
+            {Object.keys(TARGETS)
+              .filter(isOpenIn)
+              .map((target) => {
+                const option = TARGETS[target];
 
-              return (
-                <ResponsiveMenuLinkItem
-                  key={target}
-                  href={href(url)}
-                  target="_blank"
-                  rel="noopener"
-                  onClick={() => {
-                    setOpenIn(target);
-                  }}
-                >
-                  <Icon />
-                  {label}
-                </ResponsiveMenuLinkItem>
-              );
-            })}
+                return (
+                  <ResponsiveMenuLinkItem
+                    key={target}
+                    href={option.href(url)}
+                    target="_blank"
+                    rel="noopener"
+                    onClick={() => {
+                      setOpenIn(target);
+                    }}
+                  >
+                    <option.Icon />
+                    {option.label}
+                  </ResponsiveMenuLinkItem>
+                );
+              })}
           </ResponsiveMenuGroup>
         </ResponsiveMenuPopup>
       </ResponsiveMenu>
     </Group>
   );
-}
+};

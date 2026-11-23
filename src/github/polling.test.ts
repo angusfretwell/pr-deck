@@ -18,10 +18,58 @@ import { mergeabilityPollInterval } from "./polling";
 const httpError = (status: number) =>
   Object.assign(new Error("HTTP error"), { status });
 
-describe("mergeabilityPollInterval", () => {
-  const interval = (dataUpdateCount: number, errorUpdateCount: number) =>
-    mergeabilityPollInterval({ dataUpdateCount, errorUpdateCount });
+const interval = (dataUpdateCount: number, errorUpdateCount: number) =>
+  mergeabilityPollInterval({ dataUpdateCount, errorUpdateCount });
 
+const startPolling = (
+  failure: (fetchNumber: number) => Error | null,
+  ids = ["a"]
+) => {
+  const client = new QueryClient();
+  const startedAt = Date.now();
+  const seconds: number[] = [];
+
+  const options = (queryIds: string[]) => ({
+    queryKey: ["mergeability", "acme", queryIds],
+    queryFn: () => {
+      seconds.push((Date.now() - startedAt) / 1000);
+      const error = failure(seconds.length);
+
+      if (error) {
+        throw error;
+      }
+
+      return {};
+    },
+    initialData: {},
+    staleTime: Infinity,
+    refetchInterval: ({
+      state,
+    }: {
+      state: Parameters<typeof mergeabilityPollInterval>[0];
+    }) => mergeabilityPollInterval(state),
+    retry: (failureCount: number, error: Error) =>
+      isRetryable(error) && failureCount < 1,
+    retryDelay: 1000,
+  });
+
+  const observer = new QueryObserver(client, options(ids));
+  const unsubscribe = observer.subscribe(() => {});
+
+  return {
+    seconds,
+    advance: async (ms: number) => await vi.advanceTimersByTimeAsync(ms),
+    setIds: (next: string[]) => {
+      observer.setOptions(options(next));
+    },
+    stop: () => {
+      unsubscribe();
+      client.clear();
+    },
+  };
+};
+
+describe("mergeabilityPollInterval", () => {
   it("doubles after each successful poll and stops after the fourth", () => {
     expect(
       [0, 1, 2, 3, 4, 5].map((successes) => interval(successes, 0))
@@ -46,54 +94,6 @@ describe("mergeability polling through a query observer", () => {
   afterEach(() => {
     vi.useRealTimers();
   });
-
-  function startPolling(
-    failure: (fetchNumber: number) => Error | null,
-    ids = ["a"]
-  ) {
-    const client = new QueryClient();
-    const startedAt = Date.now();
-    const seconds: number[] = [];
-
-    const options = (queryIds: string[]) => ({
-      queryKey: ["mergeability", "acme", queryIds],
-      queryFn: async () => {
-        seconds.push((Date.now() - startedAt) / 1000);
-        const error = failure(seconds.length);
-
-        if (error) {
-          throw error;
-        }
-
-        return {};
-      },
-      initialData: {},
-      staleTime: Infinity,
-      refetchInterval: ({
-        state,
-      }: {
-        state: Parameters<typeof mergeabilityPollInterval>[0];
-      }) => mergeabilityPollInterval(state),
-      retry: (failureCount: number, error: Error) =>
-        isRetryable(error) && failureCount < 1,
-      retryDelay: 1000,
-    });
-
-    const observer = new QueryObserver(client, options(ids));
-    const unsubscribe = observer.subscribe(() => {});
-
-    return {
-      seconds,
-      advance: async (ms: number) => await vi.advanceTimersByTimeAsync(ms),
-      setIds: (next: string[]) => {
-        observer.setOptions(options(next));
-      },
-      stop: () => {
-        unsubscribe();
-        client.clear();
-      },
-    };
-  }
 
   it("polls at 10, 30, 70 and 150 seconds and then stops", async () => {
     const poll = startPolling(() => null);

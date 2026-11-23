@@ -10,35 +10,36 @@ import {
   toggleValue,
 } from "./filters";
 
-const pr = (overrides: Partial<PullRequest> = {}): PullRequest => ({
-  id: "1",
-  owner: "acme",
-  repo: "web",
-  number: 1,
-  title: "Title",
-  url: "https://github.com/acme/web/pull/1",
-  author: "alice",
-  authorAvatarUrl: "",
-  isDraft: false,
-  branch: "feature",
-  baseBranch: "main",
-  isCrossRepository: false,
-  updatedAt: "2026-01-01T00:00:00Z",
-  ci: "pass",
-  mergeability: "clean",
-  review: "none",
-  reviewers: [],
-  reviewRequestedFromViewer: false,
-  ...overrides,
-});
+const pr = (overrides: Partial<PullRequest> = {}) =>
+  ({
+    id: "1",
+    owner: "acme",
+    repo: "web",
+    number: 1,
+    title: "Title",
+    url: "https://github.com/acme/web/pull/1",
+    author: "alice",
+    authorAvatarUrl: "",
+    isDraft: false,
+    branch: "feature",
+    baseBranch: "main",
+    isCrossRepository: false,
+    updatedAt: "2026-01-01T00:00:00Z",
+    ci: "pass",
+    mergeability: "clean",
+    review: "none",
+    reviewers: [],
+    reviewRequestedFromViewer: false,
+    ...overrides,
+  }) satisfies PullRequest;
 
-const is = (key: Filter["key"], ...values: string[]): Filter => ({
+const is = (key: Filter["key"], ...values: string[]) => ({
   key,
   values,
   negated: false,
 });
 
-const isNot = (key: Filter["key"], ...values: string[]): Filter => ({
+const isNot = (key: Filter["key"], ...values: string[]) => ({
   key,
   values,
   negated: true,

@@ -26,51 +26,49 @@ interface DisplayMenuProps {
   onToggleAllGroups?: () => void;
 }
 
-export function DisplayMenu({
+export const DisplayMenu = ({
   open,
   onOpenChange,
   group,
   onGroupChange,
   allGroupsCollapsed,
   onToggleAllGroups,
-}: DisplayMenuProps) {
-  return (
-    <ResponsiveMenu open={open} onOpenChange={onOpenChange}>
-      <Hint label="Display">
-        <ResponsiveMenuTrigger
-          render={
-            <Button
-              variant="outline"
-              size="icon-sm"
-              className="data-popup-open:bg-accent rounded-full before:rounded-full"
-              aria-label="Display"
-            />
-          }
-        >
-          <SlidersIcon className="size-3.5" />
-        </ResponsiveMenuTrigger>
-      </Hint>
-      <ResponsiveMenuPopup align="end" className="min-w-40">
-        <ResponsiveMenuGroup>
-          <ResponsiveMenuGroupLabel>Group by</ResponsiveMenuGroupLabel>
-          <ResponsiveMenuRadioGroup value={group} onValueChange={onGroupChange}>
-            {GROUPS.map(({ value, label }) => (
-              <ResponsiveMenuRadioItem key={value} value={value} closeOnClick>
-                {label}
-              </ResponsiveMenuRadioItem>
-            ))}
-          </ResponsiveMenuRadioGroup>
-        </ResponsiveMenuGroup>
-        {onToggleAllGroups && (
-          <>
-            <ResponsiveMenuSeparator />
-            <ResponsiveMenuItem onClick={onToggleAllGroups}>
-              {allGroupsCollapsed ? <UnfoldIcon /> : <FoldIcon />}
-              {allGroupsCollapsed ? "Expand all" : "Collapse all"}
-            </ResponsiveMenuItem>
-          </>
-        )}
-      </ResponsiveMenuPopup>
-    </ResponsiveMenu>
-  );
-}
+}: DisplayMenuProps) => (
+  <ResponsiveMenu open={open} onOpenChange={onOpenChange}>
+    <Hint label="Display">
+      <ResponsiveMenuTrigger
+        render={
+          <Button
+            variant="outline"
+            size="icon-sm"
+            className="data-popup-open:bg-accent rounded-full before:rounded-full"
+            aria-label="Display"
+          />
+        }
+      >
+        <SlidersIcon className="size-3.5" />
+      </ResponsiveMenuTrigger>
+    </Hint>
+    <ResponsiveMenuPopup align="end" className="min-w-40">
+      <ResponsiveMenuGroup>
+        <ResponsiveMenuGroupLabel>Group by</ResponsiveMenuGroupLabel>
+        <ResponsiveMenuRadioGroup value={group} onValueChange={onGroupChange}>
+          {GROUPS.map(({ value, label }) => (
+            <ResponsiveMenuRadioItem key={value} value={value} closeOnClick>
+              {label}
+            </ResponsiveMenuRadioItem>
+          ))}
+        </ResponsiveMenuRadioGroup>
+      </ResponsiveMenuGroup>
+      {onToggleAllGroups && (
+        <>
+          <ResponsiveMenuSeparator />
+          <ResponsiveMenuItem onClick={onToggleAllGroups}>
+            {allGroupsCollapsed ? <UnfoldIcon /> : <FoldIcon />}
+            {allGroupsCollapsed ? "Expand all" : "Collapse all"}
+          </ResponsiveMenuItem>
+        </>
+      )}
+    </ResponsiveMenuPopup>
+  </ResponsiveMenu>
+);

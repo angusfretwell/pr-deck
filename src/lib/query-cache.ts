@@ -38,18 +38,19 @@ export const persistOptions: PersistQueryClientProviderProps["persistOptions"] =
     dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
   };
 
-export const refetchRestoredQueries = async () =>
+export const refetchRestoredQueries = async () => {
   await queryClient.invalidateQueries();
+};
 
-export function clearQueryCache() {
+export const clearQueryCache = () => {
   queryClient.clear();
   void persister.removeClient();
-}
+};
 
-export function resetQueryCache() {
+export const resetQueryCache = () => {
   void persister.removeClient();
   void queryClient.invalidateQueries({ queryKey: ["session"] });
   void queryClient.resetQueries({
     predicate: (query) => query.queryKey[0] !== "session",
   });
-}
+};

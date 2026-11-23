@@ -45,46 +45,6 @@ interface FilterMenuProps {
   onToggle: (key: PropertyKey, value: string) => void;
 }
 
-export function FilterMenu({
-  handle,
-  triggerId,
-  onOpenChange,
-  ...list
-}: FilterMenuProps) {
-  return (
-    <Popover
-      handle={handle}
-      open={triggerId !== null}
-      triggerId={triggerId}
-      onOpenChange={(open, { trigger }) => {
-        onOpenChange(open, trigger);
-      }}
-    >
-      {({ payload: anchor }) => {
-        if (anchor === undefined) {
-          return null;
-        }
-
-        const chipKey = anchor === "header" || anchor === "add" ? null : anchor;
-
-        return (
-          <PopoverPopup
-            align={anchor === "header" ? "end" : "start"}
-            className="w-72 *:data-[slot=popover-viewport]:py-0 *:data-[slot=popover-viewport]:[--viewport-inline-padding:0] sm:w-62.5"
-          >
-            <FilterMenuList
-              key={anchor}
-              initialKey={chipKey}
-              canGoBack={chipKey === null}
-              {...list}
-            />
-          </PopoverPopup>
-        );
-      }}
-    </Popover>
-  );
-}
-
 interface FilterMenuListProps {
   initialKey: PropertyKey | null;
   canGoBack: boolean;
@@ -95,7 +55,7 @@ interface FilterMenuListProps {
   onToggle: (key: PropertyKey, value: string) => void;
 }
 
-function FilterMenuList({
+const FilterMenuList = ({
   initialKey,
   canGoBack,
   orgPrs,
@@ -103,7 +63,7 @@ function FilterMenuList({
   filters,
   viewer,
   onToggle,
-}: FilterMenuListProps) {
+}: FilterMenuListProps) => {
   const [propertyKey, setPropertyKey] = useState(initialKey);
   const [query, setQuery] = useState("");
 
@@ -131,19 +91,23 @@ function FilterMenuList({
   const needle = query.trim().toLowerCase();
   const matches = (label: string) => label.toLowerCase().includes(needle);
 
-  const valueItems = (property: Property, prefixed: boolean): Item[] =>
+  const valueItems = (property: Property, prefixed: boolean) =>
     facets(property, filters, scopedPrs, orgPrs, viewer)
       .filter(({ option }) => matches(option.label))
-      .map((facet) => ({ kind: "value", property, prefixed, ...facet }));
+      .map(
+        (facet) =>
+          ({ kind: "value", property, prefixed, ...facet }) satisfies Item
+      );
 
   const items: Item[] = propertyKey
     ? valueItems(PROPERTY[propertyKey], false)
     : [
         ...PROPERTIES.filter((property) => matches(property.name)).map(
-          (property): Item => ({
-            kind: "property",
-            property,
-          })
+          (property) =>
+            ({
+              kind: "property",
+              property,
+            }) satisfies Item
         ),
         ...(needle
           ? PROPERTIES.flatMap((property) => valueItems(property, true))
@@ -168,9 +132,11 @@ function FilterMenuList({
         items={items}
         mode="none"
         value={query}
-        onValueChange={(value, { reason }) =>
-          reason !== "item-press" && setQuery(value)
-        }
+        onValueChange={(value, { reason }) => {
+          if (reason !== "item-press") {
+            setQuery(value);
+          }
+        }}
       >
         <div className="p-2">
           <AutocompleteInput
@@ -236,4 +202,42 @@ function FilterMenuList({
       </Command>
     </div>
   );
-}
+};
+
+export const FilterMenu = ({
+  handle,
+  triggerId,
+  onOpenChange,
+  ...list
+}: FilterMenuProps) => (
+  <Popover
+    handle={handle}
+    open={triggerId !== null}
+    triggerId={triggerId}
+    onOpenChange={(open, { trigger }) => {
+      onOpenChange(open, trigger);
+    }}
+  >
+    {({ payload: anchor }) => {
+      if (anchor === undefined) {
+        return null;
+      }
+
+      const chipKey = anchor === "header" || anchor === "add" ? null : anchor;
+
+      return (
+        <PopoverPopup
+          align={anchor === "header" ? "end" : "start"}
+          className="w-72 *:data-[slot=popover-viewport]:py-0 *:data-[slot=popover-viewport]:[--viewport-inline-padding:0] sm:w-62.5"
+        >
+          <FilterMenuList
+            key={anchor}
+            initialKey={chipKey}
+            canGoBack={chipKey === null}
+            {...list}
+          />
+        </PopoverPopup>
+      );
+    }}
+  </Popover>
+);

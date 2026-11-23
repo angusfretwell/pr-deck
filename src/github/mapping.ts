@@ -9,7 +9,6 @@ import type {
   PullRequestList,
   PullRequestStatus,
   Reviewer,
-  ReviewState,
   ReviewVerdict,
   Session,
 } from "@/types";
@@ -31,7 +30,7 @@ interface Connection<T> {
   nodes: (T | null)[] | null;
 }
 
-export const nodesOf = <T>(connection: Connection<T> | null | undefined): T[] =>
+export const nodesOf = <T>(connection: Connection<T> | null | undefined) =>
   (connection?.nodes ?? []).filter((node) => node !== null);
 
 type NodeOf<C> = NonNullable<C> extends Connection<infer T> ? T : never;
@@ -122,51 +121,48 @@ const CHECK_STATES: Record<
   STALE: "skipped",
 };
 
-export const toMergeability = (raw: MergeableState): Mergeability =>
-  MERGEABILITY[raw];
+export const toMergeability = (raw: MergeableState) => MERGEABILITY[raw];
 
-export function withMergeability(
+export const withMergeability = (
   list: PullRequestList,
   states: Record<string, Mergeability>
-): PullRequestList {
-  return {
+) =>
+  ({
     ...list,
     pullRequests: list.pullRequests.map((pr) =>
       pr.id in states ? { ...pr, mergeability: states[pr.id] } : pr
     ),
-  };
-}
+  }) satisfies PullRequestList;
 
-export function toAccount(raw: RawAccount): Account {
-  return {
+export const toAccount = (raw: RawAccount) =>
+  ({
     login: raw.login,
-    name: raw.name || raw.login,
+    name: raw.name === null || raw.name === "" ? raw.login : raw.name,
     avatarUrl: raw.avatarUrl,
-  };
-}
+  }) satisfies Account;
 
-export function toSession({ viewer }: RawSession): Session {
+export const toSession = ({ viewer }: RawSession) => {
   const account = toAccount(viewer);
 
   const orgs = nodesOf(viewer.organizations)
     .map(toAccount)
-    .sort((a, b) => a.login.localeCompare(b.login));
+    .toSorted((a, b) => a.login.localeCompare(b.login));
 
-  return { viewer: account, owners: [account, ...orgs] };
-}
+  return { viewer: account, owners: [account, ...orgs] } satisfies Session;
+};
 
-export function toCi(node: Pick<RawPullRequestStatus, "commits">): CiState {
+export const toCi = (node: Pick<RawPullRequestStatus, "commits">) => {
   const rollup = nodesOf(node.commits)[0]?.commit.statusCheckRollup;
 
   return rollup ? CI_STATES[rollup.state] : "none";
-}
+};
 
-export function toReviewers(
+export const toReviewers = (
   node: Pick<
     RawPullRequestStatus,
     "author" | "latestReviews" | "latestOpinionatedReviews"
   >
-): Reviewer[] {
+) => {
   const authorLogin = node.author?.login ?? GHOST.login;
   const reviewers = new Map<string, Reviewer>();
 
@@ -193,12 +189,12 @@ export function toReviewers(
   }
 
   return [...reviewers.values()];
-}
+};
 
-export function toReviewState(
+export const toReviewState = (
   decision: PullRequestReviewDecision | null,
   reviewers: Reviewer[]
-): ReviewState {
+) => {
   const verdicts = new Set(reviewers.map((reviewer) => reviewer.verdict));
 
   if (decision === "APPROVED") {
@@ -226,13 +222,13 @@ export function toReviewState(
   }
 
   return "none";
-}
+};
 
-export function isReviewRequestedFrom(
+export const isReviewRequestedFrom = (
   node: Pick<RawPullRequestStatus, "reviewRequests">,
   { viewer, viewerTeams }: ReviewContext
-): boolean {
-  return nodesOf(node.reviewRequests).some(({ requestedReviewer }) => {
+) =>
+  nodesOf(node.reviewRequests).some(({ requestedReviewer }) => {
     if (requestedReviewer?.__typename === "User") {
       return requestedReviewer.login === viewer;
     }
@@ -243,7 +239,6 @@ export function isReviewRequestedFrom(
 
     return false;
   });
-}
 
 export const PENDING_STATUS: PullRequestStatus = {
   ci: "none",
@@ -253,7 +248,7 @@ export const PENDING_STATUS: PullRequestStatus = {
   reviewRequestedFromViewer: false,
 };
 
-export function toPullRequestRow(node: RawPullRequestRow): PullRequest {
+export const toPullRequestRow = (node: RawPullRequestRow) => {
   const author = node.author ?? GHOST;
 
   return {
@@ -272,13 +267,13 @@ export function toPullRequestRow(node: RawPullRequestRow): PullRequest {
     updatedAt: node.updatedAt,
     ...PENDING_STATUS,
     statusPending: true,
-  };
-}
+  } satisfies PullRequest;
+};
 
-export function toPullRequestStatus(
+export const toPullRequestStatus = (
   node: RawPullRequestStatus,
   context: ReviewContext
-): PullRequestStatus {
+) => {
   const reviewers = toReviewers(node);
   const author = node.author?.login ?? GHOST.login;
 
@@ -289,17 +284,15 @@ export function toPullRequestStatus(
     reviewers,
     reviewRequestedFromViewer:
       author !== context.viewer && isReviewRequestedFrom(node, context),
-  };
-}
+  } satisfies PullRequestStatus;
+};
 
-export function withStatus(
-  pr: PullRequest,
-  status: PullRequestStatus
-): PullRequest {
+export const withStatus = (pr: PullRequest, status: PullRequestStatus) => {
   const { statusPending: _, ...row } = pr;
+  const updated: PullRequest = { ...row, ...status };
 
-  return { ...row, ...status };
-}
+  return updated;
+};
 
 const statusOf = ({
   ci,
@@ -307,18 +300,19 @@ const statusOf = ({
   review,
   reviewers,
   reviewRequestedFromViewer,
-}: PullRequestStatus): PullRequestStatus => ({
-  ci,
-  mergeability,
-  review,
-  reviewers,
-  reviewRequestedFromViewer,
-});
+}: PullRequestStatus) =>
+  ({
+    ci,
+    mergeability,
+    review,
+    reviewers,
+    reviewRequestedFromViewer,
+  }) satisfies PullRequestStatus;
 
-export function withRows(
+export const withRows = (
   previous: PullRequestList | undefined,
   rows: PullRequestList
-) {
+) => {
   const known = new Map(
     previous?.pullRequests
       .filter((pr) => !pr.statusPending)
@@ -333,13 +327,18 @@ export function withRows(
       return previousPr ? withStatus(row, statusOf(previousPr)) : row;
     }),
   };
-}
+};
 
-function secondsBetween(
+const secondsBetween = (
   startedAt: string | null,
   completedAt: string | null
-): number | null {
-  if (!startedAt || !completedAt) {
+) => {
+  if (
+    startedAt === null ||
+    startedAt === "" ||
+    completedAt === null ||
+    completedAt === ""
+  ) {
     return null;
   }
 
@@ -347,9 +346,9 @@ function secondsBetween(
     0,
     Math.round((Date.parse(completedAt) - Date.parse(startedAt)) / 1000)
   );
-}
+};
 
-export function toCheck(node: RawCheckContext): Check {
+export const toCheck = (node: RawCheckContext) => {
   if (node.__typename === "StatusContext") {
     return {
       name: node.context,
@@ -357,7 +356,7 @@ export function toCheck(node: RawCheckContext): Check {
       seconds: null,
       url: node.targetUrl,
       required: node.isRequired,
-    };
+    } satisfies Check;
   }
 
   const conclusion = node.status === "COMPLETED" ? node.conclusion : null;
@@ -370,12 +369,10 @@ export function toCheck(node: RawCheckContext): Check {
       : null,
     url: node.detailsUrl,
     required: node.isRequired,
-  };
-}
+  } satisfies Check;
+};
 
-export function toPullRequestDetail(
-  node: RawPullRequestDetail
-): PullRequestDetail {
+export const toPullRequestDetail = (node: RawPullRequestDetail) => {
   const contexts = nodesOf(
     nodesOf(node.commits)[0]?.commit.statusCheckRollup?.contexts
   );
@@ -391,5 +388,5 @@ export function toPullRequestDetail(
       additions,
       deletions,
     })),
-  };
-}
+  } satisfies PullRequestDetail;
+};

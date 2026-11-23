@@ -22,12 +22,15 @@ const DEFAULT_VIEWS: { name: string; filters: Filter[] }[] = [
   },
 ];
 
-const seedViews = (): View[] =>
-  DEFAULT_VIEWS.map((view) => ({
-    ...view,
-    id: crypto.randomUUID(),
-    isDefault: true,
-  }));
+const seedViews = () =>
+  DEFAULT_VIEWS.map(
+    (view) =>
+      ({
+        ...view,
+        id: crypto.randomUUID(),
+        isDefault: true,
+      }) satisfies View
+  );
 
 const matchesDefault = (view: View) =>
   DEFAULT_VIEWS.some(
@@ -35,7 +38,7 @@ const matchesDefault = (view: View) =>
   );
 
 const markDefaults = (views: View[]) =>
-  views.some((view) => !view.isDefault && matchesDefault(view))
+  views.some((view) => view.isDefault !== true && matchesDefault(view))
     ? views.map((view) =>
         matchesDefault(view) ? { ...view, isDefault: true } : view
       )
@@ -44,39 +47,41 @@ const markDefaults = (views: View[]) =>
 const slugify = (name: string) =>
   name
     .toLowerCase()
-    .replaceAll(/[^a-z0-9]+/g, "-")
-    .replaceAll(/^-|-$/g, "") || "view";
+    .replaceAll(/[^a-z0-9]+/gu, "-")
+    .replaceAll(/^-|-$/gu, "") || "view";
 
-function uniqueName(views: View[], name: string, exceptId?: string) {
+const uniqueName = (views: View[], name: string, exceptId?: string) => {
   const base = name.trim() || "Untitled view";
 
   const taken = new Set(
-    views
-      .filter((view) => view.id !== exceptId)
-      .map((view) => slugify(view.name))
+    views.flatMap((view) => (view.id === exceptId ? [] : [slugify(view.name)]))
   );
 
   let candidate = base;
 
-  for (let n = 2; taken.has(slugify(candidate)); n++) {
+  for (let n = 2; taken.has(slugify(candidate)); n += 1) {
     candidate = `${base} ${n}`;
   }
 
   return candidate;
-}
+};
 
 export const countByView = (
   views: View[],
   prs: PullRequest[],
   viewer: string
-): Record<string, number> =>
+) =>
   Object.fromEntries(
-    views
-      .filter((view) => !awaitsStatus(view.filters, prs))
-      .map((view) => [
-        view.id,
-        prs.filter((pr) => passes(pr, view.filters, viewer)).length,
-      ])
+    views.flatMap((view) =>
+      awaitsStatus(view.filters, prs)
+        ? []
+        : [
+            [
+              view.id,
+              prs.filter((pr) => passes(pr, view.filters, viewer)).length,
+            ] satisfies [string, number],
+          ]
+    )
   );
 
 export interface ViewsSession {
@@ -118,12 +123,12 @@ interface OpenViewsInput {
   session?: ViewsSession;
 }
 
-export function openViews({
+export const openViews = ({
   owner,
   stored,
   slug,
   session = NEW_SESSION,
-}: OpenViewsInput): Views {
+}: OpenViewsInput) => {
   const list = stored ? markDefaults(stored) : seedViews();
   const root = `/${owner}`;
   const pathFor = (name: string) => `${root}/${slugify(name)}`;
@@ -151,7 +156,8 @@ export function openViews({
     session: current,
     filters,
     filtersChanged: !sameFilters(filters, savedFilters),
-    deletableViewId: active && !active.isDefault ? active.id : null,
+    deletableViewId:
+      active !== null && active.isDefault !== true ? active.id : null,
 
     hrefFor: (id) => {
       const view = list.find((candidate) => candidate.id === id);
@@ -186,7 +192,7 @@ export function openViews({
         : unchanged,
 
     saveAsNew: () => {
-      const view = {
+      const view: View = {
         id: crypto.randomUUID(),
         name: uniqueName(list, "New view"),
         filters,
@@ -217,12 +223,12 @@ export function openViews({
     },
 
     remove: (id) =>
-      list.some((view) => view.id === id && !view.isDefault)
+      list.some((view) => view.id === id && view.isDefault !== true)
         ? {
             ...unchanged,
             views: list.filter((view) => view.id !== id),
             navigate: { to: root },
           }
         : unchanged,
-  };
-}
+  } satisfies Views;
+};

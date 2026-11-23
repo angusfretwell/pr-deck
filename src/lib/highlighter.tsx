@@ -1,4 +1,3 @@
-import * as React from "react";
 import type { GrammarState, HighlighterCore } from "shiki/core";
 
 const languages = {
@@ -18,7 +17,7 @@ const languages = {
   yaml: async () => await import("shiki/langs/yaml.mjs"),
 };
 
-const aliases: Record<string, keyof typeof languages> = {
+const aliases = {
   gfm: "markdown",
   "html-basic": "html",
   js: "javascript",
@@ -31,11 +30,16 @@ const aliases: Record<string, keyof typeof languages> = {
   ts: "typescript",
   yml: "yaml",
   zsh: "bash",
-};
+} satisfies Record<string, keyof typeof languages>;
+
+const isLanguage = (name: string): name is keyof typeof languages =>
+  name in languages;
+
+const isAlias = (name: string): name is keyof typeof aliases => name in aliases;
 
 let highlighter: Promise<HighlighterCore> | undefined;
 
-async function getHighlighter() {
+const getHighlighter = async () => {
   highlighter ??= Promise.all([
     import("shiki/core"),
     import("shiki/engine/javascript"),
@@ -52,23 +56,27 @@ async function getHighlighter() {
   );
 
   return await highlighter;
-}
+};
 
-function getLanguage(language: string) {
+const getLanguage = (language: string) => {
   const name = language.toLowerCase();
 
   if (name === "ansi") {
     return name;
   }
 
-  if (name in languages) {
-    return name as keyof typeof languages;
+  if (isLanguage(name)) {
+    return name;
   }
 
-  return aliases[name] ?? null;
-}
+  if (isAlias(name)) {
+    return aliases[name];
+  }
 
-export async function loadHighlighter(language: string) {
+  return null;
+};
+
+export const loadHighlighter = async (language: string) => {
   const lang = getLanguage(language);
 
   if (!lang) {
@@ -101,7 +109,7 @@ export async function loadHighlighter(language: string) {
           line.map((token, index) => (
             <span
               key={index}
-              style={token.htmlStyle as React.CSSProperties}
+              style={token.htmlStyle}
               className="text-(--shiki-light) dark:text-(--shiki-dark)"
             >
               {token.content}
@@ -112,4 +120,4 @@ export async function loadHighlighter(language: string) {
       };
     },
   };
-}
+};

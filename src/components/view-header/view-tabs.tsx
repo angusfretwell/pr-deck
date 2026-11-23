@@ -1,7 +1,7 @@
 import { XIcon } from "@primer/octicons-react";
 import { animate, motion } from "motion/react";
 import type { AnimationPlaybackControls } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { Link } from "wouter";
 
 import {
@@ -43,7 +43,189 @@ interface ViewTabsProps {
 
 const PILL = "rounded-full before:rounded-full";
 
-export function ViewTabs({
+const translateX = (element: Element) => {
+  const [x = ""] = getComputedStyle(element).translate.split(" ");
+
+  return Number(x.replace(/px$/u, "")) || 0;
+};
+
+const viewportOf = (strip: HTMLElement | null) =>
+  strip?.closest("[data-slot=scroll-area-viewport]");
+
+const centerActive = (strip: HTMLElement | null, shouldGlide: boolean) => {
+  const viewport = viewportOf(strip);
+
+  if (!strip || !viewport) {
+    return;
+  }
+
+  const from = viewport.scrollLeft - translateX(strip);
+
+  strip
+    .querySelector('[aria-current="page"]')
+    ?.scrollIntoView({ inline: "center", block: "nearest" });
+  const shift = viewport.scrollLeft - from;
+
+  if (!shouldGlide || !shift) {
+    return;
+  }
+
+  strip.style.transition = "none";
+  strip.style.translate = `${shift}px`;
+  strip.getBoundingClientRect();
+  strip.style.transition = "";
+  strip.style.translate = "";
+};
+
+const Count = ({ children }: { children: number | undefined }) => {
+  const [loadedOnMount] = useReducer(
+    (state: boolean) => state,
+    children !== undefined
+  );
+
+  if (children === undefined) {
+    return null;
+  }
+
+  return (
+    <span
+      className={cn(
+        "text-muted-foreground -ms-1.5 grid grid-cols-[1fr] text-sm leading-none tabular-nums sm:text-xs",
+        !loadedOnMount &&
+          "ease-snappy transition-[grid-template-columns,opacity] [transition-delay:0ms,100ms] [transition-duration:150ms,100ms] motion-reduce:transition-opacity starting:grid-cols-[0fr] starting:opacity-0"
+      )}
+    >
+      <span className="min-w-0 overflow-hidden ps-1.5">{children}</span>
+    </span>
+  );
+};
+
+interface ViewLinkProps {
+  href: string;
+  active: boolean;
+  name: string;
+  count: number | undefined;
+  className?: string;
+  onDoubleClick?: () => void;
+}
+
+const ViewLink = ({
+  href,
+  active,
+  name,
+  count,
+  className,
+  onDoubleClick,
+}: ViewLinkProps) => (
+  <Button
+    variant="outline"
+    size="sm"
+    className={cn(
+      PILL,
+      "aria-[current=page]:bg-input/64 dark:aria-[current=page]:bg-input aria-[current=page]:shadow-none",
+      className
+    )}
+    render={<Link href={href} aria-current={active ? "page" : undefined} />}
+    onDoubleClick={onDoubleClick}
+  >
+    <span className="flex min-w-0 items-baseline gap-1.5">
+      <span className="max-w-50 truncate" title={name}>
+        {name}
+      </span>
+      <Count>{count}</Count>
+    </span>
+  </Button>
+);
+
+const DeleteViewButton = ({
+  name,
+  onConfirm,
+}: {
+  name: string;
+  onConfirm: () => void;
+}) => (
+  <AlertDialog>
+    <Hint label="Delete view">
+      <AlertDialogTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            className={cn(PILL, "absolute end-1 top-1/2 -translate-y-1/2")}
+            aria-label="Delete view"
+          />
+        }
+      >
+        <XIcon />
+      </AlertDialogTrigger>
+    </Hint>
+    <AlertDialogPopup>
+      <AlertDialogHeader>
+        <AlertDialogTitle>Delete “{name}”?</AlertDialogTitle>
+        <AlertDialogDescription>
+          This view and its filters will be removed.
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogClose render={<Button variant="ghost" />}>
+          Cancel
+        </AlertDialogClose>
+        <AlertDialogClose
+          render={<Button variant="destructive" />}
+          onClick={onConfirm}
+        >
+          Delete
+        </AlertDialogClose>
+      </AlertDialogFooter>
+    </AlertDialogPopup>
+  </AlertDialog>
+);
+
+interface RenameInputProps {
+  name: string;
+  count: number | undefined;
+  onCommit: (name: string) => void;
+}
+
+const RenameInput = ({ name, count, onCommit }: RenameInputProps) => {
+  const [draft, setDraft] = useState(name);
+
+  return (
+    <InputGroup className={cn(PILL, "h-8 w-auto sm:h-7")}>
+      <InputGroupInput
+        size="sm"
+        aria-label="View name"
+        className="font-medium"
+        style={{ width: `min(${Math.max(draft.length, 4) + 1}ch, 12.5rem)` }}
+        value={draft}
+        autoFocus
+        autoComplete="off"
+        spellCheck={false}
+        onFocus={(event) => {
+          event.currentTarget.select();
+        }}
+        onChange={(event) => {
+          setDraft(event.target.value);
+        }}
+        onBlur={() => {
+          onCommit(draft);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.currentTarget.blur();
+          }
+        }}
+      />
+      {count !== undefined && (
+        <InputGroupAddon align="inline-end">
+          <Count>{count}</Count>
+        </InputGroupAddon>
+      )}
+    </InputGroup>
+  );
+};
+
+export const ViewTabs = ({
   views,
   viewCounts,
   allOpenCount,
@@ -54,44 +236,16 @@ export function ViewTabs({
   onRenamingViewChange,
   onRenameView,
   onDeleteView,
-}: ViewTabsProps) {
+}: ViewTabsProps) => {
   const nav = useRef<HTMLElement>(null);
   const desktop = useDesktop();
   const glide = useRef<AnimationPlaybackControls>(null);
   const panned = useRef(false);
 
-  const viewport = () =>
-    nav.current!.closest("[data-slot=scroll-area-viewport]")!;
-
-  const scrolledViewId = useRef(activeViewId);
-
-  const centerActive = (glide: boolean) => {
-    const strip = nav.current;
-    const viewport = strip?.closest("[data-slot=scroll-area-viewport]");
-
-    if (!strip || !viewport) {
-      return;
-    }
-
-    const from =
-      viewport.scrollLeft -
-      (Number.parseFloat(getComputedStyle(strip).translate) || 0);
-
-    strip
-      .querySelector('[aria-current="page"]')
-      ?.scrollIntoView({ inline: "center", block: "nearest" });
-    const shift = viewport.scrollLeft - from;
-
-    if (!glide || !shift) {
-      return;
-    }
-
-    strip.style.transition = "none";
-    strip.style.translate = `${shift}px`;
-    strip.getBoundingClientRect();
-    strip.style.transition = "";
-    strip.style.translate = "";
-  };
+  const centeredFor = useRef<{
+    viewId: string | null;
+    countsKey: string;
+  } | null>(null);
 
   const countsKey = [
     allOpenCount,
@@ -99,10 +253,18 @@ export function ViewTabs({
   ].join(",");
 
   useEffect(() => {
-    const switched = scrolledViewId.current !== activeViewId;
-    scrolledViewId.current = activeViewId;
-    centerActive(switched);
-  }, [activeViewId, views.length, countsKey]);
+    const previous = centeredFor.current;
+
+    if (previous?.viewId === activeViewId && previous.countsKey === countsKey) {
+      return;
+    }
+
+    centeredFor.current = { viewId: activeViewId, countsKey };
+    centerActive(
+      nav.current,
+      previous !== null && previous.viewId !== activeViewId
+    );
+  }, [activeViewId, countsKey]);
 
   return (
     <ScrollArea
@@ -117,24 +279,31 @@ export function ViewTabs({
           panned.current = false;
           glide.current?.stop();
         }}
-        onPanStart={() => (panned.current = !desktop)}
+        onPanStart={() => {
+          panned.current = !desktop;
+        }}
         onPan={(_, { delta }) => {
-          if (panned.current) {
-            viewport().scrollLeft -= delta.x;
+          const viewport = viewportOf(nav.current);
+
+          if (panned.current && viewport) {
+            viewport.scrollLeft -= delta.x;
           }
         }}
         onPanEnd={(_, { velocity }) => {
-          if (!panned.current) {
+          const strip = viewportOf(nav.current);
+
+          if (!panned.current || !strip) {
             return;
           }
 
-          const strip = viewport();
           glide.current = animate(strip.scrollLeft, strip.scrollLeft, {
             type: "inertia",
             velocity: -velocity.x,
             min: 0,
             max: strip.scrollWidth - strip.clientWidth,
-            onUpdate: (left) => (strip.scrollLeft = left),
+            onUpdate: (left) => {
+              strip.scrollLeft = left;
+            },
           });
         }}
         onClickCapture={(event) => {
@@ -144,7 +313,7 @@ export function ViewTabs({
         }}
         onTransitionEnd={(event) => {
           if (event.propertyName === "grid-template-columns") {
-            centerActive(true);
+            centerActive(nav.current, true);
           }
         }}
       >
@@ -199,151 +368,4 @@ export function ViewTabs({
       </motion.nav>
     </ScrollArea>
   );
-}
-
-interface ViewLinkProps {
-  href: string;
-  active: boolean;
-  name: string;
-  count: number | undefined;
-  className?: string;
-  onDoubleClick?: () => void;
-}
-
-function ViewLink({
-  href,
-  active,
-  name,
-  count,
-  className,
-  onDoubleClick,
-}: ViewLinkProps) {
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      className={cn(
-        PILL,
-        "aria-[current=page]:bg-input/64 dark:aria-[current=page]:bg-input aria-[current=page]:shadow-none",
-        className
-      )}
-      render={<Link href={href} aria-current={active ? "page" : undefined} />}
-      onDoubleClick={onDoubleClick}
-    >
-      <span className="flex min-w-0 items-baseline gap-1.5">
-        <span className="max-w-50 truncate" title={name}>
-          {name}
-        </span>
-        <Count>{count}</Count>
-      </span>
-    </Button>
-  );
-}
-
-function DeleteViewButton({
-  name,
-  onConfirm,
-}: {
-  name: string;
-  onConfirm: () => void;
-}) {
-  return (
-    <AlertDialog>
-      <Hint label="Delete view">
-        <AlertDialogTrigger
-          render={
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              className={cn(PILL, "absolute end-1 top-1/2 -translate-y-1/2")}
-              aria-label="Delete view"
-            />
-          }
-        >
-          <XIcon />
-        </AlertDialogTrigger>
-      </Hint>
-      <AlertDialogPopup>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete “{name}”?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This view and its filters will be removed.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogClose render={<Button variant="ghost" />}>
-            Cancel
-          </AlertDialogClose>
-          <AlertDialogClose
-            render={<Button variant="destructive" />}
-            onClick={onConfirm}
-          >
-            Delete
-          </AlertDialogClose>
-        </AlertDialogFooter>
-      </AlertDialogPopup>
-    </AlertDialog>
-  );
-}
-
-function Count({ children }: { children: number | undefined }) {
-  const [loadedOnMount] = useState(children !== undefined);
-
-  if (children === undefined) {
-    return null;
-  }
-
-  return (
-    <span
-      className={cn(
-        "text-muted-foreground -ms-1.5 grid grid-cols-[1fr] text-sm leading-none tabular-nums sm:text-xs",
-        !loadedOnMount &&
-          "ease-snappy transition-[grid-template-columns,opacity] [transition-delay:0ms,100ms] [transition-duration:150ms,100ms] motion-reduce:transition-opacity starting:grid-cols-[0fr] starting:opacity-0"
-      )}
-    >
-      <span className="min-w-0 overflow-hidden ps-1.5">{children}</span>
-    </span>
-  );
-}
-
-interface RenameInputProps {
-  name: string;
-  count: number | undefined;
-  onCommit: (name: string) => void;
-}
-
-function RenameInput({ name, count, onCommit }: RenameInputProps) {
-  const [draft, setDraft] = useState(name);
-
-  return (
-    <InputGroup className={cn(PILL, "h-8 w-auto sm:h-7")}>
-      <InputGroupInput
-        size="sm"
-        aria-label="View name"
-        className="font-medium"
-        style={{ width: `min(${Math.max(draft.length, 4) + 1}ch, 12.5rem)` }}
-        value={draft}
-        autoFocus
-        autoComplete="off"
-        spellCheck={false}
-        onFocus={(event) => {
-          event.currentTarget.select();
-        }}
-        onChange={(event) => {
-          setDraft(event.target.value);
-        }}
-        onBlur={() => {
-          onCommit(draft);
-        }}
-        onKeyDown={(event) =>
-          event.key === "Enter" && event.currentTarget.blur()
-        }
-      />
-      {count !== undefined && (
-        <InputGroupAddon align="inline-end">
-          <Count>{count}</Count>
-        </InputGroupAddon>
-      )}
-    </InputGroup>
-  );
-}
+};

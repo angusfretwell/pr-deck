@@ -1,3 +1,4 @@
+import { noop } from "@tanstack/react-query";
 import { useRef } from "react";
 
 import { AppShell } from "@/components/app-shell";
@@ -17,11 +18,12 @@ const OWNER = "northwind";
 const identicon = (login: string) =>
   `https://github.com/identicons/${login}.png`;
 
-const account = (login: string, name: string): Account => ({
-  login,
-  name,
-  avatarUrl: identicon(login),
-});
+const account = (login: string, name: string) =>
+  ({
+    login,
+    name,
+    avatarUrl: identicon(login),
+  }) satisfies Account;
 
 const SESSION: Session = {
   viewer: account(VIEWER, "Sam Kowalczyk"),
@@ -184,9 +186,7 @@ const { groups: GROUPS } = derivePrList({
   desktop: true,
 });
 
-const noop = () => {};
-
-export function SetupPreview({ className }: { className?: string }) {
+export const SetupPreview = ({ className }: { className?: string }) => {
   const searchRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -262,4 +262,4 @@ export function SetupPreview({ className }: { className?: string }) {
       </div>
     </div>
   );
-}
+};

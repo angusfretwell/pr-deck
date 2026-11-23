@@ -80,25 +80,6 @@ export interface CommandPaletteProps {
   onSearch: (query: string) => void;
 }
 
-export function CommandPalette({
-  open,
-  onOpenChange,
-  ...props
-}: CommandPaletteProps) {
-  return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandDialogPopup finalFocus={false}>
-        <CommandPaletteList
-          onClose={() => {
-            onOpenChange(false);
-          }}
-          {...props}
-        />
-      </CommandDialogPopup>
-    </CommandDialog>
-  );
-}
-
 const Check = () => <CheckIcon className="text-muted-foreground size-3.5" />;
 
 const Count = ({ children }: { children: ReactNode }) => (
@@ -111,10 +92,10 @@ const sentenceCase = (name: string) =>
 const matches = (text: string, needle: string) => {
   const haystack = text.toLowerCase();
 
-  return needle.split(/\s+/).every((word) => haystack.includes(word));
+  return needle.split(/\s+/u).every((word) => haystack.includes(word));
 };
 
-function CommandPaletteList({
+const CommandPaletteList = ({
   onClose,
   owner,
   owners,
@@ -134,7 +115,7 @@ function CommandPaletteList({
   onSearch,
 }: Omit<CommandPaletteProps, "open" | "onOpenChange"> & {
   onClose: () => void;
-}) {
+}) => {
   const [query, setQuery] = useState("");
   const [, navigate] = useLocation();
   const { ternaryDarkMode, setTernaryDarkMode } = useColorMode();
@@ -315,16 +296,15 @@ function CommandPaletteList({
         },
       ],
     },
-  ]
-    .map((section) => ({
-      ...section,
-      items: needle
-        ? section.items.filter((item) =>
-            matches(`${section.value} ${item.keywords}`, needle)
-          )
-        : section.items,
-    }))
-    .filter((section) => section.items.length > 0);
+  ].flatMap((section) => {
+    const items = needle
+      ? section.items.filter((item) =>
+          matches(`${section.value} ${item.keywords}`, needle)
+        )
+      : section.items;
+
+    return items.length > 0 ? [{ ...section, items }] : [];
+  });
 
   if (needle) {
     sections.push({
@@ -352,7 +332,7 @@ function CommandPaletteList({
   const run = (item: PaletteCommand) => {
     item.run();
 
-    if (!item.keepOpen) {
+    if (item.keepOpen !== true) {
       onClose();
     }
   };
@@ -362,9 +342,11 @@ function CommandPaletteList({
       items={sections}
       mode="none"
       value={query}
-      onValueChange={(value, { reason }) =>
-        reason !== "item-press" && setQuery(value)
-      }
+      onValueChange={(value, { reason }) => {
+        if (reason !== "item-press") {
+          setQuery(value);
+        }
+      }}
     >
       <CommandInput
         placeholder="Type a command or search…"
@@ -425,4 +407,21 @@ function CommandPaletteList({
       </CommandFooter>
     </Command>
   );
-}
+};
+
+export const CommandPalette = ({
+  open,
+  onOpenChange,
+  ...props
+}: CommandPaletteProps) => (
+  <CommandDialog open={open} onOpenChange={onOpenChange}>
+    <CommandDialogPopup finalFocus={false}>
+      <CommandPaletteList
+        onClose={() => {
+          onOpenChange(false);
+        }}
+        {...props}
+      />
+    </CommandDialogPopup>
+  </CommandDialog>
+);

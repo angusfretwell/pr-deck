@@ -13,26 +13,27 @@ import {
 import type { PrListInput, Selection, SelectionAction } from "./pr-list";
 import { deriveStacks } from "./stacks";
 
-const pr = (id: string, repo: string, author: string): PullRequest => ({
-  id,
-  owner: "acme",
-  repo,
-  number: Number(id),
-  title: `Title ${id}`,
-  url: `https://github.com/acme/${repo}/pull/${id}`,
-  author,
-  authorAvatarUrl: "",
-  isDraft: false,
-  branch: "feature",
-  baseBranch: "main",
-  isCrossRepository: false,
-  updatedAt: "2026-01-01T00:00:00Z",
-  ci: "pass",
-  mergeability: "clean",
-  review: "none",
-  reviewers: [],
-  reviewRequestedFromViewer: false,
-});
+const pr = (id: string, repo: string, author: string) =>
+  ({
+    id,
+    owner: "acme",
+    repo,
+    number: Number(id),
+    title: `Title ${id}`,
+    url: `https://github.com/acme/${repo}/pull/${id}`,
+    author,
+    authorAvatarUrl: "",
+    isDraft: false,
+    branch: "feature",
+    baseBranch: "main",
+    isCrossRepository: false,
+    updatedAt: "2026-01-01T00:00:00Z",
+    ci: "pass",
+    mergeability: "clean",
+    review: "none",
+    reviewers: [],
+    reviewRequestedFromViewer: false,
+  }) satisfies PullRequest;
 
 const PRS = [
   pr("1", "web", "bob"),
@@ -56,16 +57,20 @@ const list = (overrides: Partial<PrListInput> = {}) =>
     ...overrides,
   });
 
-const selecting = (
-  selectedId: string | null,
-  previewOpen = false
-): Selection => ({
-  selectedId,
-  previewOpen,
-});
+const selecting = (selectedId: string | null, previewOpen = false) =>
+  ({
+    selectedId,
+    previewOpen,
+  }) satisfies Selection;
 
 const rowIds = (groups: { key: string; rows: PullRequest[] }[]) =>
   groups.map((group) => [group.key, group.rows.map((row) => row.id)]);
+
+const act = (
+  selection: Selection,
+  action: SelectionAction,
+  overrides?: Partial<PrListInput>
+) => applySelectionAction(list({ selection, ...overrides }), action);
 
 describe("pipeline", () => {
   it("groups by repo with sorted keys, keeping input order within a group", () => {
@@ -219,12 +224,6 @@ describe("toggleAllGroups", () => {
 });
 
 describe("selection actions", () => {
-  const act = (
-    selection: Selection,
-    action: SelectionAction,
-    overrides?: Partial<PrListInput>
-  ) => applySelectionAction(list({ selection, ...overrides }), action);
-
   it("starts at the first row when nothing is selected, whichever way it moves", () => {
     expect(act(NO_SELECTION, { type: "move", delta: 1 })).toEqual(
       selecting("2")

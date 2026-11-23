@@ -28,36 +28,38 @@ const actor = (login: string) => ({
   avatarUrl: `https://avatars/${login}`,
 });
 
-const review = (login: string, state: RawReview["state"]): RawReview => ({
-  state,
-  author: actor(login),
-});
+const review = (login: string, state: RawReview["state"]) =>
+  ({
+    state,
+    author: actor(login),
+  }) satisfies RawReview;
 
 type RawPullRequest = RawPullRequestRow & RawPullRequestStatus;
 
-const rawPullRequest = (
-  overrides: Partial<RawPullRequest> = {}
-): RawPullRequest => ({
-  __typename: "PullRequest",
-  id: "PR_1",
-  number: 7,
-  title: "Add things",
-  url: "https://github.com/acme/web/pull/7",
-  isDraft: false,
-  updatedAt: "2026-11-01T00:00:00Z",
-  headRefName: "feature",
-  baseRefName: "main",
-  isCrossRepository: false,
-  mergeable: "MERGEABLE",
-  reviewDecision: null,
-  repository: { name: "web", owner: { login: "acme" } },
-  author: actor("alice"),
-  commits: { nodes: [{ commit: { statusCheckRollup: { state: "SUCCESS" } } }] },
-  latestReviews: { nodes: [] },
-  latestOpinionatedReviews: { nodes: [] },
-  reviewRequests: { nodes: [] },
-  ...overrides,
-});
+const rawPullRequest = (overrides: Partial<RawPullRequest> = {}) =>
+  ({
+    __typename: "PullRequest",
+    id: "PR_1",
+    number: 7,
+    title: "Add things",
+    url: "https://github.com/acme/web/pull/7",
+    isDraft: false,
+    updatedAt: "2026-11-01T00:00:00Z",
+    headRefName: "feature",
+    baseRefName: "main",
+    isCrossRepository: false,
+    mergeable: "MERGEABLE",
+    reviewDecision: null,
+    repository: { name: "web", owner: { login: "acme" } },
+    author: actor("alice"),
+    commits: {
+      nodes: [{ commit: { statusCheckRollup: { state: "SUCCESS" } } }],
+    },
+    latestReviews: { nodes: [] },
+    latestOpinionatedReviews: { nodes: [] },
+    reviewRequests: { nodes: [] },
+    ...overrides,
+  }) satisfies RawPullRequest;
 
 const map = (overrides: Partial<RawPullRequest>) => {
   const raw = rawPullRequest(overrides);
@@ -224,17 +226,17 @@ describe("overall review", () => {
   });
 });
 
-describe("reviewRequestedFromViewer", () => {
-  const requests = (
-    ...requestedReviewers: RawReviewRequest["requestedReviewer"][]
-  ) => ({
-    reviewRequests: {
-      nodes: requestedReviewers.map((requestedReviewer) => ({
-        requestedReviewer,
-      })),
-    },
-  });
+const requests = (
+  ...requestedReviewers: RawReviewRequest["requestedReviewer"][]
+) => ({
+  reviewRequests: {
+    nodes: requestedReviewers.map((requestedReviewer) => ({
+      requestedReviewer,
+    })),
+  },
+});
 
+describe("reviewRequestedFromViewer", () => {
   it("is true for a direct request", () => {
     expect(
       map(requests({ __typename: "User", login: "me" }))
@@ -301,24 +303,24 @@ describe("toSession", () => {
   });
 });
 
-describe("toCheck", () => {
-  const checkRun = (
-    status: CheckStatusState,
-    conclusion: CheckConclusionState | null,
-    startedAt: string | null = null,
-    completedAt: string | null = null
-  ) =>
-    toCheck({
-      __typename: "CheckRun",
-      name: "build",
-      status,
-      conclusion,
-      startedAt,
-      completedAt,
-      detailsUrl: "https://ci/build",
-      isRequired: true,
-    });
+const checkRun = (
+  status: CheckStatusState,
+  conclusion: CheckConclusionState | null,
+  startedAt: string | null = null,
+  completedAt: string | null = null
+) =>
+  toCheck({
+    __typename: "CheckRun",
+    name: "build",
+    status,
+    conclusion,
+    startedAt,
+    completedAt,
+    detailsUrl: "https://ci/build",
+    isRequired: true,
+  });
 
+describe("toCheck", () => {
   it.each([
     ["SUCCESS", "pass"],
     ["FAILURE", "fail"],
@@ -512,10 +514,10 @@ describe("toPullRequestRow", () => {
   });
 });
 
-describe("withRows", () => {
-  const row = (id: string, title = "Add things") =>
-    toPullRequestRow(rawPullRequest({ id, title }));
+const pendingRow = (id: string, title = "Add things") =>
+  toPullRequestRow(rawPullRequest({ id, title }));
 
+describe("withRows", () => {
   it("keeps the known status of pull requests still in the list", () => {
     const previous = {
       pullRequests: [
@@ -526,7 +528,7 @@ describe("withRows", () => {
     };
 
     const next = withRows(previous, {
-      pullRequests: [row("PR_1", "Renamed"), row("PR_3")],
+      pullRequests: [pendingRow("PR_1", "Renamed"), pendingRow("PR_3")],
       totalCount: 2,
     });
 
@@ -539,7 +541,7 @@ describe("withRows", () => {
 
   it("leaves every row pending on a first load", () => {
     const next = withRows(undefined, {
-      pullRequests: [row("PR_1")],
+      pullRequests: [pendingRow("PR_1")],
       totalCount: 1,
     });
 

@@ -1,3 +1,5 @@
+import { Radio } from "@base-ui/react/radio";
+import { RadioGroup } from "@base-ui/react/radio-group";
 import { SearchIcon } from "@primer/octicons-react";
 import { useState } from "react";
 
@@ -57,103 +59,12 @@ interface FilterDrawerProps extends FilterDrawerContentProps {
   onOpenChange: (open: boolean, trigger: Element | undefined) => void;
 }
 
-export function FilterDrawer({
-  handle,
-  triggerId,
-  onOpenChange,
-  ...content
-}: FilterDrawerProps) {
-  return (
-    <Drawer
-      handle={handle}
-      open={triggerId !== null}
-      triggerId={triggerId}
-      onOpenChange={(open, { trigger }) => {
-        onOpenChange(open, trigger);
-      }}
-    >
-      {({ payload: anchor }) => {
-        if (anchor === undefined) {
-          return null;
-        }
-
-        return (
-          <DrawerPopup showBar>
-            {anchor === "header" || anchor === "add" ? (
-              <PropertyList {...content} />
-            ) : (
-              <PropertyPane key={anchor} propertyKey={anchor} {...content} />
-            )}
-          </DrawerPopup>
-        );
-      }}
-    </Drawer>
-  );
-}
-
-function PropertyList(props: FilterDrawerContentProps) {
-  const { filters, scopedPrs, orgPrs, viewer, onClearAll } = props;
-  const count = scopedPrs.filter((pr) => passes(pr, filters, viewer)).length;
-
-  return (
-    <>
-      <DrawerHeader>
-        <DrawerTitle className="text-lg">Filters</DrawerTitle>
-      </DrawerHeader>
-      <DrawerPanel>
-        <DrawerMenu>
-          {PROPERTIES.map((property) => {
-            const filter = filters.find(
-              (candidate) => candidate.key === property.key
-            );
-
-            return (
-              <Drawer key={property.key}>
-                <DrawerMenuTrigger>
-                  <span className="flex-1 truncate text-start">
-                    {property.name}
-                  </span>
-                  <span
-                    className={cn(
-                      "max-w-1/2 truncate text-sm",
-                      filter ? "font-medium" : "text-muted-foreground"
-                    )}
-                  >
-                    {filter
-                      ? `${filter.negated ? "not " : ""}${filterSummary(filter, orgPrs, viewer)}`
-                      : "Any"}
-                  </span>
-                </DrawerMenuTrigger>
-                <DrawerPopup showBar>
-                  <PropertyPane nested propertyKey={property.key} {...props} />
-                </DrawerPopup>
-              </Drawer>
-            );
-          })}
-        </DrawerMenu>
-      </DrawerPanel>
-      <DrawerFooter variant="bare">
-        <Button
-          variant="secondary"
-          disabled={filters.length === 0}
-          onClick={onClearAll}
-        >
-          Clear all
-        </Button>
-        <DrawerClose render={<Button />}>
-          Show {count} pull request{count === 1 ? "" : "s"}
-        </DrawerClose>
-      </DrawerFooter>
-    </>
-  );
-}
-
 interface PropertyPaneProps extends FilterDrawerContentProps {
   nested?: boolean;
   propertyKey: PropertyKey;
 }
 
-function PropertyPane({
+const PropertyPane = ({
   nested = false,
   propertyKey,
   orgPrs,
@@ -163,7 +74,7 @@ function PropertyPane({
   onToggle,
   onNegatedChange,
   onClear,
-}: PropertyPaneProps) {
+}: PropertyPaneProps) => {
   const property = PROPERTY[propertyKey];
   const filter = filters.find((candidate) => candidate.key === propertyKey);
 
@@ -197,16 +108,22 @@ function PropertyPane({
     <>
       <DrawerHeader className="flex-row items-center justify-between gap-3">
         <DrawerTitle className="text-lg">{property.name}</DrawerTitle>
-        <SegmentedControl size="sm" role="radiogroup" aria-label="Match">
+        <SegmentedControl
+          size="sm"
+          aria-label="Match"
+          render={
+            <RadioGroup
+              value={negated}
+              onValueChange={(next) => {
+                changeNegated(next);
+              }}
+            />
+          }
+        >
           {[false, true].map((value) => (
             <SegmentedControlItem
               key={String(value)}
-              role="radio"
-              aria-checked={negated === value}
-              data-checked={negated === value || undefined}
-              onClick={() => {
-                changeNegated(value);
-              }}
+              render={<Radio.Root value={value} />}
             >
               {value ? "is not" : "is"}
             </SegmentedControlItem>
@@ -288,4 +205,93 @@ function PropertyPane({
       </DrawerFooter>
     </>
   );
-}
+};
+
+const PropertyList = (props: FilterDrawerContentProps) => {
+  const { filters, scopedPrs, orgPrs, viewer, onClearAll } = props;
+  const count = scopedPrs.filter((pr) => passes(pr, filters, viewer)).length;
+
+  return (
+    <>
+      <DrawerHeader>
+        <DrawerTitle className="text-lg">Filters</DrawerTitle>
+      </DrawerHeader>
+      <DrawerPanel>
+        <DrawerMenu>
+          {PROPERTIES.map((property) => {
+            const filter = filters.find(
+              (candidate) => candidate.key === property.key
+            );
+
+            return (
+              <Drawer key={property.key}>
+                <DrawerMenuTrigger>
+                  <span className="flex-1 truncate text-start">
+                    {property.name}
+                  </span>
+                  <span
+                    className={cn(
+                      "max-w-1/2 truncate text-sm",
+                      filter ? "font-medium" : "text-muted-foreground"
+                    )}
+                  >
+                    {filter
+                      ? `${filter.negated ? "not " : ""}${filterSummary(filter, orgPrs, viewer)}`
+                      : "Any"}
+                  </span>
+                </DrawerMenuTrigger>
+                <DrawerPopup showBar>
+                  <PropertyPane nested propertyKey={property.key} {...props} />
+                </DrawerPopup>
+              </Drawer>
+            );
+          })}
+        </DrawerMenu>
+      </DrawerPanel>
+      <DrawerFooter variant="bare">
+        <Button
+          variant="secondary"
+          disabled={filters.length === 0}
+          onClick={onClearAll}
+        >
+          Clear all
+        </Button>
+        <DrawerClose render={<Button />}>
+          Show {count} pull request{count === 1 ? "" : "s"}
+        </DrawerClose>
+      </DrawerFooter>
+    </>
+  );
+};
+
+export const FilterDrawer = ({
+  handle,
+  triggerId,
+  onOpenChange,
+  ...content
+}: FilterDrawerProps) => (
+  <Drawer
+    handle={handle}
+    open={triggerId !== null}
+    triggerId={triggerId}
+    onOpenChange={(open, { trigger }) => {
+      onOpenChange(open, trigger);
+    }}
+  >
+    {({ payload: anchor }) => {
+      if (anchor === undefined) {
+        return null;
+      }
+
+      return (
+        <DrawerPopup showBar>
+          {anchor === "header" || anchor === "add" ? (
+            <PropertyList {...content} />
+          ) : (
+            <PropertyPane key={anchor} propertyKey={anchor} {...content} />
+          )}
+        </DrawerPopup>
+      );
+    }}
+  </Drawer>
+);

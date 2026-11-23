@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
+import type { View } from "../types";
 import { useStoredViews } from "./storage";
 import { NEW_SESSION, openViews } from "./views";
 import type { ViewsChange } from "./views";
 
-export function useViews(owner: string, slug: string | null) {
+export const useViews = (owner: string, slug: string | null) => {
   const [storedViews, setStoredViews] = useStoredViews();
   const [session, setSession] = useState(NEW_SESSION);
   const [, navigate] = useLocation();
-  const stored = storedViews[owner];
+  const stored: View[] | undefined = storedViews[owner];
 
   const views = openViews({ owner, stored, slug, session });
 
@@ -26,7 +27,7 @@ export function useViews(owner: string, slug: string | null) {
     }
   }, [list, stored, owner, setStoredViews]);
 
-  if (!stored) {
+  if (stored === undefined) {
     return null;
   }
 
@@ -45,4 +46,4 @@ export function useViews(owner: string, slug: string | null) {
   };
 
   return { views, commit };
-}
+};

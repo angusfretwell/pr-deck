@@ -32,15 +32,18 @@ export const useHiddenOwners = () =>
 
 type GroupsByOwner = Record<string, string[]>;
 
-export function parseGroupsByOwner(stored: string): GroupsByOwner {
+export const parseGroupsByOwner = (stored: string) => {
   const parsed: unknown = JSON.parse(stored);
 
-  return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
-    ? (parsed as GroupsByOwner)
-    : {};
-}
+  const groupsByOwner: GroupsByOwner =
+    parsed instanceof Object && !Array.isArray(parsed)
+      ? Object.fromEntries(Object.entries(parsed))
+      : {};
 
-function useGroupsByOwner(key: string, owner: string) {
+  return groupsByOwner;
+};
+
+const useGroupsByOwner = (key: string, owner: string) => {
   const [byOwner, setByOwner] = useLocalStorage<GroupsByOwner>(
     key,
     {},
@@ -52,7 +55,7 @@ function useGroupsByOwner(key: string, owner: string) {
   };
 
   return [byOwner[owner] ?? [], setGroups] as const;
-}
+};
 
 export const useCollapsedGroups = (owner: string) =>
   useGroupsByOwner("pr-deck:collapsed-groups", owner);
