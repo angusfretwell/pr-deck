@@ -141,13 +141,13 @@ describe("pipeline", () => {
 
 describe("toggleGroup", () => {
   it("collapses and expands one group, leaving other entries alone", () => {
-    const collapsed = toggleGroup(list({ collapsed: ["author:bob"] }), "web", false);
+    const collapsed = toggleGroup(list({ collapsed: ["author:bob"] }), "web", "group");
     expect(collapsed).toEqual(["author:bob", "repo:web"]);
-    expect(toggleGroup(list({ collapsed }), "web", false)).toEqual(["author:bob"]);
+    expect(toggleGroup(list({ collapsed }), "web", "group")).toEqual(["author:bob"]);
   });
 
   it("collapses every group of the current grouping at once", () => {
-    expect(toggleGroup(list({ collapsed: ["repo:api"] }), "web", true)).toEqual([
+    expect(toggleGroup(list({ collapsed: ["repo:api"] }), "web", "all")).toEqual([
       "repo:api",
       "repo:docs",
       "repo:web",
@@ -156,7 +156,20 @@ describe("toggleGroup", () => {
 
   it("expands every group at once when the toggled group is collapsed", () => {
     const collapsed = ["repo:api", "author:bob", "repo:web"];
-    expect(toggleGroup(list({ collapsed }), "web", true)).toEqual(["author:bob"]);
+    expect(toggleGroup(list({ collapsed }), "web", "all")).toEqual(["author:bob"]);
+  });
+
+  it("collapses the other groups and opens the toggled one", () => {
+    expect(toggleGroup(list({ collapsed: ["author:bob", "repo:web"] }), "web", "others")).toEqual([
+      "author:bob",
+      "repo:api",
+      "repo:docs",
+    ]);
+  });
+
+  it("expands the other groups when they are already the only ones collapsed", () => {
+    const collapsed = ["author:bob", "repo:api", "repo:docs"];
+    expect(toggleGroup(list({ collapsed }), "web", "others")).toEqual(["author:bob"]);
   });
 });
 

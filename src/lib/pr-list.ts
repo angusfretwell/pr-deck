@@ -50,6 +50,8 @@ export interface PrList {
   starred: string[];
 }
 
+export type ToggleScope = "group" | "all" | "others";
+
 export type SelectionAction =
   | { type: "move"; delta: 1 | -1 }
   | { type: "select"; id: string }
@@ -142,9 +144,16 @@ function setGroupsCollapsed(list: PrList, keys: string[], collapse: boolean): st
 
 const groupKeys = ({ groups }: PrList) => groups.map((entry) => entry.key);
 
-export function toggleGroup(list: PrList, key: string, all: boolean): string[] {
+export function toggleGroup(list: PrList, key: string, scope: ToggleScope): string[] {
+  if (scope === "others") {
+    const others = groupKeys(list).filter((other) => other !== key);
+    const focused = list.groups.every((entry) => entry.collapsed === (entry.key !== key));
+    if (focused) return setGroupsCollapsed(list, others, false);
+    const collapsed = setGroupsCollapsed(list, others, true);
+    return setGroupsCollapsed({ ...list, collapsed }, [key], false);
+  }
   const collapse = !list.collapsed.includes(groupId(list.group, key));
-  return setGroupsCollapsed(list, all ? groupKeys(list) : [key], collapse);
+  return setGroupsCollapsed(list, scope === "all" ? groupKeys(list) : [key], collapse);
 }
 
 export const allGroupsCollapsed = ({ groups }: PrList) => groups.every((entry) => entry.collapsed);

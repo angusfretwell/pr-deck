@@ -170,7 +170,7 @@ function OrgPage({
         query={deferredQuery}
         onShowAll={showAll}
         onClearSearch={() => onQueryChange("")}
-        onToggleGroup={(key, all) => setCollapsedGroups(toggleGroup(list, key, all))}
+        onToggleGroup={(key, scope) => setCollapsedGroups(toggleGroup(list, key, scope))}
         onToggleStar={(key) => setStarredGroups(toggleStar(list, key))}
       />
     );

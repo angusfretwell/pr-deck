@@ -20,7 +20,7 @@ import { Empty, EmptyContent, EmptyHeader, EmptyMedia, EmptyTitle } from "@/comp
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { age, isStale, issueBadges, statusBadge } from "@/lib/pr";
-import type { PrListGroup } from "@/lib/pr-list";
+import type { PrListGroup, ToggleScope } from "@/lib/pr-list";
 import type { Cluster, Stack } from "@/lib/stacks";
 import { cn } from "@/lib/utils";
 import type { Group, PullRequest } from "@/types";
@@ -35,7 +35,7 @@ export interface PrTableProps {
   query: string;
   onShowAll: () => void;
   onClearSearch: () => void;
-  onToggleGroup: (key: string, all: boolean) => void;
+  onToggleGroup: (key: string, scope: ToggleScope) => void;
   onToggleStar: (key: string) => void;
 }
 
@@ -102,7 +102,7 @@ export function PrTable({
         <Collapsible
           key={key}
           open={!collapsed}
-          onOpenChange={(_, { event }) => onToggleGroup(key, "altKey" in event && event.altKey)}
+          onOpenChange={(_, { event }) => onToggleGroup(key, toggleScope(event))}
           className={cn(group !== "none" && "relative py-1")}
         >
           {group !== "none" && (
@@ -148,6 +148,12 @@ export function PrTable({
       ))}
     </div>
   );
+}
+
+function toggleScope(event: Event): ToggleScope {
+  if (!(event instanceof MouseEvent || event instanceof KeyboardEvent)) return "group";
+  if (event.metaKey || event.ctrlKey) return "others";
+  return event.altKey ? "all" : "group";
 }
 
 function StarButton({
