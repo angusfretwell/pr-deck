@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vite-plus/test";
 import type { PullRequest } from "../types";
 import {
+  allGroupsCollapsed,
   applySelectionAction,
   derivePrList,
   NO_SELECTION,
+  toggleAllGroups,
   toggleGroup,
   type PrListInput,
   type Selection,
@@ -143,6 +145,23 @@ describe("toggleGroup", () => {
   it("expands every group at once when the toggled group is collapsed", () => {
     const collapsed = ["repo:api", "author:bob", "repo:web"];
     expect(toggleGroup(list({ collapsed }), "web", true)).toEqual(["author:bob"]);
+  });
+});
+
+describe("toggleAllGroups", () => {
+  it("collapses every group while any is expanded", () => {
+    expect(toggleAllGroups(list({ collapsed: ["author:bob", "repo:web"] }))).toEqual([
+      "author:bob",
+      "repo:web",
+      "repo:api",
+      "repo:docs",
+    ]);
+  });
+
+  it("expands every group once all are collapsed", () => {
+    const collapsed = ["repo:api", "author:bob", "repo:docs", "repo:web"];
+    expect(allGroupsCollapsed(list({ collapsed }))).toBe(true);
+    expect(toggleAllGroups(list({ collapsed }))).toEqual(["author:bob"]);
   });
 });
 

@@ -124,11 +124,22 @@ export function applySelectionAction(list: PrList, action: SelectionAction): Sel
   }
 }
 
-export function toggleGroup(list: PrList, key: string, all: boolean): string[] {
-  const { collapsed, group, groups } = list;
-  const id = collapsedId(group, key);
-  const ids = all ? groups.map((entry) => collapsedId(group, entry.key)) : [id];
-  return collapsed.includes(id)
-    ? collapsed.filter((existing) => !ids.includes(existing))
-    : [...collapsed, ...ids.filter((added) => !collapsed.includes(added))];
+function setGroupsCollapsed(list: PrList, keys: string[], collapse: boolean): string[] {
+  const { collapsed, group } = list;
+  const ids = keys.map((key) => collapsedId(group, key));
+  return collapse
+    ? [...collapsed, ...ids.filter((added) => !collapsed.includes(added))]
+    : collapsed.filter((existing) => !ids.includes(existing));
 }
+
+const groupKeys = ({ groups }: PrList) => groups.map((entry) => entry.key);
+
+export function toggleGroup(list: PrList, key: string, all: boolean): string[] {
+  const collapse = !list.collapsed.includes(collapsedId(list.group, key));
+  return setGroupsCollapsed(list, all ? groupKeys(list) : [key], collapse);
+}
+
+export const allGroupsCollapsed = ({ groups }: PrList) => groups.every((entry) => entry.collapsed);
+
+export const toggleAllGroups = (list: PrList) =>
+  setGroupsCollapsed(list, groupKeys(list), !allGroupsCollapsed(list));

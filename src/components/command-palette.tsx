@@ -5,11 +5,13 @@ import {
   CheckIcon,
   FilterIcon,
   FilterRemoveIcon,
+  FoldIcon,
   GitPullRequestDraftIcon,
   PaintbrushIcon,
   PlusIcon,
   RowsIcon,
   SearchIcon,
+  UnfoldIcon,
 } from "@primer/octicons-react";
 import { Fragment, useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
@@ -66,6 +68,8 @@ export interface CommandPaletteProps {
   viewer: string;
   group: Group;
   onGroupChange: (group: Group) => void;
+  allGroupsCollapsed: boolean;
+  onToggleAllGroups?: () => void;
   hideDrafts: boolean;
   onHideDraftsChange?: (hideDrafts: boolean) => void;
   onSearch: (query: string) => void;
@@ -108,6 +112,8 @@ function CommandPaletteList({
   viewer,
   group,
   onGroupChange,
+  allGroupsCollapsed,
+  onToggleAllGroups,
   hideDrafts,
   onHideDraftsChange,
   onSearch,
@@ -201,6 +207,17 @@ function CommandPaletteList({
       end: group === value ? <Check /> : undefined,
       run: () => onGroupChange(value),
     })),
+    ...(onToggleAllGroups
+      ? [
+          {
+            id: "groups:toggle-all",
+            keywords: "expand collapse fold unfold all groups",
+            icon: allGroupsCollapsed ? <UnfoldIcon /> : <FoldIcon />,
+            label: allGroupsCollapsed ? "Expand all groups" : "Collapse all groups",
+            run: onToggleAllGroups,
+          },
+        ]
+      : []),
     ...(onHideDraftsChange
       ? [
           {

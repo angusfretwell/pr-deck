@@ -1,11 +1,13 @@
-import { SlidersIcon } from "@primer/octicons-react";
+import { FoldIcon, SlidersIcon, UnfoldIcon } from "@primer/octicons-react";
 import {
   ResponsiveMenu,
   ResponsiveMenuGroup,
   ResponsiveMenuGroupLabel,
+  ResponsiveMenuItem,
   ResponsiveMenuPopup,
   ResponsiveMenuRadioGroup,
   ResponsiveMenuRadioItem,
+  ResponsiveMenuSeparator,
   ResponsiveMenuTrigger,
 } from "@/components/responsive-menu";
 import { Button } from "@/components/ui/button";
@@ -18,9 +20,18 @@ interface DisplayMenuProps {
   onOpenChange: (open: boolean) => void;
   group: Group;
   onGroupChange: (group: Group) => void;
+  allGroupsCollapsed: boolean;
+  onToggleAllGroups?: () => void;
 }
 
-export function DisplayMenu({ open, onOpenChange, group, onGroupChange }: DisplayMenuProps) {
+export function DisplayMenu({
+  open,
+  onOpenChange,
+  group,
+  onGroupChange,
+  allGroupsCollapsed,
+  onToggleAllGroups,
+}: DisplayMenuProps) {
   return (
     <ResponsiveMenu open={open} onOpenChange={onOpenChange}>
       <Hint label="Display">
@@ -48,6 +59,15 @@ export function DisplayMenu({ open, onOpenChange, group, onGroupChange }: Displa
             ))}
           </ResponsiveMenuRadioGroup>
         </ResponsiveMenuGroup>
+        {onToggleAllGroups && (
+          <>
+            <ResponsiveMenuSeparator />
+            <ResponsiveMenuItem onClick={onToggleAllGroups}>
+              {allGroupsCollapsed ? <UnfoldIcon /> : <FoldIcon />}
+              {allGroupsCollapsed ? "Expand all" : "Collapse all"}
+            </ResponsiveMenuItem>
+          </>
+        )}
       </ResponsiveMenuPopup>
     </ResponsiveMenu>
   );

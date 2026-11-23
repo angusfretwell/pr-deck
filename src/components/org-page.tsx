@@ -27,9 +27,11 @@ import { ViewSwipe, type SwipeNeighbour } from "@/components/view-swipe";
 import { errorMessage } from "@/github/api";
 import { usePullRequests } from "@/github/hooks";
 import {
+  allGroupsCollapsed,
   applySelectionAction,
   derivePrList,
   NO_SELECTION,
+  toggleAllGroups,
   toggleGroup,
   type PrList,
   type SelectionAction,
@@ -130,6 +132,11 @@ function OrgPage({
   const list = derivePrList({ ...listInput, filters, selection });
   const act = (action: SelectionAction) => setSelection(applySelectionAction(list, action));
   const select = useEventCallback((id: string) => act({ type: "select", id }));
+  const groupsCollapsed = allGroupsCollapsed(list);
+  const toggleAll =
+    group !== "none" && list.groups.length > 0
+      ? () => setCollapsedGroups(toggleAllGroups(list))
+      : undefined;
 
   useEffect(() => setLastPath(location), [location, setLastPath]);
 
@@ -260,6 +267,8 @@ function OrgPage({
               onOpenChange={setDisplayMenuOpen}
               group={group}
               onGroupChange={setGroup}
+              allGroupsCollapsed={groupsCollapsed}
+              onToggleAllGroups={toggleAll}
             />
           </ViewHeader>
         </div>
@@ -320,6 +329,8 @@ function OrgPage({
         viewer={viewer}
         group={group}
         onGroupChange={setGroup}
+        allGroupsCollapsed={groupsCollapsed}
+        onToggleAllGroups={toggleAll}
         hideDrafts={hideDrafts}
         onHideDraftsChange={desktop ? setHideDrafts : undefined}
         onSearch={(text) => {

@@ -191,7 +191,13 @@ export function SetupPreview({ className }: { className?: string }) {
         />
         <DraftsToggle hideDrafts={false} onHideDraftsChange={noop} />
         <FilterButton />
-        <DisplayMenu open={false} onOpenChange={noop} group="repo" onGroupChange={noop} />
+        <DisplayMenu
+          open={false}
+          onOpenChange={noop}
+          group="repo"
+          onGroupChange={noop}
+          allGroupsCollapsed={false}
+        />
       </ViewHeader>
       <div className="pb-4">
         <PrTable
