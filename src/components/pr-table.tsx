@@ -206,9 +206,7 @@ function GroupHeading({ group, name, rows }: { group: Group; name: string; rows:
       )}
       <span className="flex min-w-0 items-baseline gap-2">
         <span className="truncate">{name}</span>
-        <span className="text-sm text-muted-foreground tabular-nums sm:text-xs">
-          {rows.length}
-        </span>
+        <span className="text-sm text-muted-foreground tabular-nums sm:text-xs">{rows.length}</span>
       </span>
     </>
   );
