@@ -97,8 +97,41 @@ function pullRequests(owner: string): PullRequest[] {
 const paragraph =
   "<p>This change tidies up the flow and adds coverage for the edge cases we hit in production last week. It should be safe to roll out behind the existing flag.</p>";
 
+const escapeHtml = (text: string) =>
+  text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+
+const fence = (code: string, language?: string) =>
+  `<div class="${language ? `highlight highlight-source-${language}` : "snippet-clipboard-content"} notranslate position-relative overflow-auto" data-snippet-clipboard-copy-content="${escapeHtml(code)}"><pre class="notranslate"><code>${escapeHtml(code)}</code></pre></div>`;
+
+const codeSample = fence(
+  `export function retry<T>(task: () => Promise<T>, attempts = 3): Promise<T> {
+  return task().catch((error: unknown) => {
+    if (attempts <= 1) throw error;
+    return retry(task, attempts - 1);
+  });
+}`,
+  "ts",
+);
+
+const shellSample = fence("pnpm install\npnpm test -- --run src/lib/retry.test.ts", "shell");
+
+const diffSample = fence(
+  `- const timeout = 1000;
++ const timeout = 5000;
+  fetchWithTimeout(url, timeout);`,
+  "diff",
+);
+
+const plainSample = fence(
+  "Error: request timed out after 1000ms\n    at fetchWithTimeout (src/lib/http.ts:42:11)",
+);
+
 const detail = (): PullRequestDetail => ({
-  bodyHtml: `<h2>Summary</h2>${paragraph.repeat(3)}<h2>Testing</h2><ul><li>Unit tests</li><li>Manual check on iOS Safari</li><li>Staging deploy</li></ul>${paragraph.repeat(4)}`,
+  bodyHtml: `<h2>Summary</h2>${paragraph}${codeSample}${paragraph}${diffSample}<h2>Testing</h2><ul><li>Unit tests${shellSample}</li><li>Manual check on iOS Safari</li><li>Staging deploy</li></ul><p>The old behaviour logged:</p>${plainSample}${paragraph.repeat(3)}`,
   additions: 412,
   deletions: 96,
   changedFiles: 14,
