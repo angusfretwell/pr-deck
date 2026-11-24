@@ -53,7 +53,7 @@ function StarButton({
       aria-pressed={starred}
       onClick={onToggle}
       className={cn(
-        "absolute inset-y-0 end-1 my-auto hover:bg-transparent",
+        "absolute inset-y-0 inset-e-1 my-auto hover:bg-transparent",
         starred
           ? "text-yellow-500 dark:text-yellow-300"
           : "text-muted-foreground opacity-0 transition-opacity duration-150 ease-out group-hover/header:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-60"
@@ -127,7 +127,7 @@ export function GroupSection({
           >
             <GroupHeading group={group} name={key} rows={rows} />
           </div>
-          <div className="sticky top-[calc(var(--pinned-height,0px)+--spacing(2))] z-10 w-0">
+          <div className="sticky top-[calc(var(--pinned-height,0px)+(--spacing(2)))] z-10 w-0">
             <div className="group/header relative w-[100cqw] bg-background shadow-[0_-8px_0_var(--background)]">
               <CollapsibleTrigger
                 className={cn(

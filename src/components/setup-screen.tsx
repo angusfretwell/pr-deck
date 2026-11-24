@@ -171,7 +171,7 @@ export function SetupScreen({ initialError, onSignIn }: SetupScreenProps) {
         </footer>
       </section>
       <section className="bg-sidebar relative hidden overflow-hidden border-s lg:block">
-        <div className="animate-rise absolute start-12 -end-48 top-[16%] bottom-0 overflow-hidden rounded-ss-xl border-s border-t mask-b-from-45% mask-b-to-85% shadow-lg/5 motion-reduce:animate-none min-[1800px]:end-0">
+        <div className="animate-rise absolute inset-s-12 -inset-e-48 top-[16%] bottom-0 overflow-hidden rounded-ss-xl border-s border-t mask-b-from-45% mask-b-to-85% shadow-lg/5 motion-reduce:animate-none min-[1800px]:inset-e-0">
           <SetupPreview className="h-full min-w-180" />
         </div>
       </section>

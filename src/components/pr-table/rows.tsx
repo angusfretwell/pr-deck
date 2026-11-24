@@ -29,7 +29,7 @@ function StackTree({ nested }: { nested: number }) {
       <span
         className={cn(
           BRANCH,
-          "left-[14px] w-3 rounded-bl-[3px] border-b border-l"
+          "left-3.5 w-3 rounded-bl-[3px] border-b border-l"
         )}
         style={{
           top: `calc(var(--row) / 2 + ${ROOT_ICON_CLEARANCE})`,
@@ -39,7 +39,7 @@ function StackTree({ nested }: { nested: number }) {
       {Array.from({ length: nested - 1 }, (_, index) => (
         <span
           key={index}
-          className={cn(BRANCH, "left-[15px] w-[11px] border-t")}
+          className={cn(BRANCH, "left-3.75 w-2.75 border-t")}
           style={{ top: rowCentre(index + 1) }}
         />
       ))}
@@ -167,7 +167,7 @@ const PrRow = memo(({ pr, selected, stack, nested }: PrRowProps) => {
         "grid h-10 touch-manipulation grid-cols-(--columns) items-center gap-x-2.5 rounded-md px-2 sm:h-9",
         group === "none"
           ? "scroll-mt-(--pinned-height)"
-          : "scroll-mt-[calc(var(--pinned-height,0px)+--spacing(12))] sm:scroll-mt-[calc(var(--pinned-height,0px)+--spacing(11))]",
+          : "scroll-mt-[calc(var(--pinned-height,0px)+(--spacing(12)))] sm:scroll-mt-[calc(var(--pinned-height,0px)+(--spacing(11)))]",
         selected ? "bg-info-muted" : "hover:bg-accent active:bg-accent"
       )}
     >

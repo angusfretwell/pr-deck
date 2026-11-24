@@ -58,7 +58,7 @@ function Count({ children }: { children: number | undefined }) {
       className={cn(
         "text-muted-foreground -ms-1.5 grid grid-cols-[1fr] text-sm leading-none tabular-nums sm:text-xs",
         !loadedOnMount &&
-          "ease-snappy transition-[grid-template-columns,opacity] [transition-delay:0ms,100ms] [transition-duration:150ms,100ms] motion-reduce:transition-opacity starting:grid-cols-[0fr] starting:opacity-0"
+          "ease-snappy transition-[grid-template-columns,opacity] delay-[0ms,100ms] duration-[150ms,100ms] motion-reduce:transition-opacity starting:grid-cols-[0fr] starting:opacity-0"
       )}
     >
       <span className="min-w-0 overflow-hidden ps-1.5">{children}</span>
@@ -120,7 +120,7 @@ function DeleteViewButton({
             <Button
               variant="ghost"
               size="icon-xs"
-              className={cn(PILL, "absolute end-1 top-1/2 -translate-y-1/2")}
+              className={cn(PILL, "absolute inset-e-1 top-1/2 -translate-y-1/2")}
               aria-label="Delete view"
             />
           }

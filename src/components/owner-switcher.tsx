@@ -252,7 +252,7 @@ function OwnerLinks(props: OwnerSwitcherProps) {
         ref={measurer}
         aria-hidden
         inert
-        className="invisible absolute start-0 top-0 w-max"
+        className="invisible absolute inset-s-0 top-0 w-max"
       >
         <OwnerNav owners={owners} activeOwner={activeOwner} />
       </div>
