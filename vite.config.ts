@@ -20,6 +20,10 @@ export default defineConfig({
       "skills-lock.json",
       "src/github/graphql.generated.ts",
     ],
+    sortTailwindcss: {
+      ...ultracite.sortTailwindcss,
+      stylesheet: "./src/index.css",
+    },
   },
   lint: {
     env: core.env,
