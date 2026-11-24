@@ -26,13 +26,15 @@
     "clsx": "^2.1.1",
     "html-react-parser": "^6.1.10",
     "motion": "^14.14.0",
+    "nuqs": "^2.10.3",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "shiki": "^4.6.0",
     "tailwind-merge": "^3.7.0",
     "tailwindcss": "^4.3.5",
     "usehooks-ts": "^3.1.1",
-    "wouter": "^3.13.0"
+    "wouter": "^3.13.0",
+    "zustand": "^5.1.0"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^8.0.0",

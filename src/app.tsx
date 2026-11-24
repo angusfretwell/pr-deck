@@ -3,11 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Redirect, Route, Switch, useLocation } from "wouter";
 
-import { AppShell } from "@/components/app-shell";
-import { OrgRoute } from "@/components/org-page";
 import { QueryErrorEmpty } from "@/components/query-error-empty";
-import { SearchProvider } from "@/components/search-context";
-import { SetupScreen } from "@/components/setup-screen";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -17,19 +13,17 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Spinner } from "@/components/ui/spinner";
+import { AppShell } from "@/features/shell/app-shell";
 import { errorMessage, isAuthError } from "@/github/api";
 import { useSession } from "@/github/hooks";
+import { useDarkMode, usePreferences } from "@/lib/preferences";
 import { clearQueryCache } from "@/lib/query-cache";
-import {
-  useColorMode,
-  useHiddenOwners,
-  useLastPath,
-  useToken,
-} from "@/lib/storage";
+import { OrgRoute } from "@/pages/org";
+import { SetupScreen } from "@/pages/setup";
 import type { Session } from "@/types";
 
 function useFallbackPath(owners: string[]) {
-  const [lastPath] = useLastPath();
+  const lastPath = usePreferences((state) => state.lastPath);
   const lastOwner = lastPath?.split("/")[1];
 
   return lastPath !== null &&
@@ -90,7 +84,7 @@ function Dashboard({
   session: Session;
   onSignOut: () => void;
 }) {
-  const [hiddenOwners, setHiddenOwners] = useHiddenOwners();
+  const hiddenOwners = usePreferences((state) => state.hiddenOwners);
 
   const enabledOwners = useMemo(
     () => session.owners.filter((owner) => !hiddenOwners.includes(owner.login)),
@@ -100,42 +94,38 @@ function Dashboard({
   const owners = enabledOwners.map((owner) => owner.login);
 
   return (
-    <SearchProvider>
-      <Switch>
-        <Route path="/:org/:viewSlug?">
-          {({ org, viewSlug }) => (
-            <>
-              <AppShell
-                session={session}
-                enabledOwners={enabledOwners}
-                hiddenOwners={hiddenOwners}
-                onHiddenOwnersChange={setHiddenOwners}
-                activeOwner={org}
-                onSignOut={onSignOut}
+    <Switch>
+      <Route path="/:org/:viewSlug?">
+        {({ org, viewSlug }) => (
+          <>
+            <AppShell
+              session={session}
+              enabledOwners={enabledOwners}
+              activeOwner={org}
+              onSignOut={onSignOut}
+            />
+            {owners.includes(org) ? (
+              <OrgRoute
+                key={org}
+                owner={org}
+                owners={enabledOwners}
+                viewSlug={viewSlug ?? null}
+                viewer={session.viewer.login}
               />
-              {owners.includes(org) ? (
-                <OrgRoute
-                  key={org}
-                  owner={org}
-                  owners={enabledOwners}
-                  viewSlug={viewSlug ?? null}
-                  viewer={session.viewer.login}
-                />
-              ) : (
-                <OwnerNotFound
-                  owner={org}
-                  hidden={hiddenOwners.includes(org)}
-                  owners={owners}
-                />
-              )}
-            </>
-          )}
-        </Route>
-        <Route>
-          <RootRedirect owners={owners} />
-        </Route>
-      </Switch>
-    </SearchProvider>
+            ) : (
+              <OwnerNotFound
+                owner={org}
+                hidden={hiddenOwners.includes(org)}
+                owners={owners}
+              />
+            )}
+          </>
+        )}
+      </Route>
+      <Route>
+        <RootRedirect owners={owners} />
+      </Route>
+    </Switch>
   );
 }
 
@@ -165,9 +155,9 @@ function Workspace({ onSignOut }: { onSignOut: () => void }) {
 
 function App() {
   const queryClient = useQueryClient();
-  const [token, setToken, removeToken] = useToken();
+  const token = usePreferences((state) => state.token);
   const [authError, setAuthError] = useState<string | null>(null);
-  const { isDarkMode } = useColorMode();
+  const isDarkMode = useDarkMode();
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
@@ -176,18 +166,15 @@ function App() {
       ?.setAttribute("content", isDarkMode ? "#161616" : "#ffffff");
   }, [isDarkMode]);
 
-  const signOut = useCallback(
-    (message: string | null) => {
-      setAuthError(message);
-      removeToken();
-      clearQueryCache();
-    },
-    [removeToken]
-  );
+  const signOut = useCallback((message: string | null) => {
+    setAuthError(message);
+    usePreferences.setState({ token: null });
+    clearQueryCache();
+  }, []);
 
   function signIn(newToken: string, session: Session) {
     clearQueryCache();
-    setToken(newToken);
+    usePreferences.setState({ token: newToken });
     queryClient.setQueryData(["session"], session);
     setAuthError(null);
   }

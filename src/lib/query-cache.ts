@@ -6,7 +6,7 @@ import {
 import type { Query } from "@tanstack/react-query";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
 
-import { TOKEN_KEY } from "./storage";
+import { usePreferences } from "./preferences";
 
 const PERSISTED_QUERIES = new Set<unknown>(["session", "pull-requests"]);
 
@@ -24,7 +24,7 @@ const persister = createAsyncStoragePersister({
   storage: {
     getItem: (key) => localStorage.getItem(key),
     setItem: (key, value) => {
-      if (localStorage.getItem(TOKEN_KEY) !== null) {
+      if (usePreferences.getState().token !== null) {
         localStorage.setItem(key, value);
       }
     },

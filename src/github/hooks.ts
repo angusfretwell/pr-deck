@@ -1,6 +1,6 @@
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useToken } from "@/lib/storage";
+import { usePreferences } from "@/lib/preferences";
 import type { Mergeability, PullRequestList } from "@/types";
 
 import * as realApi from "./api";
@@ -36,7 +36,7 @@ const live = {
 };
 
 export function useSession() {
-  const [token] = useToken();
+  const token = usePreferences((state) => state.token);
 
   return useQuery({
     queryKey: ["session"],
@@ -55,7 +55,7 @@ function usePendingMergeability(
   owner: string,
   list: PullRequestList | undefined
 ) {
-  const [token] = useToken();
+  const token = usePreferences((state) => state.token);
   const queryClient = useQueryClient();
 
   const ids =
@@ -86,7 +86,7 @@ function usePendingMergeability(
 }
 
 export function usePullRequests(owner: string) {
-  const [token] = useToken();
+  const token = usePreferences((state) => state.token);
   const viewer = useSession().data?.viewer.login;
   const queryClient = useQueryClient();
   const queryKey = ["pull-requests", owner];
@@ -115,7 +115,7 @@ export function usePullRequests(owner: string) {
 }
 
 export function usePullRequestDetail(id: string) {
-  const [token] = useToken();
+  const token = usePreferences((state) => state.token);
 
   return useQuery({
     queryKey: ["pull-request-detail", id],

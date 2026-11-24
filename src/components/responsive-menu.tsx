@@ -28,7 +28,7 @@ import {
   MenuSeparator,
   MenuTrigger,
 } from "@/components/ui/menu";
-import { useDesktop } from "@/lib/use-desktop";
+import { useDesktop } from "@/hooks/use-desktop";
 
 interface ResponsiveMenuContextValue {
   drawer: boolean;

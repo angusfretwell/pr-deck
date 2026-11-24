@@ -1,0 +1,235 @@
+import type { Filter, PullRequest, View } from "@/types";
+
+import { awaitsStatus, passes, sameFilters, VIEWER_VALUE } from "./filters";
+
+export const ALL_OPEN_NAME = "Open";
+
+const DEFAULT_VIEWS: { name: string; filters: Filter[] }[] = [
+  {
+    name: "Mine",
+    filters: [{ key: "author", values: [VIEWER_VALUE], negated: false }],
+  },
+  {
+    name: "Needs my review",
+    filters: [{ key: "myReview", values: ["requested"], negated: false }],
+  },
+  {
+    name: "Ready to merge",
+    filters: [
+      { key: "ci", values: ["pass"], negated: false },
+      { key: "conflicts", values: ["clean"], negated: false },
+      { key: "review", values: ["approved"], negated: false },
+    ],
+  },
+];
+
+function seedViews() {
+  return DEFAULT_VIEWS.map(
+    (view) =>
+      ({
+        ...view,
+        id: crypto.randomUUID(),
+        isDefault: true,
+      }) satisfies View
+  );
+}
+
+function matchesDefault(view: View) {
+  return DEFAULT_VIEWS.some(
+    (seed) => seed.name === view.name && sameFilters(seed.filters, view.filters)
+  );
+}
+
+function markDefaults(views: View[]) {
+  return views.some((view) => view.isDefault !== true && matchesDefault(view))
+    ? views.map((view) =>
+        matchesDefault(view) ? { ...view, isDefault: true } : view
+      )
+    : views;
+}
+
+function slugify(name: string) {
+  return (
+    name
+      .toLowerCase()
+      .replaceAll(/[^a-z0-9]+/gu, "-")
+      .replaceAll(/^-|-$/gu, "") || "view"
+  );
+}
+
+function uniqueName(views: View[], name: string, exceptId?: string) {
+  const base = name.trim() || "Untitled view";
+
+  const taken = new Set(
+    views.flatMap((view) => (view.id === exceptId ? [] : [slugify(view.name)]))
+  );
+
+  let candidate = base;
+
+  for (let n = 2; taken.has(slugify(candidate)); n += 1) {
+    candidate = `${base} ${n}`;
+  }
+
+  return candidate;
+}
+
+export function countByView(views: View[], prs: PullRequest[], viewer: string) {
+  return Object.fromEntries(
+    views.flatMap((view) =>
+      awaitsStatus(view.filters, prs)
+        ? []
+        : [
+            [
+              view.id,
+              prs.filter((pr) => passes(pr, view.filters, viewer)).length,
+            ] satisfies [string, number],
+          ]
+    )
+  );
+}
+
+export interface ViewsSession {
+  draft: Filter[] | null;
+  renamingViewId: string | null;
+}
+
+export const NEW_SESSION: ViewsSession = { draft: null, renamingViewId: null };
+
+export interface ViewsChange {
+  views: View[];
+  session: ViewsSession;
+  navigate?: { to: string; replace?: boolean };
+}
+
+export interface Views {
+  list: View[];
+  active: View | null;
+  redirectTo: string | null;
+  session: ViewsSession;
+  filters: Filter[];
+  filtersChanged: boolean;
+  deletableViewId: string | null;
+  hrefFor: (id: string | null) => string;
+  setFilters: (filters: Filter[]) => ViewsChange;
+  resetFilters: () => ViewsChange;
+  showAll: () => ViewsChange;
+  save: () => ViewsChange;
+  saveAsNew: () => ViewsChange;
+  setRenaming: (id: string | null) => ViewsChange;
+  rename: (id: string, name: string) => ViewsChange;
+  remove: (id: string) => ViewsChange;
+}
+
+interface OpenViewsInput {
+  owner: string;
+  stored: View[] | undefined;
+  slug: string | null;
+  session?: ViewsSession;
+}
+
+export function openViews({
+  owner,
+  stored,
+  slug,
+  session = NEW_SESSION,
+}: OpenViewsInput) {
+  const list = stored ? markDefaults(stored) : seedViews();
+  const root = `/${owner}`;
+
+  function pathFor(name: string) {
+    return `${root}/${slugify(name)}`;
+  }
+
+  const found =
+    slug === null ? null : list.find((view) => slugify(view.name) === slug);
+
+  const active = found ?? null;
+  const activeId = active?.id ?? null;
+  const savedFilters = active?.filters ?? [];
+  const filters = session.draft ?? savedFilters;
+
+  const unchanged: ViewsChange = { views: list, session };
+
+  return {
+    list,
+    active,
+    redirectTo: found === undefined ? root : null,
+    session,
+    filters,
+    filtersChanged: !sameFilters(filters, savedFilters),
+    deletableViewId:
+      active !== null && active.isDefault !== true ? active.id : null,
+
+    hrefFor: (id) => {
+      const view = list.find((candidate) => candidate.id === id);
+
+      return view ? pathFor(view.name) : root;
+    },
+
+    setFilters: (next) => ({
+      ...unchanged,
+      session: { ...session, draft: next },
+    }),
+
+    resetFilters: () => ({
+      ...unchanged,
+      session: { ...session, draft: null },
+    }),
+
+    showAll: () => ({
+      ...unchanged,
+      session: { ...session, draft: null },
+      navigate: { to: root },
+    }),
+
+    save: () =>
+      active
+        ? {
+            views: list.map((view) =>
+              view.id === active.id ? { ...view, filters } : view
+            ),
+            session: { ...session, draft: null },
+          }
+        : unchanged,
+
+    saveAsNew: () => {
+      const view: View = {
+        id: crypto.randomUUID(),
+        name: uniqueName(list, "New view"),
+        filters,
+      };
+
+      return {
+        views: [...list, view],
+        session: { draft: null, renamingViewId: view.id },
+        navigate: { to: pathFor(view.name) },
+      };
+    },
+
+    setRenaming: (id) => ({
+      ...unchanged,
+      session: { ...session, renamingViewId: id },
+    }),
+
+    rename: (id, requestedName) => {
+      const name = uniqueName(list, requestedName, id);
+
+      return {
+        views: list.map((view) => (view.id === id ? { ...view, name } : view)),
+        session: { ...session, renamingViewId: null },
+        ...(id === activeId && {
+          navigate: { to: pathFor(name), replace: true },
+        }),
+      };
+    },
+
+    remove: (id) =>
+      list.some((view) => view.id === id && view.isDefault !== true)
+        ? {
+            views: list.filter((view) => view.id !== id),
+            session: { ...session, draft: null },
+            navigate: { to: root },
+          }
+        : unchanged,
+  } satisfies Views;
+}
