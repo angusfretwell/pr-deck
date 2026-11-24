@@ -1,10 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, use, useCallback, useMemo, useState } from "react";
 import type { ComponentProps, ReactNode } from "react";
 
 import {
@@ -91,7 +85,7 @@ export function ResponsiveMenu({
 export function ResponsiveMenuTrigger(
   props: Omit<ComponentProps<typeof MenuTrigger>, "handle" | "payload">
 ) {
-  const { drawer } = useContext(ResponsiveMenuContext);
+  const { drawer } = use(ResponsiveMenuContext);
 
   return drawer ? <DrawerTrigger {...props} /> : <MenuTrigger {...props} />;
 }
@@ -100,7 +94,7 @@ export function ResponsiveMenuPopup({
   children,
   ...props
 }: ComponentProps<typeof MenuPopup>) {
-  const { drawer } = useContext(ResponsiveMenuContext);
+  const { drawer } = use(ResponsiveMenuContext);
 
   if (!drawer) {
     return <MenuPopup {...props}>{children}</MenuPopup>;
@@ -116,7 +110,7 @@ export function ResponsiveMenuPopup({
 }
 
 export function ResponsiveMenuGroup({ children }: { children: ReactNode }) {
-  const { drawer } = useContext(ResponsiveMenuContext);
+  const { drawer } = use(ResponsiveMenuContext);
 
   return drawer ? (
     <DrawerMenuGroup>{children}</DrawerMenuGroup>
@@ -130,7 +124,7 @@ export function ResponsiveMenuGroupLabel({
 }: {
   children: ReactNode;
 }) {
-  const { drawer } = useContext(ResponsiveMenuContext);
+  const { drawer } = use(ResponsiveMenuContext);
 
   return drawer ? (
     <DrawerMenuGroupLabel>{children}</DrawerMenuGroupLabel>
@@ -140,7 +134,7 @@ export function ResponsiveMenuGroupLabel({
 }
 
 export function ResponsiveMenuSeparator() {
-  const { drawer } = useContext(ResponsiveMenuContext);
+  const { drawer } = use(ResponsiveMenuContext);
 
   return drawer ? <DrawerMenuSeparator /> : <MenuSeparator />;
 }
@@ -156,7 +150,7 @@ export function ResponsiveMenuRadioGroup<T extends string>({
   onValueChange,
   children,
 }: ResponsiveMenuRadioGroupProps<T>) {
-  const { drawer } = useContext(ResponsiveMenuContext);
+  const { drawer } = use(ResponsiveMenuContext);
   const Group = drawer ? DrawerMenuRadioGroup : MenuRadioGroup;
 
   return (
@@ -182,7 +176,7 @@ export function ResponsiveMenuRadioItem({
   closeOnClick,
   ...props
 }: ResponsiveMenuRadioItemProps) {
-  const { drawer, close } = useContext(ResponsiveMenuContext);
+  const { drawer, close } = use(ResponsiveMenuContext);
 
   return drawer ? (
     <DrawerMenuRadioItem
@@ -205,7 +199,7 @@ interface ResponsiveMenuCheckboxItemProps {
 export function ResponsiveMenuCheckboxItem(
   props: ResponsiveMenuCheckboxItemProps
 ) {
-  const { drawer } = useContext(ResponsiveMenuContext);
+  const { drawer } = use(ResponsiveMenuContext);
 
   return drawer ? (
     <DrawerMenuCheckboxItem {...props} />
@@ -221,7 +215,7 @@ export function ResponsiveMenuItem({
   onClick: () => void;
   children: ReactNode;
 }) {
-  const { drawer, close } = useContext(ResponsiveMenuContext);
+  const { drawer, close } = use(ResponsiveMenuContext);
 
   if (!drawer) {
     return <MenuItem onClick={onClick}>{children}</MenuItem>;
@@ -251,7 +245,7 @@ export function ResponsiveMenuLinkItem({
   onClick,
   ...props
 }: ResponsiveMenuLinkItemProps) {
-  const { drawer, close } = useContext(ResponsiveMenuContext);
+  const { drawer, close } = use(ResponsiveMenuContext);
 
   if (!drawer) {
     return <MenuLinkItem {...props} onClick={onClick} />;
