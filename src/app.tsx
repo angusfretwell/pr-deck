@@ -1,10 +1,12 @@
 import { CloudOfflineIcon } from "@primer/octicons-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Redirect, Route, Switch, useLocation } from "wouter";
 
 import { AppShell } from "@/components/app-shell";
 import { OrgRoute } from "@/components/org-page";
+import { QueryErrorEmpty } from "@/components/query-error-empty";
+import { SearchProvider } from "@/components/search-context";
 import { SetupScreen } from "@/components/setup-screen";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +14,6 @@ import {
   EmptyContent,
   EmptyDescription,
   EmptyHeader,
-  EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Spinner } from "@/components/ui/spinner";
@@ -89,15 +90,6 @@ function Dashboard({
   session: Session;
   onSignOut: () => void;
 }) {
-  const [query, setQuery] = useState("");
-  const searchRef = useRef<HTMLInputElement>(null);
-  const [searchOpen, setSearchOpen] = useState(false);
-
-  function openSearch() {
-    setSearchOpen(true);
-    searchRef.current?.focus();
-  }
-
   const [hiddenOwners, setHiddenOwners] = useHiddenOwners();
 
   const enabledOwners = useMemo(
@@ -108,50 +100,42 @@ function Dashboard({
   const owners = enabledOwners.map((owner) => owner.login);
 
   return (
-    <Switch>
-      <Route path="/:org/:viewSlug?">
-        {({ org, viewSlug }) => (
-          <>
-            <AppShell
-              session={session}
-              enabledOwners={enabledOwners}
-              hiddenOwners={hiddenOwners}
-              onHiddenOwnersChange={setHiddenOwners}
-              activeOwner={org}
-              query={query}
-              onQueryChange={setQuery}
-              searchRef={searchRef}
-              searchVisible={searchOpen || query !== ""}
-              onSearchBlur={() => {
-                setSearchOpen(false);
-              }}
-              onSignOut={onSignOut}
-            />
-            {owners.includes(org) ? (
-              <OrgRoute
-                key={org}
-                owner={org}
-                owners={enabledOwners}
-                viewSlug={viewSlug ?? null}
-                viewer={session.viewer.login}
-                query={query}
-                onQueryChange={setQuery}
-                onOpenSearch={openSearch}
+    <SearchProvider>
+      <Switch>
+        <Route path="/:org/:viewSlug?">
+          {({ org, viewSlug }) => (
+            <>
+              <AppShell
+                session={session}
+                enabledOwners={enabledOwners}
+                hiddenOwners={hiddenOwners}
+                onHiddenOwnersChange={setHiddenOwners}
+                activeOwner={org}
+                onSignOut={onSignOut}
               />
-            ) : (
-              <OwnerNotFound
-                owner={org}
-                hidden={hiddenOwners.includes(org)}
-                owners={owners}
-              />
-            )}
-          </>
-        )}
-      </Route>
-      <Route>
-        <RootRedirect owners={owners} />
-      </Route>
-    </Switch>
+              {owners.includes(org) ? (
+                <OrgRoute
+                  key={org}
+                  owner={org}
+                  owners={enabledOwners}
+                  viewSlug={viewSlug ?? null}
+                  viewer={session.viewer.login}
+                />
+              ) : (
+                <OwnerNotFound
+                  owner={org}
+                  hidden={hiddenOwners.includes(org)}
+                  owners={owners}
+                />
+              )}
+            </>
+          )}
+        </Route>
+        <Route>
+          <RootRedirect owners={owners} />
+        </Route>
+      </Switch>
+    </SearchProvider>
   );
 }
 
@@ -164,27 +148,11 @@ function Workspace({ onSignOut }: { onSignOut: () => void }) {
 
   if (session.isError && !isAuthError(session.error)) {
     return (
-      <Empty>
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <CloudOfflineIcon />
-          </EmptyMedia>
-          <EmptyTitle>Couldn&apos;t reach GitHub</EmptyTitle>
-          <EmptyDescription>{errorMessage(session.error)}</EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Button
-            size="sm"
-            variant="outline"
-            loading={session.isFetching}
-            onClick={() => {
-              void session.refetch();
-            }}
-          >
-            Try again
-          </Button>
-        </EmptyContent>
-      </Empty>
+      <QueryErrorEmpty
+        icon={<CloudOfflineIcon />}
+        title="Couldn't reach GitHub"
+        result={session}
+      />
     );
   }
 

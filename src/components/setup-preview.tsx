@@ -1,8 +1,8 @@
 import { noop } from "@tanstack/react-query";
-import { useRef } from "react";
 
 import { AppShell } from "@/components/app-shell";
 import { PrTable } from "@/components/pr-table";
+import { SearchProvider } from "@/components/search-context";
 import { FilterButton, ViewHeader } from "@/components/view-header";
 import { DisplayMenu } from "@/components/view-header/display-menu";
 import { DraftsToggle } from "@/components/view-header/drafts-toggle";
@@ -189,8 +189,6 @@ const { groups: GROUPS } = derivePrList({
 });
 
 export function SetupPreview({ className }: { className?: string }) {
-  const searchRef = useRef<HTMLInputElement>(null);
-
   return (
     <div
       inert
@@ -200,19 +198,16 @@ export function SetupPreview({ className }: { className?: string }) {
         className
       )}
     >
-      <AppShell
-        session={SESSION}
-        enabledOwners={SESSION.owners}
-        hiddenOwners={[]}
-        onHiddenOwnersChange={noop}
-        activeOwner={OWNER}
-        query=""
-        onQueryChange={noop}
-        searchRef={searchRef}
-        searchVisible={false}
-        onSearchBlur={noop}
-        onSignOut={noop}
-      />
+      <SearchProvider>
+        <AppShell
+          session={SESSION}
+          enabledOwners={SESSION.owners}
+          hiddenOwners={[]}
+          onHiddenOwnersChange={noop}
+          activeOwner={OWNER}
+          onSignOut={noop}
+        />
+      </SearchProvider>
       <ViewHeader
         filters={[]}
         filtersChanged={false}
