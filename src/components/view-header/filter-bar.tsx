@@ -5,17 +5,13 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Group, GroupSeparator, GroupText } from "@/components/ui/group";
 import { filterSummary, PROPERTY } from "@/lib/filters";
 import { cn } from "@/lib/utils";
-import type { Filter, PropertyKey, PullRequest } from "@/types";
+import type { Filter } from "@/types";
 
+import { useFilterContext } from "./filter-context";
 import { FilterTrigger } from "./filter-trigger";
 
 interface FilterBarProps {
-  filters: Filter[];
-  orgPrs: PullRequest[];
-  viewer: string;
   actions: ReactNode;
-  onNegatedChange: (key: PropertyKey, negated: boolean) => void;
-  onRemove: (index: number) => void;
 }
 
 function operator(filter: Filter) {
@@ -26,14 +22,12 @@ function operator(filter: Filter) {
   return filter.negated ? "is not" : "is";
 }
 
-export function FilterBar({
-  filters,
-  orgPrs,
-  viewer,
-  actions,
-  onNegatedChange,
-  onRemove,
-}: FilterBarProps) {
+export function FilterBar({ actions }: FilterBarProps) {
+  const { state, actions: filterActions, meta } = useFilterContext("FilterBar");
+  const { filters, orgPrs } = state;
+  const { setNegated, remove } = filterActions;
+  const { viewer } = meta;
+
   return (
     <div className="bg-muted mx-2 mb-2.5 flex flex-wrap items-center gap-1.5 rounded-lg px-2 py-1.5 md:mx-4">
       {filters.map((filter, index) => (
@@ -56,7 +50,7 @@ export function FilterBar({
             size="sm"
             className="text-muted-foreground"
             onClick={() => {
-              onNegatedChange(filter.key, !filter.negated);
+              setNegated(filter.key, !filter.negated);
             }}
           >
             {operator(filter)}
@@ -79,7 +73,7 @@ export function FilterBar({
             className="text-muted-foreground"
             aria-label="Remove filter"
             onClick={() => {
-              onRemove(index);
+              remove(index);
             }}
           >
             <XIcon />

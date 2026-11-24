@@ -10,13 +10,12 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Command } from "@/components/ui/command";
 import { Popover, PopoverPopup } from "@/components/ui/popover";
-import type { PopoverPrimitive } from "@/components/ui/popover";
 import { UserAvatar } from "@/components/user-avatar";
 import { facets, PROPERTIES, PROPERTY, VIEWER_VALUE } from "@/lib/filters";
 import type { Option, Property } from "@/lib/filters";
-import type { Filter, PropertyKey, PullRequest } from "@/types";
+import type { PropertyKey } from "@/types";
 
-import type { MenuAnchor } from "./filter-trigger-context";
+import { useFilterContext } from "./filter-context";
 
 type Item =
   | { kind: "property"; property: Property }
@@ -35,36 +34,17 @@ function itemKey(item: Item) {
     : item.property.key;
 }
 
-interface FilterMenuProps {
-  handle: PopoverPrimitive.Handle<MenuAnchor>;
-  triggerId: string | null;
-  onOpenChange: (open: boolean, trigger: Element | undefined) => void;
-  orgPrs: PullRequest[];
-  scopedPrs: PullRequest[];
-  filters: Filter[];
-  viewer: string;
-  onToggle: (key: PropertyKey, value: string) => void;
-}
-
 interface FilterMenuListProps {
   initialKey: PropertyKey | null;
   canGoBack: boolean;
-  orgPrs: PullRequest[];
-  scopedPrs: PullRequest[];
-  filters: Filter[];
-  viewer: string;
-  onToggle: (key: PropertyKey, value: string) => void;
 }
 
-function FilterMenuList({
-  initialKey,
-  canGoBack,
-  orgPrs,
-  scopedPrs,
-  filters,
-  viewer,
-  onToggle,
-}: FilterMenuListProps) {
+function FilterMenuList({ initialKey, canGoBack }: FilterMenuListProps) {
+  const context = useFilterContext("FilterMenu");
+
+  const { filters, orgPrs, scopedPrs } = context.state;
+  const { toggle } = context.actions;
+  const { viewer } = context.meta;
   const [propertyKey, setPropertyKey] = useState(initialKey);
   const [query, setQuery] = useState("");
 
@@ -121,7 +101,7 @@ function FilterMenuList({
 
   function pick(item: Item) {
     if (item.kind === "value") {
-      onToggle(item.property.key, item.option.value);
+      toggle(item.property.key, item.option.value);
 
       return;
     }
@@ -209,19 +189,19 @@ function FilterMenuList({
   );
 }
 
-export function FilterMenu({
-  handle,
-  triggerId,
-  onOpenChange,
-  ...list
-}: FilterMenuProps) {
+export function FilterMenu() {
+  const context = useFilterContext("FilterMenu");
+
+  const { popoverHandle, openTriggerId } = context.meta;
+  const { changeMenu } = context.actions;
+
   return (
     <Popover
-      handle={handle}
-      open={triggerId !== null}
-      triggerId={triggerId}
+      handle={popoverHandle}
+      open={openTriggerId !== null}
+      triggerId={openTriggerId}
       onOpenChange={(open, { trigger }) => {
-        onOpenChange(open, trigger);
+        changeMenu(open, trigger);
       }}
     >
       {({ payload: anchor }) => {
@@ -240,7 +220,6 @@ export function FilterMenu({
               key={anchor}
               initialKey={chipKey}
               canGoBack={chipKey === null}
-              {...list}
             />
           </PopoverPopup>
         );

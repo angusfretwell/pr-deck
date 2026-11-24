@@ -16,7 +16,6 @@ import {
   DrawerPopup,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import type { DrawerPrimitive } from "@/components/ui/drawer";
 import {
   InputGroup,
   InputGroupAddon,
@@ -36,45 +35,22 @@ import {
   VIEWER_VALUE,
 } from "@/lib/filters";
 import { cn } from "@/lib/utils";
-import type { Filter, PropertyKey, PullRequest } from "@/types";
+import type { PropertyKey } from "@/types";
 
-import type { MenuAnchor } from "./filter-trigger-context";
+import { useFilterContext } from "./filter-context";
 
 const SEARCH_THRESHOLD = 6;
 
-interface FilterDrawerContentProps {
-  orgPrs: PullRequest[];
-  scopedPrs: PullRequest[];
-  filters: Filter[];
-  viewer: string;
-  onToggle: (key: PropertyKey, value: string, negated: boolean) => void;
-  onNegatedChange: (key: PropertyKey, negated: boolean) => void;
-  onClear: (key: PropertyKey) => void;
-  onClearAll: () => void;
-}
-
-interface FilterDrawerProps extends FilterDrawerContentProps {
-  handle: DrawerPrimitive.Handle<MenuAnchor>;
-  triggerId: string | null;
-  onOpenChange: (open: boolean, trigger: Element | undefined) => void;
-}
-
-interface PropertyPaneProps extends FilterDrawerContentProps {
+interface PropertyPaneProps {
   nested?: boolean;
   propertyKey: PropertyKey;
 }
 
-function PropertyPane({
-  nested = false,
-  propertyKey,
-  orgPrs,
-  scopedPrs,
-  filters,
-  viewer,
-  onToggle,
-  onNegatedChange,
-  onClear,
-}: PropertyPaneProps) {
+function PropertyPane({ nested = false, propertyKey }: PropertyPaneProps) {
+  const context = useFilterContext("FilterDrawer");
+  const { filters, orgPrs, scopedPrs } = context.state;
+  const { toggle, setNegated, clear } = context.actions;
+  const { viewer } = context.meta;
   const property = PROPERTY[propertyKey];
   const filter = filters.find((candidate) => candidate.key === propertyKey);
 
@@ -100,7 +76,7 @@ function PropertyPane({
     setPendingNegated(next);
 
     if (filter) {
-      onNegatedChange(propertyKey, next);
+      setNegated(propertyKey, next);
     }
   }
 
@@ -159,7 +135,7 @@ function PropertyPane({
                 key={option.value}
                 checked={checked}
                 onCheckedChange={() => {
-                  onToggle(propertyKey, option.value, negated);
+                  toggle(propertyKey, option.value, negated);
                 }}
               >
                 <span className="flex items-center gap-2">
@@ -196,7 +172,7 @@ function PropertyPane({
           variant="secondary"
           disabled={!filter}
           onClick={() => {
-            onClear(propertyKey);
+            clear(propertyKey);
           }}
         >
           Clear
@@ -207,8 +183,11 @@ function PropertyPane({
   );
 }
 
-function PropertyList(props: FilterDrawerContentProps) {
-  const { filters, scopedPrs, orgPrs, viewer, onClearAll } = props;
+function PropertyList() {
+  const context = useFilterContext("FilterDrawer");
+  const { filters, scopedPrs, orgPrs } = context.state;
+  const { clearAll } = context.actions;
+  const { viewer } = context.meta;
   const count = scopedPrs.filter((pr) => passes(pr, filters, viewer)).length;
 
   return (
@@ -241,7 +220,7 @@ function PropertyList(props: FilterDrawerContentProps) {
                   </span>
                 </DrawerMenuTrigger>
                 <DrawerPopup showBar>
-                  <PropertyPane nested propertyKey={property.key} {...props} />
+                  <PropertyPane nested propertyKey={property.key} />
                 </DrawerPopup>
               </Drawer>
             );
@@ -252,7 +231,7 @@ function PropertyList(props: FilterDrawerContentProps) {
         <Button
           variant="secondary"
           disabled={filters.length === 0}
-          onClick={onClearAll}
+          onClick={clearAll}
         >
           Clear all
         </Button>
@@ -264,19 +243,18 @@ function PropertyList(props: FilterDrawerContentProps) {
   );
 }
 
-export function FilterDrawer({
-  handle,
-  triggerId,
-  onOpenChange,
-  ...content
-}: FilterDrawerProps) {
+export function FilterDrawer() {
+  const context = useFilterContext("FilterDrawer");
+  const { drawerHandle, openTriggerId } = context.meta;
+  const { changeMenu } = context.actions;
+
   return (
     <Drawer
-      handle={handle}
-      open={triggerId !== null}
-      triggerId={triggerId}
+      handle={drawerHandle}
+      open={openTriggerId !== null}
+      triggerId={openTriggerId}
       onOpenChange={(open, { trigger }) => {
-        onOpenChange(open, trigger);
+        changeMenu(open, trigger);
       }}
     >
       {({ payload: anchor }) => {
@@ -287,9 +265,9 @@ export function FilterDrawer({
         return (
           <DrawerPopup showBar>
             {anchor === "header" || anchor === "add" ? (
-              <PropertyList {...content} />
+              <PropertyList />
             ) : (
-              <PropertyPane key={anchor} propertyKey={anchor} {...content} />
+              <PropertyPane key={anchor} propertyKey={anchor} />
             )}
           </DrawerPopup>
         );

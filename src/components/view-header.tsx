@@ -1,22 +1,19 @@
 import { FilterIcon } from "@primer/octicons-react";
-import { useId, useMemo } from "react";
 import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsiblePanel } from "@/components/ui/collapsible";
-import { DrawerCreateHandle as createDrawerHandle } from "@/components/ui/drawer";
-import { PopoverCreateHandle as createPopoverHandle } from "@/components/ui/popover";
-import { toggleValue } from "@/lib/filters";
-import { useDesktop } from "@/lib/use-desktop";
-import type { Filter, PropertyKey, PullRequest } from "@/types";
+import type { Filter, PullRequest } from "@/types";
 
 import { FilterBar } from "./view-header/filter-bar";
+import { FilterContext } from "./view-header/filter-context";
+import type { MenuAnchor } from "./view-header/filter-context";
 import { FilterDrawer } from "./view-header/filter-drawer";
 import { FilterMenu } from "./view-header/filter-menu";
 import { FilterTrigger } from "./view-header/filter-trigger";
-import { FilterTriggerContext } from "./view-header/filter-trigger-context";
-import type { MenuAnchor } from "./view-header/filter-trigger-context";
 import { Hint } from "./view-header/hint";
+import { useFilterContextValue } from "./view-header/use-filter-context-value";
+import { NewViewActions, SavedViewActions } from "./view-header/view-actions";
 
 export interface FilterMenuState {
   anchor: MenuAnchor;
@@ -41,14 +38,6 @@ export interface ViewHeaderProps {
   viewer: string;
 }
 
-function anchorsFor(current: Filter[]) {
-  return [
-    "header",
-    "add",
-    ...current.map((filter) => filter.key),
-  ] satisfies MenuAnchor[];
-}
-
 export function ViewHeader({
   children,
   filters,
@@ -63,139 +52,43 @@ export function ViewHeader({
   scopedPrs,
   viewer,
 }: ViewHeaderProps) {
-  const desktop = useDesktop();
-  const popoverHandle = useMemo(() => createPopoverHandle<MenuAnchor>(), []);
-  const drawerHandle = useMemo(() => createDrawerHandle<MenuAnchor>(), []);
-  const triggerIdPrefix = useId();
-
-  function triggerId(anchor: MenuAnchor) {
-    return `${triggerIdPrefix}${anchor}`;
-  }
-
-  function changeFilterMenu(open: boolean, trigger: Element | undefined) {
-    if (!open) {
-      onFilterMenuChange(null);
-
-      return;
-    }
-
-    const anchor = anchorsFor(filters).find(
-      (candidate) => triggerId(candidate) === trigger?.id
-    );
-
-    if (anchor) {
-      onFilterMenuChange(anchor);
-    }
-  }
+  const value = useFilterContextValue({
+    filters,
+    onFiltersChange,
+    openAnchor: filterMenu?.anchor ?? null,
+    onFilterMenuChange,
+    orgPrs,
+    scopedPrs,
+    viewer,
+  });
 
   const barVisible = filtersChanged
     ? filterMenu?.deferBar !== true
     : filterMenu !== null && filterMenu.anchor !== "header";
 
-  function changeFilters(next: Filter[]) {
-    onFiltersChange(next);
-
-    const anchorRemoved =
-      filterMenu !== null && !anchorsFor(next).includes(filterMenu.anchor);
-
-    if (anchorRemoved) {
-      onFilterMenuChange(null);
-    }
-  }
-
-  function toggleFilterValue(key: PropertyKey, value: string, negated = false) {
-    changeFilters(toggleValue(filters, key, value, negated));
-  }
-
-  function removeFilter(index: number) {
-    onFiltersChange(filters.filter((_, i) => i !== index));
-    onFilterMenuChange(null);
-  }
-
-  function setFilterNegated(key: PropertyKey, negated: boolean) {
-    onFiltersChange(
-      filters.map((filter) =>
-        filter.key === key ? { ...filter, negated } : filter
-      )
-    );
-  }
-
-  const actions =
-    filtersChanged &&
-    (onSaveView ? (
-      <>
-        <Button variant="ghost" size="sm" onClick={onResetFilters}>
-          Reset
-        </Button>
-        <Button variant="ghost" size="sm" onClick={onSaveAsNewView}>
-          Save as new view
-        </Button>
-        <Button size="sm" onClick={onSaveView}>
-          Save
-        </Button>
-      </>
-    ) : (
-      <>
-        <Button variant="ghost" size="sm" onClick={onResetFilters}>
-          Clear
-        </Button>
-        <Button size="sm" onClick={onSaveAsNewView}>
-          Save as view
-        </Button>
-      </>
-    ));
+  const actions = onSaveView ? (
+    <SavedViewActions
+      onReset={onResetFilters}
+      onSaveAsNew={onSaveAsNewView}
+      onSave={onSaveView}
+    />
+  ) : (
+    <NewViewActions onClear={onResetFilters} onSaveAsNew={onSaveAsNewView} />
+  );
 
   return (
     <div className="border-b">
-      <FilterTriggerContext
-        value={{ drawer: !desktop, popoverHandle, drawerHandle, triggerId }}
-      >
+      <FilterContext value={value}>
         <div className="flex items-center gap-1.5 px-2 py-2.5 md:px-4">
           {children}
         </div>
         <Collapsible open={barVisible}>
           <CollapsiblePanel className="ease-snappy transition-[height,opacity] data-ending-style:opacity-0 data-starting-style:opacity-0 motion-reduce:transition-opacity">
-            <FilterBar
-              filters={filters}
-              orgPrs={orgPrs}
-              viewer={viewer}
-              actions={actions}
-              onNegatedChange={setFilterNegated}
-              onRemove={removeFilter}
-            />
+            <FilterBar actions={filtersChanged && actions} />
           </CollapsiblePanel>
         </Collapsible>
-      </FilterTriggerContext>
-      {desktop ? (
-        <FilterMenu
-          handle={popoverHandle}
-          triggerId={filterMenu && triggerId(filterMenu.anchor)}
-          onOpenChange={changeFilterMenu}
-          orgPrs={orgPrs}
-          scopedPrs={scopedPrs}
-          filters={filters}
-          viewer={viewer}
-          onToggle={toggleFilterValue}
-        />
-      ) : (
-        <FilterDrawer
-          handle={drawerHandle}
-          triggerId={filterMenu && triggerId(filterMenu.anchor)}
-          onOpenChange={changeFilterMenu}
-          orgPrs={orgPrs}
-          scopedPrs={scopedPrs}
-          filters={filters}
-          viewer={viewer}
-          onToggle={toggleFilterValue}
-          onNegatedChange={setFilterNegated}
-          onClear={(key) => {
-            changeFilters(filters.filter((filter) => filter.key !== key));
-          }}
-          onClearAll={() => {
-            changeFilters([]);
-          }}
-        />
-      )}
+        {value.meta.drawer ? <FilterDrawer /> : <FilterMenu />}
+      </FilterContext>
     </div>
   );
 }

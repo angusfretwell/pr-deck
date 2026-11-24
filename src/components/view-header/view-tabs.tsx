@@ -1,7 +1,6 @@
 import { XIcon } from "@primer/octicons-react";
-import { animate, motion } from "motion/react";
-import type { AnimationPlaybackControls } from "motion/react";
-import { useEffect, useReducer, useRef, useState } from "react";
+import { motion } from "motion/react";
+import { useReducer, useRef, useState } from "react";
 import { Link } from "wouter";
 
 import {
@@ -21,12 +20,13 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useDesktop } from "@/lib/use-desktop";
 import { cn } from "@/lib/utils";
 import { ALL_OPEN_NAME } from "@/lib/views";
 import type { View } from "@/types";
 
 import { Hint } from "./hint";
+import { useCenterActive } from "./use-center-active";
+import { usePanScroll } from "./use-pan-scroll";
 
 interface ViewTabsProps {
   views: View[];
@@ -42,41 +42,6 @@ interface ViewTabsProps {
 }
 
 const PILL = "rounded-full before:rounded-full";
-
-function translateX(element: Element) {
-  const [x = ""] = getComputedStyle(element).translate.split(" ");
-
-  return Number(x.replace(/px$/u, "")) || 0;
-}
-
-function viewportOf(strip: HTMLElement | null) {
-  return strip?.closest("[data-slot=scroll-area-viewport]");
-}
-
-function centerActive(strip: HTMLElement | null, shouldGlide: boolean) {
-  const viewport = viewportOf(strip);
-
-  if (!strip || !viewport) {
-    return;
-  }
-
-  const from = viewport.scrollLeft - translateX(strip);
-
-  strip
-    .querySelector('[aria-current="page"]')
-    ?.scrollIntoView({ inline: "center", block: "nearest" });
-  const shift = viewport.scrollLeft - from;
-
-  if (!shouldGlide || !shift) {
-    return;
-  }
-
-  strip.style.transition = "none";
-  strip.style.translate = `${shift}px`;
-  strip.getBoundingClientRect();
-  strip.style.transition = "";
-  strip.style.translate = "";
-}
 
 function Count({ children }: { children: number | undefined }) {
   const [loadedOnMount] = useReducer(
@@ -230,6 +195,65 @@ function RenameInput({ name, count, onCommit }: RenameInputProps) {
   );
 }
 
+interface ViewTabProps {
+  view: View;
+  count: number | undefined;
+  active: boolean;
+  deletable: boolean;
+  renaming: boolean;
+  href: string;
+  onRenamingChange: (id: string | null) => void;
+  onRename: (id: string, name: string) => void;
+  onDelete: (id: string) => void;
+}
+
+function ViewTab({
+  view,
+  count,
+  active,
+  deletable,
+  renaming,
+  href,
+  onRenamingChange,
+  onRename,
+  onDelete,
+}: ViewTabProps) {
+  if (renaming) {
+    return (
+      <RenameInput
+        name={view.name}
+        count={count}
+        onCommit={(name) => {
+          onRename(view.id, name);
+        }}
+      />
+    );
+  }
+
+  return (
+    <div className="relative flex">
+      <ViewLink
+        href={href}
+        active={active}
+        name={view.name}
+        count={count}
+        className={cn(deletable && "pe-9 sm:pe-8")}
+        onDoubleClick={() => {
+          onRenamingChange(view.id);
+        }}
+      />
+      {deletable && (
+        <DeleteViewButton
+          name={view.name}
+          onConfirm={() => {
+            onDelete(view.id);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
 export function ViewTabs({
   views,
   viewCounts,
@@ -243,33 +267,14 @@ export function ViewTabs({
   onDeleteView,
 }: ViewTabsProps) {
   const nav = useRef<HTMLElement>(null);
-  const desktop = useDesktop();
-  const glide = useRef<AnimationPlaybackControls>(null);
-  const panned = useRef(false);
-
-  const centeredFor = useRef<{
-    viewId: string | null;
-    countsKey: string;
-  } | null>(null);
 
   const countsKey = [
     allOpenCount,
     ...views.map((view) => viewCounts[view.id]),
   ].join(",");
 
-  useEffect(() => {
-    const previous = centeredFor.current;
-
-    if (previous?.viewId === activeViewId && previous.countsKey === countsKey) {
-      return;
-    }
-
-    centeredFor.current = { viewId: activeViewId, countsKey };
-    centerActive(
-      nav.current,
-      previous !== null && previous.viewId !== activeViewId
-    );
-  }, [activeViewId, countsKey]);
+  const onTransitionEnd = useCenterActive(nav, activeViewId, countsKey);
+  const panHandlers = usePanScroll(nav);
 
   return (
     <ScrollArea
@@ -280,47 +285,8 @@ export function ViewTabs({
         ref={nav}
         aria-label="Views"
         className="ease-snappy flex w-max gap-1.5 py-2 ps-2 transition-[translate] duration-300 motion-reduce:transition-none max-md:touch-pan-y md:ps-4"
-        onPointerDownCapture={() => {
-          panned.current = false;
-          glide.current?.stop();
-        }}
-        onPanStart={() => {
-          panned.current = !desktop;
-        }}
-        onPan={(_, { delta }) => {
-          const viewport = viewportOf(nav.current);
-
-          if (panned.current && viewport) {
-            viewport.scrollLeft -= delta.x;
-          }
-        }}
-        onPanEnd={(_, { velocity }) => {
-          const strip = viewportOf(nav.current);
-
-          if (!panned.current || !strip) {
-            return;
-          }
-
-          glide.current = animate(strip.scrollLeft, strip.scrollLeft, {
-            type: "inertia",
-            velocity: -velocity.x,
-            min: 0,
-            max: strip.scrollWidth - strip.clientWidth,
-            onUpdate: (left) => {
-              strip.scrollLeft = left;
-            },
-          });
-        }}
-        onClickCapture={(event) => {
-          if (panned.current) {
-            event.stopPropagation();
-          }
-        }}
-        onTransitionEnd={(event) => {
-          if (event.propertyName === "grid-template-columns") {
-            centerActive(nav.current, true);
-          }
-        }}
+        {...panHandlers}
+        onTransitionEnd={onTransitionEnd}
       >
         <ViewLink
           href={viewHref(null)}
@@ -328,48 +294,20 @@ export function ViewTabs({
           name={ALL_OPEN_NAME}
           count={allOpenCount}
         />
-        {views.map((view) => {
-          const active = view.id === activeViewId;
-          const count = viewCounts[view.id];
-
-          if (view.id === renamingViewId) {
-            return (
-              <RenameInput
-                key={view.id}
-                name={view.name}
-                count={count}
-                onCommit={(name) => {
-                  onRenameView(view.id, name);
-                }}
-              />
-            );
-          }
-
-          const deletable = view.id === deletableViewId;
-
-          return (
-            <div key={view.id} className="relative flex">
-              <ViewLink
-                href={viewHref(view.id)}
-                active={active}
-                name={view.name}
-                count={count}
-                className={cn(deletable && "pe-9 sm:pe-8")}
-                onDoubleClick={() => {
-                  onRenamingViewChange(view.id);
-                }}
-              />
-              {deletable && (
-                <DeleteViewButton
-                  name={view.name}
-                  onConfirm={() => {
-                    onDeleteView(view.id);
-                  }}
-                />
-              )}
-            </div>
-          );
-        })}
+        {views.map((view) => (
+          <ViewTab
+            key={view.id}
+            view={view}
+            count={viewCounts[view.id]}
+            active={view.id === activeViewId}
+            deletable={view.id === deletableViewId}
+            renaming={view.id === renamingViewId}
+            href={viewHref(view.id)}
+            onRenamingChange={onRenamingViewChange}
+            onRename={onRenameView}
+            onDelete={onDeleteView}
+          />
+        ))}
       </motion.nav>
     </ScrollArea>
   );

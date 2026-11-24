@@ -1,11 +1,10 @@
-import { use } from "react";
 import type { ReactElement, ReactNode } from "react";
 
 import { DrawerTrigger } from "@/components/ui/drawer";
 import { PopoverTrigger } from "@/components/ui/popover";
 
-import { FilterTriggerContext } from "./filter-trigger-context";
-import type { MenuAnchor } from "./filter-trigger-context";
+import { useFilterContext } from "./filter-context";
+import type { MenuAnchor } from "./filter-context";
 
 interface FilterTriggerProps {
   anchor: MenuAnchor;
@@ -14,25 +13,16 @@ interface FilterTriggerProps {
 }
 
 export function FilterTrigger({ anchor, ...props }: FilterTriggerProps) {
-  const context = use(FilterTriggerContext);
+  const context = useFilterContext("FilterTrigger");
+  const { drawer, drawerHandle, popoverHandle, triggerId } = context.meta;
+  const id = triggerId(anchor);
 
-  if (!context) {
-    throw new Error("FilterTrigger must be rendered inside ViewHeader");
-  }
-
-  const id = context.triggerId(anchor);
-
-  return context.drawer ? (
-    <DrawerTrigger
-      {...props}
-      handle={context.drawerHandle}
-      payload={anchor}
-      id={id}
-    />
+  return drawer ? (
+    <DrawerTrigger {...props} handle={drawerHandle} payload={anchor} id={id} />
   ) : (
     <PopoverTrigger
       {...props}
-      handle={context.popoverHandle}
+      handle={popoverHandle}
       payload={anchor}
       id={id}
     />
