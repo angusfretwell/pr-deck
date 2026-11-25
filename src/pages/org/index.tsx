@@ -6,7 +6,7 @@ import { usePreferences } from "@/lib/preferences";
 import { closeOverlays } from "@/pages/org/lib/overlays-store";
 import type { Account } from "@/types";
 
-import { ListHotkeys } from "./list-hotkeys";
+import { CycleHotkeys, ListHotkeys } from "./list-hotkeys";
 import { ListPane } from "./list-pane";
 import { OrgCommandPalette } from "./org-command-palette";
 import { OrgListProvider } from "./org-list-context";
@@ -67,6 +67,7 @@ export function OrgRoute({ owner, owners, viewSlug, viewer }: OrgRouteProps) {
       <CloseOverlaysOnLeave key={views.active?.id} />
       <RememberLastPath />
       <ListHotkeys />
+      <CycleHotkeys />
     </OrgListProvider>
   );
 }

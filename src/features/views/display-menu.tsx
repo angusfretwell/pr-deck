@@ -12,6 +12,7 @@ import {
   ResponsiveMenuTrigger,
 } from "@/components/responsive-menu";
 import { Button } from "@/components/ui/button";
+import { HOTKEYS } from "@/features/shortcuts/lib/hotkeys";
 import { GROUPS } from "@/lib/preferences";
 import type { Group } from "@/types";
 
@@ -36,7 +37,7 @@ export function DisplayMenu({
 }: DisplayMenuProps) {
   return (
     <ResponsiveMenu open={open} onOpenChange={onOpenChange}>
-      <Hint label="Display">
+      <Hint label="Display" hotkey={HOTKEYS.display}>
         <ResponsiveMenuTrigger
           render={
             <Button

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsiblePanel } from "@/components/ui/collapsible";
+import { HOTKEYS } from "@/features/shortcuts/lib/hotkeys";
 import { useFilterContextValue } from "@/features/views/hooks/use-filter-context-value";
 import type { Filter, PullRequest } from "@/types";
 
@@ -95,7 +96,7 @@ export function ViewHeader({
 
 export function FilterButton() {
   return (
-    <Hint label="Filter">
+    <Hint label="Filter" hotkey={HOTKEYS.filter}>
       <FilterTrigger
         anchor="header"
         render={
