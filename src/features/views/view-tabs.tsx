@@ -1,5 +1,5 @@
 import { XIcon } from "@primer/octicons-react";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { useReducer, useRef, useState } from "react";
 import { Link } from "wouter";
 
@@ -33,6 +33,7 @@ interface ViewTabsProps {
   viewCounts: Record<string, number>;
   allOpenCount: number | undefined;
   activeViewId: string | null;
+  glideToActive?: boolean;
   deletableViewId: string | null;
   renamingViewId: string | null;
   viewHref: (id: string | null) => string;
@@ -42,6 +43,8 @@ interface ViewTabsProps {
 }
 
 const PILL = "rounded-full before:rounded-full";
+const GLIDE = { type: "spring", duration: 0.25, bounce: 0 } as const;
+const INSTANT = { duration: 0 } as const;
 
 function Count({ children }: { children: number | undefined }) {
   const [loadedOnMount] = useReducer(
@@ -71,6 +74,7 @@ interface ViewLinkProps {
   active: boolean;
   name: string;
   count: number | undefined;
+  glide: boolean;
   className?: string;
   onDoubleClick?: () => void;
 }
@@ -80,6 +84,7 @@ function ViewLink({
   active,
   name,
   count,
+  glide,
   className,
   onDoubleClick,
 }: ViewLinkProps) {
@@ -89,13 +94,21 @@ function ViewLink({
       size="sm"
       className={cn(
         PILL,
-        "aria-[current=page]:bg-input/64 dark:aria-[current=page]:bg-input aria-[current=page]:shadow-none",
+        "aria-[current=page]:bg-transparent aria-[current=page]:shadow-none dark:aria-[current=page]:bg-transparent",
         className
       )}
       render={<Link href={href} aria-current={active ? "page" : undefined} />}
       onDoubleClick={onDoubleClick}
     >
-      <span className="flex min-w-0 items-baseline gap-1.5">
+      {active && (
+        <motion.span
+          layoutId="active-view"
+          aria-hidden
+          className="bg-input/64 dark:bg-input absolute inset-0 rounded-full"
+          transition={glide ? GLIDE : INSTANT}
+        />
+      )}
+      <span className="relative flex min-w-0 items-baseline gap-1.5">
         <span className="max-w-50 truncate" title={name}>
           {name}
         </span>
@@ -199,6 +212,7 @@ interface ViewTabProps {
   view: View;
   count: number | undefined;
   active: boolean;
+  glide: boolean;
   deletable: boolean;
   renaming: boolean;
   href: string;
@@ -211,6 +225,7 @@ function ViewTab({
   view,
   count,
   active,
+  glide,
   deletable,
   renaming,
   href,
@@ -237,6 +252,7 @@ function ViewTab({
         active={active}
         name={view.name}
         count={count}
+        glide={glide}
         className={cn(deletable && "pe-9 sm:pe-8")}
         onDoubleClick={() => {
           onRenamingChange(view.id);
@@ -259,6 +275,7 @@ export function ViewTabs({
   viewCounts,
   allOpenCount,
   activeViewId,
+  glideToActive = false,
   deletableViewId,
   renamingViewId,
   viewHref,
@@ -267,6 +284,8 @@ export function ViewTabs({
   onDeleteView,
 }: ViewTabsProps) {
   const nav = useRef<HTMLElement>(null);
+  const reducedMotion = useReducedMotion();
+  const glide = glideToActive && reducedMotion !== true;
 
   const countsKey = [
     allOpenCount,
@@ -293,6 +312,7 @@ export function ViewTabs({
           active={activeViewId === null}
           name={ALL_OPEN_NAME}
           count={allOpenCount}
+          glide={glide}
         />
         {views.map((view) => (
           <ViewTab
@@ -300,6 +320,7 @@ export function ViewTabs({
             view={view}
             count={viewCounts[view.id]}
             active={view.id === activeViewId}
+            glide={glide}
             deletable={view.id === deletableViewId}
             renaming={view.id === renamingViewId}
             href={viewHref(view.id)}
