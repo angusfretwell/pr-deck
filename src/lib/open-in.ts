@@ -13,10 +13,9 @@ function hrefFor(openIn: OpenIn, url: string) {
 }
 
 export function useOpenInHref(url: string) {
-  return hrefFor(
-    usePreferences((state) => state.openIn),
-    url
-  );
+  const openIn = usePreferences((state) => state.openIn);
+
+  return hrefFor(openIn, url);
 }
 
 export function openPullRequest(url: string) {
