@@ -101,7 +101,7 @@ export function AccountMenu({
           <ResponsiveMenuItem onClick={openShortcuts}>
             <KeyAsteriskIcon />
             Keyboard shortcuts
-        </ResponsiveMenuItem>
+          </ResponsiveMenuItem>
         )}
         <ResponsiveMenuLinkItem href={REPO_URL} target="_blank" rel="noopener">
           <MarkGithubIcon />

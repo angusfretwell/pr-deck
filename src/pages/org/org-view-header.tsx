@@ -1,6 +1,11 @@
+import { useEffect } from "react";
+
 import { DisplayMenu } from "@/features/views/display-menu";
 import { DraftsToggle } from "@/features/views/drafts-toggle";
-import { useKeyboardViewHref } from "@/features/views/lib/keyboard-view-store";
+import {
+  clearKeyboardViewHref,
+  useKeyboardViewHref,
+} from "@/features/views/lib/keyboard-view-store";
 import { FilterButton, ViewHeader } from "@/features/views/view-header";
 import { ViewTabs } from "@/features/views/view-tabs";
 import { usePreferences } from "@/lib/preferences";
@@ -20,6 +25,13 @@ function OrgViewTabs() {
 
   const activeViewId = views.active?.id ?? null;
   const keyboardViewHref = useKeyboardViewHref();
+  const activeHref = views.hrefFor(activeViewId);
+
+  useEffect(() => {
+    if (useKeyboardViewHref.getState() !== activeHref) {
+      clearKeyboardViewHref();
+    }
+  }, [activeHref]);
 
   return (
     <ViewTabs
@@ -27,7 +39,7 @@ function OrgViewTabs() {
       viewCounts={viewCounts}
       allOpenCount={allOpenCount}
       activeViewId={activeViewId}
-      glideToActive={keyboardViewHref === views.hrefFor(activeViewId)}
+      glideToActive={keyboardViewHref === activeHref}
       deletableViewId={views.deletableViewId}
       renamingViewId={views.session.renamingViewId}
       viewHref={views.hrefFor}

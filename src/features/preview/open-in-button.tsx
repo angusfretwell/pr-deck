@@ -79,7 +79,7 @@ export function OpenInButton({
                     key={target}
                     href={OPEN_IN_HREFS[target](url)}
                     target="_blank"
-                    rel="noopener"
+                    rel="noopener noreferrer"
                     onClick={() => {
                       usePreferences.setState({ openIn: target });
                     }}
