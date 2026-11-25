@@ -1,14 +1,101 @@
 import { useHotkeys } from "@tanstack/react-hotkeys";
+import type { HotkeyMeta } from "@tanstack/react-hotkeys";
+import { useLocation } from "wouter";
 
 import { openSearch } from "@/features/search/lib/search-store";
+import { HOTKEYS } from "@/features/shortcuts/lib/hotkeys";
+import type { SHORTCUT_GROUPS } from "@/features/shortcuts/lib/hotkeys";
+import { useShortcutsOpen } from "@/features/shortcuts/lib/shortcuts-store";
 import { usePreferences } from "@/lib/preferences";
 import {
   changeFilterMenu,
+  setDisplayMenuOpen,
   togglePalette,
   useOverlays,
 } from "@/pages/org/lib/overlays-store";
 
 import { useOrgList } from "./org-list-context";
+
+function cycle<T>(items: T[], current: T, offset: 1 | -1) {
+  return items[(items.indexOf(current) + offset + items.length) % items.length];
+}
+
+function meta(group: (typeof SHORTCUT_GROUPS)[number], name: string) {
+  return { group, name } satisfies HotkeyMeta;
+}
+
+function useOpenOverlays() {
+  const { filterMenu, displayMenuOpen, paletteOpen } = useOverlays();
+  const shortcutsOpen = useShortcutsOpen();
+
+  return {
+    paletteOpen,
+    shortcutsOpen,
+    menuOpen: filterMenu !== null || displayMenuOpen,
+    idle: !filterMenu && !displayMenuOpen && !paletteOpen && !shortcutsOpen,
+  };
+}
+
+export function CycleHotkeys() {
+  const {
+    state: { views },
+    meta: { owner, owners },
+  } = useOrgList();
+
+  const [, navigate] = useLocation();
+  const { idle } = useOpenOverlays();
+
+  function cycleView(offset: 1 | -1) {
+    return () => {
+      const viewIds = [null, ...views.list.map((view) => view.id)];
+      navigate(views.hrefFor(cycle(viewIds, views.active?.id ?? null, offset)));
+    };
+  }
+
+  function cycleOwner(offset: 1 | -1) {
+    return () => {
+      const logins = owners.map((account) => account.login);
+      navigate(`/${cycle(logins, owner, offset)}`);
+    };
+  }
+
+  useHotkeys([
+    {
+      hotkey: "[",
+      callback: cycleView(-1),
+      options: {
+        enabled: idle && views.list.length > 0,
+        meta: meta("Views", "Previous view"),
+      },
+    },
+    {
+      hotkey: "]",
+      callback: cycleView(1),
+      options: {
+        enabled: idle && views.list.length > 0,
+        meta: meta("Views", "Next view"),
+      },
+    },
+    {
+      hotkey: "{",
+      callback: cycleOwner(-1),
+      options: {
+        enabled: idle && owners.length > 1,
+        meta: meta("Views", "Previous organisation"),
+      },
+    },
+    {
+      hotkey: "}",
+      callback: cycleOwner(1),
+      options: {
+        enabled: idle && owners.length > 1,
+        meta: meta("Views", "Next organisation"),
+      },
+    },
+  ]);
+
+  return null;
+}
 
 export function ListHotkeys() {
   const {
@@ -17,9 +104,7 @@ export function ListHotkeys() {
     meta: { desktop },
   } = useOrgList();
 
-  const { filterMenu, displayMenuOpen, paletteOpen } = useOverlays();
-
-  const idle = !filterMenu && !displayMenuOpen && !paletteOpen;
+  const { idle, paletteOpen, shortcutsOpen, menuOpen } = useOpenOverlays();
   const hasRows = list.order.length > 0;
   const navigable = list.order.includes(selection.selectedId ?? "");
 
@@ -33,17 +118,30 @@ export function ListHotkeys() {
     act({ type: "togglePreview" });
   }
 
+  const next = meta("Pull requests", "Next pull request");
+  const previous = meta("Pull requests", "Previous pull request");
+  const preview = meta("Pull requests", "Toggle preview");
+  const search = meta("General", "Search pull requests");
+
   useHotkeys(
     [
       {
-        hotkey: "Mod+K",
+        hotkey: HOTKEYS.palette,
         callback: togglePalette,
-        options: { enabled: !filterMenu && !displayMenuOpen },
+        options: {
+          enabled: !menuOpen && !shortcutsOpen,
+          meta: meta("General", "Command palette"),
+        },
       },
       {
         hotkey: "Mod+F",
         callback: openSearch,
-        options: { enabled: !paletteOpen },
+        options: { enabled: !paletteOpen && !shortcutsOpen, meta: search },
+      },
+      {
+        hotkey: HOTKEYS.search,
+        callback: openSearch,
+        options: { enabled: idle, meta: search },
       },
       {
         hotkey: "Escape",
@@ -57,48 +155,65 @@ export function ListHotkeys() {
             act({ type: "escape" });
           }
         },
-        options: { preventDefault: false, enabled: !paletteOpen },
+        options: {
+          preventDefault: false,
+          enabled: !paletteOpen && !shortcutsOpen,
+          meta: meta("Pull requests", "Close preview or clear selection"),
+        },
       },
-      { hotkey: "/", callback: openSearch, options: { enabled: idle } },
       {
-        hotkey: "F",
+        hotkey: HOTKEYS.filter,
         callback: () => {
           changeFilterMenu("header", views.filtersChanged);
         },
-        options: { enabled: idle },
+        options: { enabled: idle, meta: meta("Views", "Filter") },
       },
       {
-        hotkey: "D",
+        hotkey: HOTKEYS.display,
+        callback: () => {
+          setDisplayMenuOpen(true);
+        },
+        options: { enabled: idle, meta: meta("Views", "Display options") },
+      },
+      {
+        hotkey: HOTKEYS.drafts,
         callback: () => {
           usePreferences.setState({ hideDrafts: !hideDrafts });
         },
-        options: { enabled: idle && desktop },
+        options: {
+          enabled: idle && desktop,
+          meta: meta("Views", "Show or hide drafts"),
+        },
       },
-      { hotkey: "J", callback: move(1), options: { enabled: idle && hasRows } },
+      {
+        hotkey: "J",
+        callback: move(1),
+        options: { enabled: idle && hasRows, meta: next },
+      },
       {
         hotkey: "ArrowDown",
         callback: move(1),
-        options: { enabled: idle && hasRows },
+        options: { enabled: idle && hasRows, meta: next },
       },
       {
         hotkey: "K",
         callback: move(-1),
-        options: { enabled: idle && hasRows },
+        options: { enabled: idle && hasRows, meta: previous },
       },
       {
         hotkey: "ArrowUp",
         callback: move(-1),
-        options: { enabled: idle && hasRows },
+        options: { enabled: idle && hasRows, meta: previous },
       },
       {
         hotkey: "Enter",
         callback: togglePreview,
-        options: { enabled: idle && navigable },
+        options: { enabled: idle && navigable, meta: preview },
       },
       {
         hotkey: "Space",
         callback: togglePreview,
-        options: { enabled: idle && navigable },
+        options: { enabled: idle && navigable, meta: preview },
       },
       {
         hotkey: "O",
@@ -107,7 +222,11 @@ export function ListHotkeys() {
             window.open(list.selected.url, "_blank", "noopener");
           }
         },
-        options: { enabled: idle && !!list.selected, preventDefault: false },
+        options: {
+          enabled: idle && !!list.selected,
+          preventDefault: false,
+          meta: meta("Pull requests", "Open on GitHub"),
+        },
       },
     ],
     { ignoreDefaultPrevented: true }

@@ -1,4 +1,8 @@
-import { MarkGithubIcon, SignOutIcon } from "@primer/octicons-react";
+import {
+  KeyAsteriskIcon,
+  MarkGithubIcon,
+  SignOutIcon,
+} from "@primer/octicons-react";
 
 import { AccountAvatar } from "@/components/account-avatar";
 import {
@@ -15,6 +19,8 @@ import {
   ResponsiveMenuTrigger,
 } from "@/components/responsive-menu";
 import { Button } from "@/components/ui/button";
+import { openShortcuts } from "@/features/shortcuts/lib/shortcuts-store";
+import { useDesktop } from "@/hooks/use-desktop";
 import { THEMES, usePreferences } from "@/lib/preferences";
 import { REPO_URL } from "@/lib/repo";
 import type { Account, Session } from "@/types";
@@ -32,6 +38,7 @@ export function AccountMenu({
 }: AccountMenuProps) {
   const hiddenOwners = usePreferences((state) => state.hiddenOwners);
   const colorMode = usePreferences((state) => state.colorMode);
+  const desktop = useDesktop();
 
   return (
     <ResponsiveMenu>
@@ -90,6 +97,12 @@ export function AccountMenu({
           </ResponsiveMenuRadioGroup>
         </ResponsiveMenuGroup>
         <ResponsiveMenuSeparator />
+        {desktop && (
+          <ResponsiveMenuItem onClick={openShortcuts}>
+            <KeyAsteriskIcon />
+            Keyboard shortcuts
+        </ResponsiveMenuItem>
+        )}
         <ResponsiveMenuLinkItem href={REPO_URL} target="_blank" rel="noopener">
           <MarkGithubIcon />
           Source on GitHub

@@ -5,6 +5,7 @@ import {
   SegmentedControl,
   SegmentedControlItem,
 } from "@/components/ui/segmented-control";
+import { HOTKEYS } from "@/features/shortcuts/lib/hotkeys";
 
 import { Hint } from "./hint";
 
@@ -37,7 +38,7 @@ export function DraftsToggle({
       }
     >
       {OPTIONS.map((option) => (
-        <Hint key={option.label} label={option.hint}>
+        <Hint key={option.label} label={option.hint} hotkey={HOTKEYS.drafts}>
           <SegmentedControlItem
             render={<Radio.Root value={option.hideDrafts} />}
             className="h-6 rounded-full sm:h-6"

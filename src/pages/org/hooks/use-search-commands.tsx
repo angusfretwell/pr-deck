@@ -3,6 +3,7 @@ import { SearchIcon } from "@primer/octicons-react";
 import type { PaletteCommand } from "@/components/command-palette/command-palette";
 import { CommandShortcut } from "@/components/ui/command";
 import { openSearch, setSearchQuery } from "@/features/search/lib/search-store";
+import { HOTKEYS } from "@/features/shortcuts/lib/hotkeys";
 
 export function useSearchCommands(query: string) {
   return [
@@ -16,7 +17,7 @@ export function useSearchCommands(query: string) {
           <span className="font-medium">“{query.trim()}”</span>
         </span>
       ),
-      end: <CommandShortcut>/</CommandShortcut>,
+      end: <CommandShortcut>{HOTKEYS.search}</CommandShortcut>,
       run: () => {
         setSearchQuery(query.trim());
         openSearch();

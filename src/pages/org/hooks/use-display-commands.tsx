@@ -9,6 +9,7 @@ import {
 import type { PaletteCommand } from "@/components/command-palette/command-palette";
 import { Check } from "@/components/command-palette/parts";
 import { CommandShortcut } from "@/components/ui/command";
+import { HOTKEYS } from "@/features/shortcuts/lib/hotkeys";
 import { GROUPS, THEMES, usePreferences } from "@/lib/preferences";
 import { useOrgList } from "@/pages/org/org-list-context";
 
@@ -53,7 +54,7 @@ export function useDisplayCommands() {
             keywords: "drafts hide show toggle",
             icon: <GitPullRequestDraftIcon />,
             label: hideDrafts ? "Show drafts" : "Hide drafts",
-            end: <CommandShortcut>D</CommandShortcut>,
+            end: <CommandShortcut>{HOTKEYS.drafts}</CommandShortcut>,
             run: () => {
               usePreferences.setState({ hideDrafts: !hideDrafts });
             },

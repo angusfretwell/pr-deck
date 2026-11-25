@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { Spinner } from "@/components/ui/spinner";
 import { HeaderSearch, SearchButton } from "@/features/search/header-search";
 import { useSearchVisible } from "@/features/search/lib/search-store";
+import { ShortcutsDialog } from "@/features/shortcuts/shortcuts-dialog";
 import { cn } from "@/lib/utils";
 import type { Account, Session } from "@/types";
 
@@ -66,6 +67,7 @@ export function AppShell({
           </>
         )}
       </header>
+      <ShortcutsDialog />
     </div>
   );
 }
