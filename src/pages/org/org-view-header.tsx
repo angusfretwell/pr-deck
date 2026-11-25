@@ -1,5 +1,6 @@
 import { DisplayMenu } from "@/features/views/display-menu";
 import { DraftsToggle } from "@/features/views/drafts-toggle";
+import { useKeyboardViewHref } from "@/features/views/lib/keyboard-view-store";
 import { FilterButton, ViewHeader } from "@/features/views/view-header";
 import { ViewTabs } from "@/features/views/view-tabs";
 import { usePreferences } from "@/lib/preferences";
@@ -17,12 +18,16 @@ function OrgViewTabs() {
     actions: { commit },
   } = useOrgList();
 
+  const activeViewId = views.active?.id ?? null;
+  const keyboardViewHref = useKeyboardViewHref();
+
   return (
     <ViewTabs
       views={views.list}
       viewCounts={viewCounts}
       allOpenCount={allOpenCount}
-      activeViewId={views.active?.id ?? null}
+      activeViewId={activeViewId}
+      glideToActive={keyboardViewHref === views.hrefFor(activeViewId)}
       deletableViewId={views.deletableViewId}
       renamingViewId={views.session.renamingViewId}
       viewHref={views.hrefFor}

@@ -3,6 +3,7 @@ import type { HotkeyMeta } from "@tanstack/react-hotkeys";
 import { useLocation } from "wouter";
 
 import { openSearch } from "@/features/search/lib/search-store";
+import { setKeyboardViewHref } from "@/features/views/lib/keyboard-view-store";
 import { HOTKEYS } from "@/features/shortcuts/lib/hotkeys";
 import type { SHORTCUT_GROUPS } from "@/features/shortcuts/lib/hotkeys";
 import { useShortcutsOpen } from "@/features/shortcuts/lib/shortcuts-store";
@@ -49,7 +50,13 @@ export function CycleHotkeys() {
   function cycleView(offset: 1 | -1) {
     return () => {
       const viewIds = [null, ...views.list.map((view) => view.id)];
-      navigate(views.hrefFor(cycle(viewIds, views.active?.id ?? null, offset)));
+
+      const href = views.hrefFor(
+        cycle(viewIds, views.active?.id ?? null, offset)
+      );
+
+      setKeyboardViewHref(href);
+      navigate(href);
     };
   }
 
