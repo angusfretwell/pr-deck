@@ -1,4 +1,8 @@
-import { ChevronRightIcon, SearchIcon } from "@primer/octicons-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  SearchIcon,
+} from "@primer/octicons-react";
 import { useState } from "react";
 
 import {
@@ -7,6 +11,7 @@ import {
   AutocompleteItem,
   AutocompleteList,
 } from "@/components/ui/autocomplete";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Command } from "@/components/ui/command";
 import { Popover, PopoverPopup } from "@/components/ui/popover";
@@ -18,6 +23,7 @@ import {
   VIEWER_VALUE,
 } from "@/features/views/lib/filters";
 import type { Option, Property } from "@/features/views/lib/filters";
+import { cn } from "@/lib/utils";
 import type { PropertyKey } from "@/types";
 
 import { useFilterContext } from "./filter-context";
@@ -51,6 +57,7 @@ function FilterMenuList({ initialKey, canGoBack }: FilterMenuListProps) {
   const { toggle } = context.actions;
   const { viewer } = context.meta;
   const [propertyKey, setPropertyKey] = useState(initialKey);
+  const [direction, setDirection] = useState<"forward" | "back" | null>(null);
   const [query, setQuery] = useState("");
 
   const avatarUrls = new Map(
@@ -104,6 +111,14 @@ function FilterMenuList({ initialKey, canGoBack }: FilterMenuListProps) {
           : []),
       ];
 
+  const nested = propertyKey !== null && canGoBack;
+
+  function goBack() {
+    setDirection("back");
+    setPropertyKey(null);
+    setQuery("");
+  }
+
   function pick(item: Item) {
     if (item.kind === "value") {
       toggle(item.property.key, item.option.value);
@@ -111,12 +126,13 @@ function FilterMenuList({ initialKey, canGoBack }: FilterMenuListProps) {
       return;
     }
 
+    setDirection("forward");
     setPropertyKey(item.property.key);
     setQuery("");
   }
 
   return (
-    <div className="flex max-h-[min(calc(var(--available-height)-2px),24rem)] flex-col *:first:border-b">
+    <div className="flex max-h-[min(calc(var(--available-height)-2px),24rem)] flex-col overflow-hidden">
       <Command
         key={propertyKey}
         items={items}
@@ -128,66 +144,94 @@ function FilterMenuList({ initialKey, canGoBack }: FilterMenuListProps) {
           }
         }}
       >
-        <div className="p-2">
-          <AutocompleteInput
-            autoFocus
-            className="rounded-md before:rounded-[calc(var(--radius-md)-1px)]"
-            placeholder={
-              propertyKey ? `${PROPERTY[propertyKey].name}…` : "Filter…"
-            }
-            spellCheck={false}
-            startAddon={<SearchIcon />}
-            onKeyDown={(event) => {
-              if (
-                event.key === "Backspace" &&
-                !query &&
-                propertyKey &&
-                canGoBack
-              ) {
-                setPropertyKey(null);
-              }
-            }}
-          />
-        </div>
-        <AutocompleteEmpty>No matches</AutocompleteEmpty>
-        <div className="grid min-h-0 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)]">
-          <AutocompleteList>
-            {(item: Item) => (
-              <AutocompleteItem
-                key={itemKey(item)}
-                value={item}
-                className="gap-2"
-                onClick={() => {
-                  pick(item);
-                }}
+        <div
+          className={cn(
+            "flex min-h-0 flex-col motion-reduce:animate-none",
+            direction === "forward" && "animate-slide-forward",
+            direction === "back" && "animate-slide-back"
+          )}
+        >
+          {propertyKey && (
+            <div className="flex h-11 shrink-0 items-center gap-1.5 border-b px-1.5 sm:h-10">
+              {nested && (
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  className="[&_svg]:size-4.5!"
+                  aria-label="Back to filters"
+                  onClick={goBack}
+                >
+                  <ChevronLeftIcon />
+                </Button>
+              )}
+              <span
+                className={cn("text-base sm:text-sm", !nested && "ps-1.75")}
               >
-                {item.kind === "value" ? (
-                  <>
-                    <Checkbox
-                      checked={item.checked}
-                      tabIndex={-1}
-                      aria-hidden
-                    />
-                    {avatarOf(item)}
-                    {item.prefixed && (
-                      <span className="text-muted-foreground shrink-0">
-                        {item.property.name}
+                {PROPERTY[propertyKey].name}
+              </span>
+            </div>
+          )}
+          <div className="border-b p-2">
+            <AutocompleteInput
+              autoFocus
+              className="rounded-md before:rounded-[calc(var(--radius-md)-1px)]"
+              placeholder={
+                propertyKey
+                  ? `Search ${PROPERTY[propertyKey].noun}…`
+                  : "Filter…"
+              }
+              spellCheck={false}
+              startAddon={<SearchIcon />}
+              onKeyDown={(event) => {
+                const back =
+                  event.key === "Backspace" || event.key === "ArrowLeft";
+
+                if (back && !query && nested) {
+                  goBack();
+                }
+              }}
+            />
+          </div>
+          <AutocompleteEmpty>No matches</AutocompleteEmpty>
+          <div className="grid min-h-0 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)]">
+            <AutocompleteList>
+              {(item: Item) => (
+                <AutocompleteItem
+                  key={itemKey(item)}
+                  value={item}
+                  className="gap-2"
+                  onClick={() => {
+                    pick(item);
+                  }}
+                >
+                  {item.kind === "value" ? (
+                    <>
+                      <Checkbox
+                        checked={item.checked}
+                        tabIndex={-1}
+                        aria-hidden
+                      />
+                      {avatarOf(item)}
+                      {item.prefixed && (
+                        <span className="text-muted-foreground shrink-0">
+                          {item.property.name}
+                        </span>
+                      )}
+                      <span className="truncate">{item.option.label}</span>
+                      <span className="text-muted-foreground ms-auto text-sm tabular-nums sm:text-xs">
+                        {item.count}
                       </span>
-                    )}
-                    <span className="truncate">{item.option.label}</span>
-                    <span className="text-muted-foreground ms-auto text-sm tabular-nums sm:text-xs">
-                      {item.count}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="truncate">{item.property.name}</span>
-                    <ChevronRightIcon className="text-muted-foreground ms-auto size-4 sm:size-3.5" />
-                  </>
-                )}
-              </AutocompleteItem>
-            )}
-          </AutocompleteList>
+                    </>
+                  ) : (
+                    <>
+                      <span className="truncate">{item.property.name}</span>
+                      <ChevronRightIcon className="text-muted-foreground ms-auto size-4 sm:size-3.5" />
+                    </>
+                  )}
+                </AutocompleteItem>
+              )}
+            </AutocompleteList>
+          </div>
         </div>
       </Command>
     </div>
