@@ -29,12 +29,13 @@ function meta(group: (typeof SHORTCUT_GROUPS)[number], name: string) {
 function useOpenOverlays() {
   const { filterMenu, displayMenuOpen, paletteOpen } = useOverlays();
   const shortcutsOpen = useShortcutsOpen();
+  const menuOpen = filterMenu !== null || displayMenuOpen;
 
   return {
     paletteOpen,
     shortcutsOpen,
-    menuOpen: filterMenu !== null || displayMenuOpen,
-    idle: !filterMenu && !displayMenuOpen && !paletteOpen && !shortcutsOpen,
+    menuOpen,
+    idle: !menuOpen && !paletteOpen && !shortcutsOpen,
   };
 }
 
