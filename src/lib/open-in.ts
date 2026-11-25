@@ -23,6 +23,6 @@ export function openPullRequest(url: string) {
   window.open(
     hrefFor(usePreferences.getState().openIn, url),
     "_blank",
-    "noopener"
+    "noopener,noreferrer"
   );
 }
