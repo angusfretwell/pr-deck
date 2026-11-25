@@ -12,26 +12,16 @@ import {
 } from "@/components/responsive-menu";
 import { Button } from "@/components/ui/button";
 import { Group, GroupSeparator } from "@/components/ui/group";
+import { OPEN_IN_HREFS, useOpenInHref } from "@/lib/open-in";
 import { usePreferences } from "@/lib/preferences";
 import type { OpenIn } from "@/types";
 
 import { DiffsHubIcon, T3CodeIcon } from "./brand-icons";
 
-const TARGETS: Record<
-  OpenIn,
-  { label: string; Icon: ComponentType; href: (url: string) => string }
-> = {
-  github: { label: "GitHub", Icon: MarkGithubIcon, href: (url) => url },
-  diffshub: {
-    label: "DiffsHub",
-    Icon: DiffsHubIcon,
-    href: (url) => url.replace("https://github.com/", "https://diffshub.com/"),
-  },
-  t3code: {
-    label: "T3 Code",
-    Icon: T3CodeIcon,
-    href: (url) => `https://app.t3.codes/new?pr=${encodeURIComponent(url)}`,
-  },
+const TARGETS: Record<OpenIn, { label: string; Icon: ComponentType }> = {
+  github: { label: "GitHub", Icon: MarkGithubIcon },
+  diffshub: { label: "DiffsHub", Icon: DiffsHubIcon },
+  t3code: { label: "T3 Code", Icon: T3CodeIcon },
 };
 
 function isOpenIn(value: string): value is OpenIn {
@@ -46,7 +36,8 @@ export function OpenInButton({
   className?: string;
 }) {
   const openIn = usePreferences((state) => state.openIn);
-  const { label, Icon, href } = TARGETS[openIn] ?? TARGETS.github;
+  const { label, Icon } = TARGETS[openIn] ?? TARGETS.github;
+  const href = useOpenInHref(url);
   const groupRef = useRef<HTMLFieldSetElement>(null);
 
   return (
@@ -54,9 +45,9 @@ export function OpenInButton({
       <Button
         render={
           <a
-            href={href(url)}
+            href={href}
             target="_blank"
-            rel="noopener"
+            rel="noopener noreferrer"
             aria-label={`Open in ${label}`}
           />
         }
@@ -86,7 +77,7 @@ export function OpenInButton({
                 return (
                   <ResponsiveMenuLinkItem
                     key={target}
-                    href={option.href(url)}
+                    href={OPEN_IN_HREFS[target](url)}
                     target="_blank"
                     rel="noopener"
                     onClick={() => {

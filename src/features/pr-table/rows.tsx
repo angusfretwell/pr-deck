@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import type { Cluster, Stack } from "@/features/pr-table/lib/stacks";
+import { openPullRequest, useOpenInHref } from "@/lib/open-in";
 import { age, isStale, issueBadges, statusBadge } from "@/lib/pr";
 import { cn } from "@/lib/utils";
 import type { PullRequest } from "@/types";
@@ -104,6 +105,7 @@ function PrTitleCell({
   nested: boolean;
 }) {
   const { shown } = usePrTable();
+  const href = useOpenInHref(pr.url);
 
   return (
     <span className="flex min-w-0 items-center gap-1.5 font-[450]">
@@ -120,7 +122,7 @@ function PrTitleCell({
         />
       )}
       <a
-        href={pr.url}
+        href={href}
         aria-current={selected || undefined}
         onClick={(event) => {
           if (event.metaKey || event.ctrlKey || event.shiftKey) {
@@ -159,7 +161,7 @@ const PrRow = memo(({ pr, selected, stack, nested }: PrRowProps) => {
       data-selected={selected || undefined}
       onClick={(event) => {
         if (event.metaKey || event.ctrlKey) {
-          window.open(pr.url, "_blank", "noopener");
+          openPullRequest(pr.url);
         } else {
           onSelect(pr.id);
         }
