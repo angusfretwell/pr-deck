@@ -3,10 +3,12 @@ import { useState } from "react";
 import {
   CommandPalette,
   CommandPaletteList,
+  filterSections,
 } from "@/components/command-palette/command-palette";
 import { useAccountCommands } from "@/pages/org/hooks/use-account-commands";
 import { useDisplayCommands } from "@/pages/org/hooks/use-display-commands";
 import { useFilterCommands } from "@/pages/org/hooks/use-filter-commands";
+import { usePullRequestCommands } from "@/pages/org/hooks/use-pull-request-commands";
 import { useSearchCommands } from "@/pages/org/hooks/use-search-commands";
 import { useViewCommands } from "@/pages/org/hooks/use-view-commands";
 import { APP_COMMANDS } from "@/pages/org/lib/app-commands";
@@ -20,15 +22,26 @@ function OrgCommandList() {
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();
   const searchItems = useSearchCommands(query);
+  const pullRequestItems = usePullRequestCommands(needle);
 
-  const sections = [
+  const commands = [
     { value: "Views", items: useViewCommands() },
     { value: "Filters", items: useFilterCommands(needle, setQuery) },
     { value: "Display", items: useDisplayCommands() },
     { value: "Accounts", items: useAccountCommands() },
     { value: "App", items: APP_COMMANDS },
-    ...(needle ? [{ value: "Search", items: searchItems }] : []),
   ];
+
+  const pullRequests = { value: "Pull requests", items: pullRequestItems };
+  const search = needle ? [{ value: "Search", items: searchItems }] : [];
+
+  const onlyMatchIsOnePullRequest =
+    pullRequestItems.length === 1 &&
+    filterSections(commands, needle).length === 0;
+
+  const sections = onlyMatchIsOnePullRequest
+    ? [...commands, pullRequests, ...search]
+    : [...commands, ...search, pullRequests];
 
   return (
     <CommandPaletteList

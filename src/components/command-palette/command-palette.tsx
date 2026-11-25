@@ -32,10 +32,22 @@ export interface Section {
   items: PaletteCommand[];
 }
 
-function matches(text: string, needle: string) {
+export function matches(text: string, needle: string) {
   const haystack = text.toLowerCase();
 
   return needle.split(/\s+/u).every((word) => haystack.includes(word));
+}
+
+export function filterSections(sections: Section[], needle: string) {
+  return sections.flatMap((section) => {
+    const items = needle
+      ? section.items.filter((item) =>
+          matches(`${section.value} ${item.keywords}`, needle)
+        )
+      : section.items;
+
+    return items.length > 0 ? [{ ...section, items }] : [];
+  });
 }
 
 interface CommandPaletteListProps {
@@ -51,17 +63,7 @@ export function CommandPaletteList({
   onQueryChange,
   onClose,
 }: CommandPaletteListProps) {
-  const needle = query.trim().toLowerCase();
-
-  const matching = sections.flatMap((section) => {
-    const items = needle
-      ? section.items.filter((item) =>
-          matches(`${section.value} ${item.keywords}`, needle)
-        )
-      : section.items;
-
-    return items.length > 0 ? [{ ...section, items }] : [];
-  });
+  const matching = filterSections(sections, query.trim().toLowerCase());
 
   function run(item: PaletteCommand) {
     item.run();
