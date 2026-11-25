@@ -6,6 +6,7 @@ import { openSearch } from "@/features/search/lib/search-store";
 import { HOTKEYS } from "@/features/shortcuts/lib/hotkeys";
 import type { SHORTCUT_GROUPS } from "@/features/shortcuts/lib/hotkeys";
 import { useShortcutsOpen } from "@/features/shortcuts/lib/shortcuts-store";
+import { openPullRequest } from "@/lib/open-in";
 import { usePreferences } from "@/lib/preferences";
 import {
   changeFilterMenu,
@@ -219,13 +220,13 @@ export function ListHotkeys() {
         hotkey: "O",
         callback: () => {
           if (list.selected) {
-            window.open(list.selected.url, "_blank", "noopener");
+            openPullRequest(list.selected.url);
           }
         },
         options: {
           enabled: idle && !!list.selected,
           preventDefault: false,
-          meta: meta("Pull requests", "Open on GitHub"),
+          meta: meta("Pull requests", "Open pull request"),
         },
       },
     ],
